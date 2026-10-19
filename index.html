@@ -157,18 +157,11 @@ tr:last-child td{border-bottom:0;}
     <!-- ======== NOVA CONVERSA ======== -->
     <section class="tela" id="tela-nova">
       <h1>Nova conversa</h1>
-      <div class="card" id="boxAtalho" style="display:none; text-align:center;">
-        <h2 style="margin-bottom:6px;">Conversa pronta pra ler</h2>
-        <div class="mini" id="atalhoNome" style="margin-bottom:10px;"></div>
-        <button class="acao" style="font-size:1.15em; padding:14px 22px;" onclick="colarELer()">📋 Colar conversa</button>
-        <div class="mini" style="margin-top:8px;">Se o iPhone perguntar, toque em <b>Colar</b>.</div>
-      </div>
       <div class="card">
         <label>Cole aqui a conversa do WhatsApp</label>
         <textarea id="txtConversa" rows="9" placeholder="Pode colar a conversa inteira, do jeito que ela sai do WhatsApp.&#10;&#10;Exemplo:&#10;Marcos (47) 99812-3344&#10;Boa tarde! Queria 100 camisetas oversized em suedine strong preta, P ao GG, com estampa DTF na frente. Precisava pra 30 dias."></textarea>
         <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
           <button class="acao" onclick="lerAgora()">Ler conversa</button>
-          <button class="acao sec" onclick="colarELer()">📋 Colar e ler</button>
           <button class="acao sec" onclick="limparConversa()">Limpar</button>
         </div>
         <div class="mini" style="margin-top:9px;">Eu separo o que foi pedido e mostro aqui embaixo pra você conferir. Nada é salvo antes de você clicar em salvar.</div>
@@ -367,9 +360,27 @@ function normalizar(s){
    que ELE mandou não é pedido do cliente, e sem isso o leitor lê o orçamento
    dele de volta como se fosse coisa que o cliente pediu. */
 const EU = ['BORINELLI','PATRICK','EU','VOCE'];
-function separarFalas(txt){
+
+/* Recado do próprio WhatsApp não é fala de ninguém: o aviso de criptografia,
+   "mensagem apagada", "mídia oculta", o nome do arquivo anexado. Isso entrava
+   no "como quer a peça" e sujava tudo. */
+const LIXO=[
+  /CRIPTOGRAFAD/, /SOMENTE AS PESSOAS QUE FAZEM PARTE/, /PROTEGIDAS COM A CRIPTOGRAFIA/,
+  /MENSAGEM FOI APAGADA/, /VOCE APAGOU ESTA MENSAGEM/, /ESSA MENSAGEM FOI EDITADA/,
+  /MIDIA OCULTA/, /MEDIA OMITTED/, /ARQUIVO ANEXADO/, /FILE ATTACHED/,
+  /CODIGO DE SEGURANCA/, /SECURITY CODE/, /MUDOU PARA O NUMERO/, /ALTEROU O NUMERO/,
+  /CRIOU ESTE GRUPO/, /ADICIONOU VOCE/, /SAIU DO GRUPO/, /CHAMADA DE VOZ/, /CHAMADA DE VIDEO/,
+  /LIGACAO PERDIDA/, /VIDEOCHAMADA PERDIDA/, /CLIQUE PARA SABER MAIS/
+];
+const ehLixo=msg=>{ const n=normalizar(msg); return !n.trim() || LIXO.some(re=>re.test(n)); };
+
+/* meusNomes: os nomes que o Patrick marcou como sendo o lado dele. O perfil do
+   WhatsApp Business pode se chamar qualquer coisa, então adivinhar não basta —
+   ele escolhe na tela e o app guarda pra próxima. */
+function separarFalas(txt, meusNomes){
   const linhas=String(txt||'').split(/\r?\n/);
   const re=/^\s*\[?\d{1,2}\/\d{1,2}\/\d{2,4}[,\s]+\d{1,2}:\d{2}(?::\d{2})?\]?\s*[-–]?\s*([^:]{1,40}):\s?(.*)$/;
+  const meus=(meusNomes||[]).map(normalizar).filter(Boolean);
   let temFormato=false;
   const cliente=[], todos=[], autores=new Set();
   linhas.forEach(l=>{
@@ -378,15 +389,20 @@ function separarFalas(txt){
       temFormato=true;
       const autor=m[1].trim(), msg=m[2];
       autores.add(autor);
+      if(ehLixo(msg)) return;
       todos.push(msg);
       const an=normalizar(autor);
-      const meu=EU.some(e=>an===e || an.startsWith(e+' ') || an.includes('BORINELLI'));
+      const meu = meus.includes(an) ||
+                  EU.some(e=>an===e || an.startsWith(e+' ')) || an.includes('BORINELLI');
       if(!meu) cliente.push(msg);
-    } else if(l.trim()) {
+    } else if(l.trim() && !ehLixo(l)) {
       todos.push(l);
     }
   });
-  if(!temFormato) return {texto:String(txt||''), formato:false, autores:[]};
+  if(!temFormato){
+    const limpo=linhas.filter(l=>l.trim() && !ehLixo(l)).join('\n');
+    return {texto:limpo, formato:false, autores:[]};
+  }
   // se só tem UM autor, não dá pra saber quem é quem: usa tudo
   const usar = (cliente.length && autores.size>1)? cliente : todos;
   return {texto:usar.join('\n'), formato:true, autores:[...autores]};
@@ -535,8 +551,16 @@ function acharNaJanela(t, pos, raio, fn){
 }
 
 /* ---- a leitura ---- */
-function lerConversa(txtBruto){
-  const sep=separarFalas(txtBruto);
+/* "Preta" e "Preto" são a mesma cor: tira a repetição que aparecia na ficha */
+function corBase(c){ return normalizar(c).replace(/[AO]S?$/,''); }
+function coresUnicas(lista){
+  const vistas=new Set(), out=[];
+  (lista||[]).forEach(c=>{ const b=corBase(c); if(b && !vistas.has(b)){ vistas.add(b); out.push(c); } });
+  return out;
+}
+
+function lerConversa(txtBruto, meusNomes){
+  const sep=separarFalas(txtBruto, meusNomes);
   const t=normalizar(sep.texto);
   const tudo=normalizar(txtBruto);
 
@@ -594,7 +618,7 @@ function lerConversa(txtBruto){
         malha: malha.nome||'',
         gramatura: malha.g||'',
         qtd: qTr.length? qTr[0].qtd : (qtdAntesDoCorte(tr, c.pos-ini) || (um && qtds.length? qtds[0].qtd : '')),
-        cores: cTr.length? cTr : (um? cores.map(x=>x.cor) : []),
+        cores: coresUnicas(cTr.length? cTr : (um? cores.map(x=>x.cor) : [])),
         tamanhos: acharTamanhos(tr, infantil)
       });
     });
@@ -605,7 +629,7 @@ function lerConversa(txtBruto){
       malha:(malhas[0]||{item:{}}).item.nome||'',
       gramatura:(malhas[0]||{item:{}}).item.g||'',
       qtd: qtds.length? qtds[0].qtd : '',
-      cores: cores.map(x=>x.cor),
+      cores: coresUnicas(cores.map(x=>x.cor)),
       tamanhos: acharTamanhos(t, false)
     });
   }
@@ -631,6 +655,7 @@ function lerConversa(txtBruto){
     comoQuer,
     prazo,
     avisos,
+    autores: sep.autores,
     formatoExport: sep.formato,
     totalPecas: itens.reduce((s,i)=>s+(Number(i.qtd)||0),0)
   };
@@ -689,7 +714,7 @@ const firebaseConfig = {
 const NO='pedidos';
 const CHAVE_LOCAL='borinelli-pedidos';
 
-var S={clientes:[], pedidos:[], removidos:[]};
+var S={clientes:[], pedidos:[], removidos:[], meusNomes:[]};
 let fbDB=null, fbOnline=false, aplicandoRemoto=false, jaRecebeu=false;
 const meuId='p-'+Math.random().toString(36).slice(2,9);
 
@@ -701,7 +726,7 @@ function salvar(){
 }
 function carregar(){
   try{ const v=localStorage.getItem(CHAVE_LOCAL); if(v) S=Object.assign(S, JSON.parse(v)); }catch(e){}
-  S.clientes=S.clientes||[]; S.pedidos=S.pedidos||[]; S.removidos=S.removidos||[];
+  S.clientes=S.clientes||[]; S.pedidos=S.pedidos||[]; S.removidos=S.removidos||[]; S.meusNomes=S.meusNomes||[];
 }
 /* junta em vez de sobrescrever: dois aparelhos podem cadastrar ao mesmo tempo */
 function mesclar(remoto){
@@ -713,6 +738,7 @@ function mesclar(remoto){
   S.clientes=por(S.clientes, remoto.clientes).filter(x=>!mortos.has(x.id));
   S.pedidos =por(S.pedidos,  remoto.pedidos ).filter(x=>!mortos.has(x.id));
   S.removidos=[...mortos];
+  S.meusNomes=[...new Set([...(S.meusNomes||[]), ...(remoto.meusNomes||[])])];
 }
 function iniciarFirebase(){
   if(typeof firebase==='undefined') return pintarSync('sem biblioteca');
@@ -882,35 +908,12 @@ let lidoAtual=null, editandoPedido=null;
 function lerAgora(){
   const txt=document.getElementById('txtConversa').value;
   if(!txt.trim()) return alert('Cole a conversa primeiro.');
-  const r=lerConversa(txt);
-  if(nomeColado && !r.nome) r.nome=nomeColado;
+  const r=lerConversa(txt, S.meusNomes);
   lidoAtual={bruto:txt, r};
   montarConferencia(r, txt);
   document.getElementById('confBox').style.display='';
   const cb=document.getElementById('confBox');
   if(cb.scrollIntoView) cb.scrollIntoView({behavior:'smooth', block:'start'});
-}
-/* ---- vindo do atalho do iPhone: ?colar=1&nome=<nome do arquivo exportado> ---- */
-var nomeColado='';
-function colarELer(){
-  const ta=document.getElementById('txtConversa');
-  if(!navigator.clipboard || !navigator.clipboard.readText){
-    ta.focus(); return alert('Segure o dedo na caixa e toque em Colar, depois em Ler conversa.');
-  }
-  navigator.clipboard.readText().then(t=>{
-    if(!String(t||'').trim()) return alert('A área de transferência está vazia. Rode o atalho de novo.');
-    ta.value=t;
-    document.getElementById('boxAtalho').style.display='none';
-    lerAgora();
-  }).catch(()=>{ ta.focus(); alert('Não consegui colar sozinho. Segure o dedo na caixa, toque em Colar e depois em Ler conversa.'); });
-}
-function veioDoAtalho(){
-  const q=new URLSearchParams(location.search);
-  if(!q.has('colar')) return;
-  nomeColado=nomeDoArquivo(q.get('nome')||'') || String(q.get('nome')||'').replace(/\.(txt|zip)$/i,'').trim();
-  const b=document.getElementById('boxAtalho'); b.style.display='';
-  document.getElementById('atalhoNome').textContent= nomeColado? 'Cliente: '+nomeColado : '';
-  try{ history.replaceState(null,'',location.pathname); }catch(e){}
 }
 function limparConversa(){
   document.getElementById('txtConversa').value='';
@@ -1167,10 +1170,116 @@ function importarArquivos(inp){
       if(l.cortou) r.avisos=[...r.avisos, 'o zip trazia '+l.cortou+' fotos; peguei as '+MAX_FOTOS_ZIP+' primeiras'];
       lote.push({arq:l.arq, txt:l.txt, r, fotos:l.fotos||[]});
     });
+    /* escolhe quem é o cliente e relê já sem as falas do Patrick */
+    lote.forEach((l,ix)=>{ l.autorCliente=autorClientePadrao(l); if(l.autorCliente){ aprenderLado(l); reparsar(ix); } });
+    salvar();
     if(msg) msg.textContent=erros.join(' · ');
     renderLote();
   });
 }
+/* ---- um número é uma coisa só ---- */
+function chaveCliente(nome, tel){
+  const d=soDigitos(tel);
+  return d.length>=8? 'T'+d.slice(-8) : 'N'+normalizar(nome||'');
+}
+/* duas conversas que começam igual são a mesma conversa reimportada */
+function mesmaConversa(a,b){
+  const na=normalizar(a||'').replace(/\s+/g,' ').trim();
+  const nb=normalizar(b||'').replace(/\s+/g,' ').trim();
+  if(na.length<30 || nb.length<30) return false;
+  return na.startsWith(nb.slice(0,180)) || nb.startsWith(na.slice(0,180));
+}
+/* mesma peça: mesmo corte, e malha igual OU uma das duas ainda em branco —
+   senão "Oversized" e "Oversized Suedine Strong" viram duas linhas da mesma coisa */
+const mesmoItem=(a,b)=>{
+  if((a.corte||'')!==(b.corte||'')) return false;
+  const ma=a.malha||'', mb=b.malha||'';
+  return !ma || !mb || ma===mb;
+};
+
+/* junta o conteúdo de um pedido dentro de outro, sem perder nada dos dois */
+function fundirNoPedido(alvo, novo){
+  (novo.itens||[]).forEach(i=>{
+    const ja=(alvo.itens||[]).find(x=>mesmoItem(x,i));
+    if(!ja){ alvo.itens=[...(alvo.itens||[]), i]; return; }
+    ja.qtd=Math.max(Number(ja.qtd)||0, Number(i.qtd)||0);
+    ja.cores=[...new Set([...(ja.cores||[]), ...(i.cores||[])])];
+    ja.tamanhos=[...new Set([...(ja.tamanhos||[]), ...(i.tamanhos||[])])];
+    if(!ja.malha && i.malha){ ja.malha=i.malha; ja.gramatura=i.gramatura||''; }
+  });
+  /* item sem nada preenchido some quando já existe um irmão com conteúdo */
+  if((alvo.itens||[]).length>1)
+    alvo.itens=alvo.itens.filter(i=>i.corte||i.malha||Number(i.qtd)>0);
+  const nomes=new Set((alvo.fotos||[]).map(f=>f.nome));
+  (novo.fotos||[]).forEach(f=>{ if(!nomes.has(f.nome)){ nomes.add(f.nome); alvo.fotos=[...(alvo.fotos||[]), f]; } });
+  alvo.extras  =[...new Set([...(alvo.extras||[]),   ...(novo.extras||[])])];
+  alvo.detalhes=[...new Set([...(alvo.detalhes||[]), ...(novo.detalhes||[])])];
+  const linhas=new Set((alvo.comoQuer||'').split('\n').map(x=>x.trim()).filter(Boolean));
+  (novo.comoQuer||'').split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>linhas.add(x));
+  alvo.comoQuer=[...linhas].join('\n');
+  if(!alvo.prazo && novo.prazo) alvo.prazo=novo.prazo;
+  if((novo.conversa||'').length>(alvo.conversa||'').length) alvo.conversa=novo.conversa;
+  if(novo.obs && !(alvo.obs||'').includes(novo.obs)) alvo.obs=[alvo.obs, novo.obs].filter(Boolean).join('\n');
+  alvo.ts=Date.now();
+  return alvo;
+}
+
+/* junta todos os pedidos de um cliente num só — pro caso de já ter duplicado */
+function juntarPedidosDoCliente(cid){
+  const peds=pedidosDe(cid);
+  if(peds.length<2) return;
+  if(!confirm('Juntar os '+peds.length+' pedidos deste cliente num só?\n\n'+
+              'Peças, fotos e detalhes de todos entram no mesmo pedido. Não dá pra desfazer.')) return;
+  const base=peds[peds.length-1];            /* o mais antigo vira o dono */
+  peds.slice(0,-1).reverse().forEach(p=>{
+    fundirNoPedido(base, p);
+    S.removidos=[...new Set([...(S.removidos||[]), p.id])];
+  });
+  base.etapa=peds.map(p=>p.etapa).find(e=>e!=='novo') || base.etapa;
+  base.criado=Math.min(...peds.map(p=>p.criado||Date.now()));
+  S.pedidos=S.pedidos.filter(p=>p.clienteId!==cid || p.id===base.id);
+  salvar(); render();
+}
+
+/* quem é o cliente nesta conversa: por padrão o autor que não é o Patrick */
+function autorClientePadrao(l){
+  const aut=l.r.autores||[];
+  if(aut.length<2) return aut[0]||'';
+  const meus=(S.meusNomes||[]).map(normalizar);
+  const fora=aut.filter(a=>{ const n=normalizar(a);
+    return !meus.includes(n) && !/BORINELLI|^PATRICK/.test(n); });
+  if(fora.length===1) return fora[0];
+  const doTitulo=normalizar(nomeDoArquivo(l.arq));
+  const bate=aut.find(a=>doTitulo && normalizar(a)===doTitulo);
+  return bate || fora[0] || aut[0];
+}
+/* conversa de duas pessoas: quem não é o cliente é o perfil do Patrick.
+   Guarda pra próxima importação já vir filtrada — e se ele trocar, desfaz. */
+function aprenderLado(l){
+  const aut=l.r.autores||[];
+  if(aut.length!==2 || !l.autorCliente) return;
+  const meu=aut.find(a=>a!==l.autorCliente);
+  const eu=normalizar(l.autorCliente);
+  S.meusNomes=[...new Set([...(S.meusNomes||[]).filter(n=>normalizar(n)!==eu), meu])];
+}
+function trocarAutor(ix, autor){
+  const l=lote[ix]; if(!l) return;
+  l.autorCliente=autor;
+  aprenderLado(l);
+  reparsar(ix);
+  salvar();
+}
+function reparsar(ix){
+  const l=lote[ix]; if(!l) return;
+  const outros=(l.r.autores||[]).filter(a=>a!==l.autorCliente);
+  const r=lerConversa(l.txt, [...(S.meusNomes||[]), ...outros]);
+  const doTitulo=nomeDoArquivo(l.arq);
+  if(doTitulo && !r.nome) r.nome=doTitulo;
+  if(l.autorCliente) r.nome=l.autorCliente;
+  l.r=r;
+  renderLote();
+}
+
 function renderLote(){
   const box=document.getElementById('loteBox'); if(!box) return;
   if(!lote.length){ box.style.display='none'; return; }
@@ -1184,7 +1293,11 @@ function renderLote(){
       const it=l.r.itens, tot=it.reduce((s,i)=>s+(Number(i.qtd)||0),0);
       return '<tr>'+
         '<td><input type="checkbox" data-ix="'+ix+'" style="width:auto;"'+(it.length?' checked':'')+'></td>'+
-        '<td><input id="lt-nome-'+ix+'" value="'+esc(tituloCaixa(l.r.nome)||'')+'" placeholder="sem nome"></td>'+
+        '<td><input id="lt-nome-'+ix+'" value="'+esc(tituloCaixa(l.r.nome)||'')+'" placeholder="sem nome">'+
+          ((l.r.autores||[]).length>1? '<div class="mini" style="margin-top:4px;">quem é o cliente?<br>'+
+            '<select onchange="trocarAutor('+ix+',this.value)">'+
+            l.r.autores.map(a=>'<option'+(a===l.autorCliente?' selected':'')+'>'+esc(a)+'</option>').join('')+
+            '</select></div>':'')+'</td>'+
         '<td><input id="lt-tel-'+ix+'" value="'+esc(l.r.telefone||'')+'" placeholder="sem número"></td>'+
         '<td>'+(it.length? it.map(i=>esc((i.qtd? i.qtd+' ':'')+(i.corte||'?')+(i.malha? ' · '+i.malha:'')+
             ((i.cores||[]).length? ' · '+i.cores.map(tituloCaixa).join('/'):''))).join('<br>')
@@ -1206,35 +1319,84 @@ function salvarLote(){
   const marcados=[...document.querySelectorAll('#loteTab input[type=checkbox]')]
     .filter(c=>c.checked).map(c=>Number(c.dataset.ix));
   if(!marcados.length) return alert('Nenhuma conversa marcada.');
-  let novos=0, juntados=0;
+
+  /* mesmo número = uma coisa só: as conversas do mesmo cliente viram UM pedido,
+     em vez de um pedido por arquivo importado */
+  const grupos=new Map();
   marcados.forEach(ix=>{
     const l=lote[ix]; if(!l) return;
-    const nome=(document.getElementById('lt-nome-'+ix)||{}).value||'';
-    const tel =(document.getElementById('lt-tel-'+ix )||{}).value||'';
-    if(!nome.trim() && !tel.trim()) return;
-    let cli=acharCliente(tel, nome);
-    if(cli){ juntados++; if(nome.trim()) cli.nome=nome.trim(); if(tel.trim()) cli.telefone=tel.trim(); cli.ts=Date.now(); }
-    else { novos++; cli={id:uid(), nome:nome.trim()||tel.trim(), telefone:tel.trim(), empresa:'', criado:Date.now(), ts:Date.now()};
-           S.clientes.push(cli); }
-    S.pedidos.push({
-      id:uid(), clienteId:cli.id, criado:Date.now(), ts:Date.now(), etapa:'novo',
-      prazo:l.r.prazo||'', obs:'', extras:(l.r.extras||[]).map(e=>e.id),
-      detalhes:(l.r.detalhes||[]).map(dd=>dd.id),
-      comoQuer:(l.r.comoQuer||[]).join('\n'),
-      conversa:l.txt,
-      fotos:(l.fotos||[]).map(f=>({id:f.id, nome:f.nome, thumb:f.thumb})),
-      itens:(l.r.itens||[]).map(i=>{
-        const dC=CORTES.find(c=>c.nome===i.corte), dM=MALHAS.find(m=>m.nome===i.malha);
-        return {corte:i.corte||'', malha:i.malha||'', corteId:dC?dC.id:'', genero:dC?dC.genero:'',
-                gramatura:dM?dM.g:'', qtd:Number(i.qtd)||0, cores:i.cores||[], tamanhos:i.tamanhos||[]};
-      })
-    });
+    const nome=((document.getElementById('lt-nome-'+ix)||{}).value||'').trim();
+    const tel =((document.getElementById('lt-tel-' +ix)||{}).value||'').trim();
+    if(!nome && !tel) return;
+    const k=chaveCliente(nome, tel);
+    if(!grupos.has(k)) grupos.set(k, {nome, tel, partes:[]});
+    const g=grupos.get(k);
+    if(!g.nome && nome) g.nome=nome;
+    if(!g.tel  && tel ) g.tel =tel;
+    g.partes.push(l);
   });
+
+  let novos=0, juntados=0, fundidos=0;
+  grupos.forEach(g=>{
+    const nome=g.nome, tel=g.tel;
+    let cli=acharCliente(tel, nome);
+    if(cli){ juntados++; if(nome) cli.nome=nome; if(tel) cli.telefone=tel; cli.ts=Date.now(); }
+    else { novos++; cli={id:uid(), nome:nome||tel, telefone:tel, empresa:'', criado:Date.now(), ts:Date.now()};
+           S.clientes.push(cli); }
+
+    /* as partes do mesmo cliente são fundidas numa só antes de virar pedido */
+    const juntoItens=[], juntoFotos=[], juntoExtras=[], juntoDet=[], juntoComo=[];
+    let juntoPrazo='', juntoConversa='';
+    g.partes.forEach(l=>{
+      (l.r.itens||[]).forEach(i=>{
+        const dC=CORTES.find(c=>c.nome===i.corte), dM=MALHAS.find(m=>m.nome===i.malha);
+        juntoItens.push({corte:i.corte||'', malha:i.malha||'', corteId:dC?dC.id:'', genero:dC?dC.genero:'',
+          gramatura:dM?dM.g:'', qtd:Number(i.qtd)||0, cores:i.cores||[], tamanhos:i.tamanhos||[]});
+      });
+      (l.fotos||[]).forEach(f=>{ if(!juntoFotos.some(x=>x.nome===f.nome)) juntoFotos.push(f); });
+      (l.r.extras||[]).forEach(e=>juntoExtras.push(e.id));
+      (l.r.detalhes||[]).forEach(dd=>juntoDet.push(dd.id));
+      (l.r.comoQuer||[]).forEach(f=>juntoComo.push(f));
+      if(!juntoPrazo && l.r.prazo) juntoPrazo=l.r.prazo;
+      if((l.txt||'').length>juntoConversa.length) juntoConversa=l.txt;
+    });
+    const candidato={
+      id:uid(), clienteId:cli.id, criado:Date.now(), ts:Date.now(), etapa:'novo',
+      prazo:juntoPrazo, obs:'',
+      extras:[...new Set(juntoExtras)], detalhes:[...new Set(juntoDet)],
+      comoQuer:[...new Set(juntoComo.map(x=>x.trim()).filter(Boolean))].join('\n'),
+      conversa:juntoConversa,
+      fotos:juntoFotos.map(f=>({id:f.id, nome:f.nome, thumb:f.thumb})),
+      itens:[]
+    };
+    juntoItens.forEach(i=>{
+      const ja=candidato.itens.find(x=>mesmoItem(x,i));
+      if(!ja) return candidato.itens.push(i);
+      ja.qtd=Math.max(ja.qtd, i.qtd);
+      ja.cores=[...new Set([...ja.cores, ...i.cores])];
+      ja.tamanhos=[...new Set([...ja.tamanhos, ...i.tamanhos])];
+      if(!ja.malha && i.malha){ ja.malha=i.malha; ja.gramatura=i.gramatura; }
+    });
+    if(candidato.itens.length>1)
+      candidato.itens=candidato.itens.filter(i=>i.corte||i.malha||i.qtd>0);
+
+    /* já existe um pedido com essa mesma conversa? então é ela de novo, não outra */
+    const igual=pedidosDe(cli.id).find(p=>mesmaConversa(p.conversa, candidato.conversa));
+    if(igual){ fundirNoPedido(igual, candidato); fundidos++; }
+    else S.pedidos.push(candidato);
+    g.salvo=true;
+  });
+
+
   /* as fotos grandes das conversas salvas vão pro aparelho */
   marcados.forEach(ix=>{ (lote[ix]&&lote[ix].fotos||[]).forEach(f=>{ if(f.grande) idbPut(f.id, f.grande); }); });
   lote=[]; renderLote(); salvar(); irPara('clientes');
-  alert('Importado: '+novos+' cliente'+(novos!==1?'s':'')+' novo'+(novos!==1?'s':'')+
-        (juntados? ' e '+juntados+' pedido'+(juntados!==1?'s':'')+' em cliente que já existia':'')+'.');
+  const partes=[];
+  if(novos)    partes.push(novos+' cliente'+(novos!==1?'s':'')+' novo'+(novos!==1?'s':''));
+  if(juntados) partes.push(juntados+' em cliente que já existia');
+  if(fundidos) partes.push(fundidos+' conversa'+(fundidos!==1?'s':'')+' que já estava'+(fundidos!==1?'m':'')+
+                           ' no sistema, juntada'+(fundidos!==1?'s':'')+' no mesmo pedido');
+  alert('Importado: '+(partes.join(' · ')||'nada')+'.');
 }
 
 /* ================= 2. CLIENTES ================= */
@@ -1274,7 +1436,11 @@ function renderClientes(){
           (ult? '<span class="tag" style="background:'+etapaDe(ult.etapa).cor+'">'+esc(etapaDe(ult.etapa).nome)+'</span>':'')+
           '<div class="mini">'+(ult? fmtData(ult.criado):'')+'</div></div>'+
       '</div>'+
-      (ab? '<div class="cliCorpo">'+(c.telefone? '<a class="acao mini wpp" target="_blank" href="https://wa.me/55'+soDigitos(c.telefone)+'">Abrir no WhatsApp</a>':'')+
+      (ab? '<div class="cliCorpo">'+
+        '<div style="display:flex; gap:7px; flex-wrap:wrap; margin-bottom:4px;">'+
+        (c.telefone? '<a class="acao mini wpp" target="_blank" href="https://wa.me/55'+soDigitos(c.telefone)+'">Abrir no WhatsApp</a>':'')+
+        (peds.length>1? '<button class="acao mini sec" onclick="juntarPedidosDoCliente(\''+c.id+'\')">⇅ Juntar os '+peds.length+' num só</button>':'')+
+        '</div>'+
         peds.map(p=>cardPedido(p)).join('')+'</div>' : '')+
     '</div>';
   }).join('');
@@ -1293,7 +1459,7 @@ function cardPedido(p){
     '<table class="tabItens"><tr><th>Peça</th><th>Malha</th><th>Qtd</th><th>Cores</th><th>Tamanhos</th></tr>'+
     (p.itens||[]).map(i=>'<tr><td><b>'+esc(i.corte||'—')+'</b></td><td>'+esc(i.malha||'—')+
       (i.gramatura? ' <span class="mini">'+esc(i.gramatura)+'</span>':'')+'</td>'+
-      '<td><b>'+(Number(i.qtd)||0).toLocaleString('pt-BR')+'</b></td>'+
+      '<td>'+(Number(i.qtd)>0? '<b>'+Number(i.qtd).toLocaleString('pt-BR')+'</b>':'—')+'</td>'+
       '<td>'+esc((i.cores||[]).map(tituloCaixa).join(', ')||'—')+'</td>'+
       '<td>'+esc((i.tamanhos||[]).join(' ')||'—')+'</td></tr>').join('')+
     '</table>'+
@@ -1367,7 +1533,7 @@ function renderPedidos(){
   document.getElementById('tabPedidos').innerHTML = L.length?
     '<tr><th>Cliente</th><th>Peça</th><th>Malha</th><th>Qtd</th><th>Cores</th><th>Tamanhos</th><th>Etapa</th><th>Data</th></tr>'+
     L.map(x=>'<tr><td><b>'+esc(x.c.nome)+'</b></td><td>'+esc(x.i.corte||'—')+'</td><td>'+esc(x.i.malha||'—')+'</td>'+
-      '<td><b>'+(Number(x.i.qtd)||0).toLocaleString('pt-BR')+'</b></td>'+
+      '<td>'+(Number(x.i.qtd)>0? '<b>'+Number(x.i.qtd).toLocaleString('pt-BR')+'</b>':'—')+'</td>'+
       '<td>'+esc((x.i.cores||[]).map(tituloCaixa).join(', ')||'—')+'</td>'+
       '<td>'+esc((x.i.tamanhos||[]).join(' ')||'—')+'</td>'+
       '<td><span class="tag" style="background:'+etapaDe(x.p.etapa).cor+'">'+esc(etapaDe(x.p.etapa).nome)+'</span></td>'+
@@ -1451,7 +1617,6 @@ document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('fEtapaCli').innerHTML='<option value="">todas</option>'+
     ETAPAS.map(e=>'<option value="'+e.id+'">'+esc(e.nome)+'</option>').join('');
   irPara('nova');
-  veioDoAtalho();
   iniciarFirebase();
 });
 

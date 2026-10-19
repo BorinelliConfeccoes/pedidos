@@ -1,5 +1,5 @@
 const CACHE='borinelli-pedidos-v140';
-const ARQS=['./','./index.html','./manifest.json','./icone.png'];
+const ARQS=['./','./index.html','./manifest.json'];
 self.addEventListener('install', e=>{ self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ARQS).catch(()=>{}))); });
 self.addEventListener('activate', e=>{ e.waitUntil(
