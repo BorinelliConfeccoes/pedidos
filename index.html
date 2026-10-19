@@ -99,6 +99,12 @@ table.tabPrinc tr:last-child td{border-bottom:0;}
 .cliCorpo{padding:13px 15px; border-top:1px solid var(--linha);}
 .cliAcoes{display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;}
 
+.evol{background:#fff7e9; border:1px solid #ecd9b4; border-radius:9px; padding:10px 12px; font-size:13.5px; color:#6b5520;}
+.evol ol{margin:6px 0 0; padding-left:20px;}
+.evol li{margin-bottom:2px;}
+.evol .mini{color:#8a7245; margin-top:6px;}
+.mudou{color:#8a6a16; margin-top:4px;}
+
 /* ---------- fotos ---------- */
 .fotos>div{display:flex; flex-wrap:wrap; gap:7px;}
 .fotos>div:not(:empty){margin-bottom:8px;}
@@ -420,12 +426,12 @@ function separarFalas(txt, meusNomes){
     }
   });
   if(!temFormato){
-    const limpo=linhas.filter(l=>l.trim() && !ehLixo(l)).join('\n');
-    return {texto:limpo, formato:false, autores:[]};
+    const soltas=linhas.filter(l=>l.trim() && !ehLixo(l));
+    return {texto:soltas.join('\n'), falas:soltas, formato:false, autores:[]};
   }
   // se só tem UM autor, não dá pra saber quem é quem: usa tudo
   const usar = (cliente.length && autores.size>1)? cliente : todos;
-  return {texto:usar.join('\n'), formato:true, autores:[...autores]};
+  return {texto:usar.join('\n'), falas:usar, formato:true, autores:[...autores]};
 }
 
 function acharTelefone(txt){
@@ -579,13 +585,8 @@ function coresUnicas(lista){
   return out;
 }
 
-function lerConversa(txtBruto, meusNomes){
-  const sep=separarFalas(txtBruto, meusNomes);
-  const t=normalizar(sep.texto);
-  const tudo=normalizar(txtBruto);
-
-  /* primeiro procura só os cortes de verdade; a palavra genérica ("camiseta")
-     só entra em campo quando nenhum deles apareceu */
+/* ---- extrai o que UMA mensagem está pedindo ---- */
+function extrairItens(t){
   let cortes=acharTermos(t, CORTES);
   if(!cortes.length){
     const genericos=CORTES.filter(c=>c.fracos).map(c=>({...c, termos:c.fracos}));
@@ -594,74 +595,195 @@ function lerConversa(txtBruto, meusNomes){
   const malhas=acharTermos(t, MALHAS);
   const qtds=acharQtds(t);
   const cores=acharCores(t);
-  const extras=acharTermos(t, EXTRAS).map(x=>x.item);
-  const extrasUnicos=[...new Set(extras.map(e=>e.id))].map(id=>EXTRAS.find(e=>e.id===id));
-
-  const avisos=[];
-  malhas.forEach(m=>{ if(m.item.fora && avisos.indexOf(m.item.aviso)<0) avisos.push(m.item.aviso); });
-
-  let itens=[];
+  const itens=[];
   if(cortes.length){
-    /* Quando o cliente pede mais de uma peça na mesma mensagem, o texto é fatiado
-       no meio do caminho entre uma citação e a outra. Assim "50 tradicionais
-       marinho e mais 30 baby look branca" não mistura as duas quantidades. */
+    /* mais de uma peça na mesma mensagem: fatia no conector ("e mais", "+",
+       vírgula), nunca no meio cego — a quantidade vem ANTES do nome da peça */
     const unicos=[];
     cortes.forEach(c=>{ if(!unicos.some(u=>u.item.id===c.item.id)) unicos.push(c); });
-    /* o corte do texto é feito no conector ("e mais", "+", vírgula, nova linha),
-       não no meio cego: a quantidade vem ANTES do nome da peça, então cortar no
-       meio jogaria o "30" do segundo pedido no trecho do primeiro. */
     const divisa=(a,b)=>{
       const meio=t.slice(a,b);
       const conectores=[/\s+E\s+MAIS\s+/g, /\n/g, /\s*[;+]\s*/g, /\s+MAIS\s+/g, /\s*,\s*/g, /\s+E\s+/g];
       for(const re of conectores){
-        let ult=-1, m;
-        re.lastIndex=0;
+        let ult=-1, m; re.lastIndex=0;
         while((m=re.exec(meio))!==null) ult=m.index+m[0].length;
         if(ult>=0) return a+ult;
       }
       return Math.floor((a+b)/2);
     };
     unicos.forEach((c,i)=>{
-      const ini = i===0? 0 : divisa(unicos[i-1].pos, c.pos);
-      const fim = i===unicos.length-1? t.length : divisa(c.pos, unicos[i+1].pos);
-      const tr = t.slice(ini, fim);
-      const um = unicos.length===1;
+      const ini=i===0? 0 : divisa(unicos[i-1].pos, c.pos);
+      const fim=i===unicos.length-1? t.length : divisa(c.pos, unicos[i+1].pos);
+      const tr=t.slice(ini, fim), um=unicos.length===1;
       const mTr=acharTermos(tr, MALHAS).map(x=>x.item);
       const qTr=acharQtds(tr);
       const cTr=acharCores(tr).map(x=>x.cor);
-      const infantil=c.item.genero==='infantil';
       const malha=mTr[0] || (um? (malhas[0]||{}).item : null) || {};
       itens.push({
-        corte: c.item.nome,
-        corteId: c.item.id,
-        genero: c.item.genero,
-        malha: malha.nome||'',
-        gramatura: malha.g||'',
+        pos:c.pos,
+        corte:c.item.nome, corteId:c.item.id, genero:c.item.genero,
+        malha:malha.nome||'', gramatura:malha.g||'',
         qtd: qTr.length? qTr[0].qtd : (qtdAntesDoCorte(tr, c.pos-ini) || (um && qtds.length? qtds[0].qtd : '')),
         cores: coresUnicas(cTr.length? cTr : (um? cores.map(x=>x.cor) : [])),
-        tamanhos: acharTamanhos(tr, infantil)
+        tamanhos: acharTamanhos(tr, c.item.genero==='infantil')
       });
     });
-  } else if(qtds.length || malhas.length){
-    // falou de quantidade/malha mas não disse o corte: cria um item pra ele completar
-    itens.push({
-      corte:'', corteId:'', genero:'',
-      malha:(malhas[0]||{item:{}}).item.nome||'',
-      gramatura:(malhas[0]||{item:{}}).item.g||'',
-      qtd: qtds.length? qtds[0].qtd : '',
-      cores: coresUnicas(cores.map(x=>x.cor)),
-      tamanhos: acharTamanhos(t, false)
-    });
   }
+  return {itens, soltos:{
+    qtd: qtds.length? qtds[0].qtd : '',
+    cores: coresUnicas(cores.map(x=>x.cor)),
+    malha: (malhas[0]||{item:{}}).item,
+    tamanhos: acharTamanhos(t, false)
+  }, temMalha:!!malhas.length, malhasTodas:malhas.map(x=>x.item)};
+}
 
-  // prazo que o cliente citou
+/* Numa mensagem curta ("na verdade 60", "umas 50"), o número sozinho é a
+   quantidade. Só vale em mensagem curta: num texto longo um número solto é
+   telefone, preço ou CEP, e virava quantidade errada. */
+function numeroSolto(t){
+  if(t.length>70) return 0;
+  if(/\(?\d{2}\)?\s*9?\s*\d{4}[\s.-]?\d{4}/.test(t)) return 0;   // telefone
+  if(/R\s*\$/.test(t)) return 0;                                   // preço
+  const m=[...t.matchAll(/(^|[^\d,.\/-])(\d{1,3}(?:\.\d{3})+|\d{1,5})(?![\d,.\/-])/g)];
+  for(const x of m){
+    const n=Number(String(x[2]).replace(/\./g,''));
+    if(n<2 || n>5000 || (n>=2020 && n<=2035)) continue;
+    /* "20 dias" é prazo, "30%" é desconto, "2 semanas" é prazo — nada disso é
+       quantidade de peça, e virava quantidade errada em cima do pedido certo */
+    const depois=t.slice(x.index+x[0].length, x.index+x[0].length+12);
+    if(/^\s*(DIAS|DIA|SEMANAS|SEMANA|MESES|MES|HORAS|HORA|HRS|ANOS|ANO|%|REAIS)\b/.test(depois)) continue;
+    return n;
+  }
+  return 0;
+}
+
+/* ---- em que pé está a conversa ----
+   O cliente muda de ideia no meio. Ler tudo de uma vez soma pedido velho com
+   pedido novo e inventa um pedido que ninguém fez. Então lê mensagem por
+   mensagem, em ordem, e a ÚLTIMA palavra dele é a que vale. */
+const MARCA_TROCA  = /\b(NA VERDADE|MUDEI DE IDEIA|PENSANDO BEM|AO INVES|EM VEZ DE|NO LUGAR DE|TROCA(R)?|MUDA(R)?|CORRIGINDO|ME ENGANEI|ERREI|DESCULPA|SERIA|VAI SER|FICA|MELHOR)\b/;
+const MARCA_TIRA   = /\b(ESQUECE|ESQUECA|CANCELA(R)?|DESCONSIDERA|DEIXA PRA LA|TIRA (O|A|OS|AS)?|NAO QUERO MAIS|NAO VAI (MAIS|SER)|SEM (O|A)? ?(REGATA|CROPPED|OVERSIZED|INFANTIL))\b/;
+const mesmoCorte=(a,b)=>a.corteId && b.corteId && a.corteId===b.corteId;
+
+function lerConversa(txtBruto, meusNomes){
+  const sep=separarFalas(txtBruto, meusNomes);
+  const falas=(sep.falas&&sep.falas.length)? sep.falas : [sep.texto];
+  const t=normalizar(sep.texto);
+
+  const estado=[];          /* o pedido como está AGORA */
+  const mudancas=[];        /* o que mudou no caminho, pra você ver */
+  let ultimo=-1;            /* última peça mexida: é nela que cai "pode ser branca" */
   let prazo='';
-  const mp=t.match(/(\d{1,3})\s*(DIAS|DIA|SEMANAS|SEMANA)/);
-  if(mp) prazo=mp[1]+' '+mp[2].toLowerCase();
-  if(/\bURGENTE|PRA ONTEM|O QUANTO ANTES\b/.test(t)) prazo=(prazo?prazo+' · ':'')+'urgente';
 
-  /* como ele quer a peça: as etiquetas de acabamento e, junto, as frases que o
-     próprio cliente escreveu sobre isso — palavra dele vale mais que resumo meu */
+  const rotulo=i=>{ const x=estado[i]; return x? (x.corte||x.malha||'a peça') : 'a peça'; };
+
+  falas.forEach(fala=>{
+    const ft=normalizar(fala);
+    if(!ft.trim()) return;
+    const troca=MARCA_TROCA.test(ft), tira=MARCA_TIRA.test(ft);
+    let {itens:achados, soltos}=extrairItens(ft);
+
+    /* "vai ser oversized EM VEZ DE regata": o que vem depois é o que sai de
+       cena, não um segundo pedido. Corta tudo que está depois do marcador. */
+    const mSub=ft.match(/\b(EM VEZ DE|AO INVES DE|AO INVES|NO LUGAR DE)\b/);
+    if(mSub){
+      achados=achados.filter(a=>a.pos<mSub.index);
+      const antes=ft.slice(0, mSub.index);
+      const nAntes=numeroSolto(antes);
+      if(nAntes) soltos.qtd=nAntes;
+      else if(soltos.qtd && numeroSolto(ft)!==soltos.qtd) soltos.qtd='';
+    }
+
+    /* "esquece as regatas, só as oversized": sai só o que vem logo depois do
+       'esquece', e o que vem depois de 'só' é o que fica. */
+    let paraTirar=[];
+    if(tira){
+      const pT=ft.search(MARCA_TIRA);
+      const mSo=ft.slice(pT).match(/\b(SO|APENAS|SOMENTE)\b/);
+      const limite=mSo? pT+mSo.index : ft.length;
+      paraTirar=achados.filter(a=>a.pos>=pT && a.pos<limite);
+      achados=achados.filter(a=>paraTirar.indexOf(a)<0);
+    }
+    paraTirar.forEach(alvo=>{
+      const ix=estado.findIndex(x=>mesmoCorte(x,alvo));
+      if(ix>=0){ mudancas.push('tirou '+estado[ix].corte); estado.splice(ix,1); if(ultimo>=ix) ultimo=-1; }
+    });
+
+    const mp=ft.match(/(\d{1,3})\s*(DIAS|DIA|SEMANAS|SEMANA)/);
+    if(mp) prazo=mp[1]+' '+mp[2].toLowerCase();
+    if(/\b(URGENTE|PRA ONTEM|O QUANTO ANTES)\b/.test(ft)) prazo=(prazo?prazo+' · ':'')+'urgente';
+
+    if(achados.length){
+      achados.forEach(novo=>{
+        const ix=estado.findIndex(x=>mesmoCorte(x,novo));
+
+        if(ix<0){
+          /* peça nova. Mas se ele está CORRIGINDO e só existe uma peça até
+             agora, ele trocou a peça — não acrescentou outra. */
+          if(troca && estado.length===1 && ultimo>=0){
+            const velho=estado[ultimo];
+            if(!novo.qtd && velho.qtd) novo.qtd=velho.qtd;
+            if(!novo.malha && velho.malha){ novo.malha=velho.malha; novo.gramatura=velho.gramatura; }
+            if(!novo.cores.length) novo.cores=velho.cores;
+            if(!novo.tamanhos.length) novo.tamanhos=velho.tamanhos;
+            mudancas.push('trocou '+velho.corte+' por '+novo.corte);
+            estado[ultimo]=novo;
+            return;
+          }
+          estado.push(novo); ultimo=estado.length-1;
+          mudancas.push('pediu '+(novo.qtd? novo.qtd+' ':'')+novo.corte);
+          return;
+        }
+        /* mesma peça citada de novo: o que ele disse agora manda */
+        const v=estado[ix];
+        if(!novo.qtd && achados.length===1) novo.qtd=numeroSolto(ft);
+        if(novo.qtd && novo.qtd!==v.qtd){
+          mudancas.push(v.corte+': '+(v.qtd||'?')+' → '+novo.qtd);
+          v.qtd=novo.qtd;
+        }
+        if(novo.malha && novo.malha!==v.malha){
+          if(v.malha) mudancas.push(v.corte+': '+v.malha+' → '+novo.malha);
+          v.malha=novo.malha; v.gramatura=novo.gramatura;
+        }
+        if(novo.cores.length){
+          if(troca){ if(v.cores.join()!==novo.cores.join()) mudancas.push(v.corte+': cor '+(v.cores.join('/')||'?')+' → '+novo.cores.join('/')); v.cores=novo.cores; }
+          else v.cores=coresUnicas([...v.cores, ...novo.cores]);
+        }
+        if(novo.tamanhos.length) v.tamanhos=troca? novo.tamanhos : [...new Set([...v.tamanhos, ...novo.tamanhos])];
+        ultimo=ix;
+      });
+      return;
+    }
+
+    /* mensagem sem nome de peça: é ajuste da última que ele citou */
+    if(ultimo<0){
+      /* nem peça houve ainda: guarda malha/qtd soltas pra ele completar */
+      if(soltos.qtd || soltos.malha.nome){
+        estado.push({corte:'', corteId:'', genero:'', malha:soltos.malha.nome||'',
+          gramatura:soltos.malha.g||'', qtd:soltos.qtd||'', cores:soltos.cores, tamanhos:soltos.tamanhos});
+        ultimo=0;
+      }
+      return;
+    }
+    const v=estado[ultimo];
+    if(!soltos.qtd) soltos.qtd=numeroSolto(mSub? ft.slice(0,mSub.index) : ft);
+    if(soltos.qtd && soltos.qtd!==v.qtd){ mudancas.push(rotulo(ultimo)+': '+(v.qtd||'?')+' → '+soltos.qtd); v.qtd=soltos.qtd; }
+    if(soltos.malha.nome && soltos.malha.nome!==v.malha){
+      if(v.malha) mudancas.push(rotulo(ultimo)+': '+v.malha+' → '+soltos.malha.nome);
+      v.malha=soltos.malha.nome; v.gramatura=soltos.malha.g||'';
+    }
+    if(soltos.cores.length){
+      if(troca){ if(v.cores.join()!==soltos.cores.join()) mudancas.push(rotulo(ultimo)+': cor '+(v.cores.join('/')||'?')+' → '+soltos.cores.join('/')); v.cores=soltos.cores; }
+      else v.cores=coresUnicas([...v.cores, ...soltos.cores]);
+    }
+    if(soltos.tamanhos.length) v.tamanhos=troca? soltos.tamanhos : [...new Set([...v.tamanhos, ...soltos.tamanhos])];
+  });
+
+  const extras=acharTermos(t, EXTRAS).map(x=>x.item);
+  const extrasUnicos=[...new Set(extras.map(e=>e.id))].map(id=>EXTRAS.find(e=>e.id===id));
+  const avisos=[];
+  acharTermos(t, MALHAS).forEach(m=>{ if(m.item.fora && avisos.indexOf(m.item.aviso)<0) avisos.push(m.item.aviso); });
+
   const detalhes=acharTermos(t, DETALHES).map(x=>x.item).concat(acharPerto(t, DETALHES, 45));
   const detalhesUnicos=[...new Set(detalhes.map(d=>d.id))].map(id=>DETALHES.find(d=>d.id===id));
   const comoQuer=frasesDeDetalhe(sep.texto);
@@ -669,7 +791,8 @@ function lerConversa(txtBruto, meusNomes){
   return {
     telefone: acharTelefone(txtBruto),
     nome: acharNome(txtBruto, sep.autores),
-    itens,
+    itens: estado,
+    mudancas,
     extras: extrasUnicos,
     detalhes: detalhesUnicos,
     comoQuer,
@@ -677,7 +800,7 @@ function lerConversa(txtBruto, meusNomes){
     avisos,
     autores: sep.autores,
     formatoExport: sep.formato,
-    totalPecas: itens.reduce((s,i)=>s+(Number(i.qtd)||0),0)
+    totalPecas: estado.reduce((s,i)=>s+(Number(i.qtd)||0),0)
   };
 }
 
@@ -720,7 +843,7 @@ function frasesDeDetalhe(textoCliente){
 if(typeof module!=='undefined') module.exports={normalizar,lerConversa,separarFalas,acharQtds,acharTermos};
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='1.5.0';
+const VERSAO='1.6.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -962,7 +1085,11 @@ function montarConferencia(r, bruto){
      '</div>';
   if(cli) h+='<div class="dica">Já conheço esse número: os itens entram no histórico de <b>'+esc(cli.nome)+'</b>.</div>';
 
-  h+='<h3>O que ele está pedindo</h3><div id="itens"></div>'+
+  if((r.mudancas||[]).length>1) h+='<div class="evol"><b>A conversa mudou no caminho</b>'+
+     '<ol>'+r.mudancas.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ol>'+
+     '<div class="mini">Abaixo está como ficou no <b>fim</b> da conversa, não a soma de tudo que foi dito.</div></div>';
+
+  h+='<h3>O que ele está pedindo agora</h3><div id="itens"></div>'+
      '<button class="acao sec mini" onclick="addItem()">+ acrescentar peça</button>';
 
   h+='<div class="linha" style="margin-top:14px;">'+
@@ -1068,6 +1195,7 @@ function salvarPedido(){
     obs: document.getElementById('cfObs').value.trim(),
     extras: [...document.querySelectorAll('#chipsExtras .chip.on')].map(c=>c.dataset.id),
     detalhes: [...document.querySelectorAll('#chipsDet .chip.on')].map(c=>c.dataset.id),
+    mudancas: (lidoAtual&&lidoAtual.r&&lidoAtual.r.mudancas) || (editandoPedido&&editandoPedido.mudancas) || [],
     comoQuer: (document.getElementById('cfComo')||{}).value||'',
     conversa: lidoAtual? lidoAtual.bruto : (editandoPedido? editandoPedido.conversa : ''),
     fotos: fotosTemp.map(f=>({id:f.id, nome:f.nome, thumb:f.thumb})),
@@ -1243,6 +1371,8 @@ function fundirNoPedido(alvo, novo){
   const linhas=new Set((alvo.comoQuer||'').split('\n').map(x=>x.trim()).filter(Boolean));
   (novo.comoQuer||'').split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>linhas.add(x));
   alvo.comoQuer=[...linhas].join('\n');
+  alvo.mudancas=alvo.mudancas||[];
+  (novo.mudancas||[]).forEach(m=>{ if(alvo.mudancas.indexOf(m)<0) alvo.mudancas.push(m); });
   if(!alvo.prazo && novo.prazo) alvo.prazo=novo.prazo;
   if((novo.conversa||'').length>(alvo.conversa||'').length) alvo.conversa=novo.conversa;
   if(novo.obs && !(alvo.obs||'').includes(novo.obs)) alvo.obs=[alvo.obs, novo.obs].filter(Boolean).join('\n');
@@ -1328,6 +1458,8 @@ function renderLote(){
         '<td>'+(it.length? it.map(i=>esc((i.qtd? i.qtd+' ':'')+(i.corte||'?')+(i.malha? ' · '+i.malha:'')+
             ((i.cores||[]).length? ' · '+i.cores.map(tituloCaixa).join('/'):''))).join('<br>')
           : '<span class="mini">nada reconhecido</span>')+
+          ((l.r.mudancas||[]).length>1? '<div class="mini mudou">↻ mudou de ideia '+((l.r.mudancas||[]).length-1)+
+            'x — mostro como ficou no fim</div>':'')+
           ((l.r.detalhes||[]).length? '<div class="mini" style="margin-top:4px;">Quer: '+
             l.r.detalhes.map(dd=>esc(dd.nome)).join(' · ')+'</div>':'')+
           (l.fotos.length? '<div class="fotos" style="margin-top:5px;"><div>'+
@@ -1372,7 +1504,7 @@ function salvarLote(){
 
     /* as partes do mesmo cliente são fundidas numa só antes de virar pedido */
     const juntoItens=[], juntoFotos=[], juntoExtras=[], juntoDet=[], juntoComo=[];
-    let juntoPrazo='', juntoConversa='';
+    let juntoPrazo='', juntoConversa=''; const juntoMud=[];
     g.partes.forEach(l=>{
       (l.r.itens||[]).forEach(i=>{
         const dC=CORTES.find(c=>c.nome===i.corte), dM=MALHAS.find(m=>m.nome===i.malha);
@@ -1383,13 +1515,14 @@ function salvarLote(){
       (l.r.extras||[]).forEach(e=>juntoExtras.push(e.id));
       (l.r.detalhes||[]).forEach(dd=>juntoDet.push(dd.id));
       (l.r.comoQuer||[]).forEach(f=>juntoComo.push(f));
+      (l.r.mudancas||[]).forEach(m=>{ if(juntoMud.indexOf(m)<0) juntoMud.push(m); });
       if(!juntoPrazo && l.r.prazo) juntoPrazo=l.r.prazo;
       if((l.txt||'').length>juntoConversa.length) juntoConversa=l.txt;
     });
     const candidato={
       id:uid(), clienteId:cli.id, criado:Date.now(), ts:Date.now(), etapa:'novo',
       prazo:juntoPrazo, obs:'',
-      extras:[...new Set(juntoExtras)], detalhes:[...new Set(juntoDet)],
+      extras:[...new Set(juntoExtras)], detalhes:[...new Set(juntoDet)], mudancas:juntoMud,
       comoQuer:[...new Set(juntoComo.map(x=>x.trim()).filter(Boolean))].join('\n'),
       conversa:juntoConversa,
       fotos:juntoFotos.map(f=>({id:f.id, nome:f.nome, thumb:f.thumb})),
@@ -1489,6 +1622,7 @@ function blocoCliente(c){
   const det=detalhesDoCliente(c.id), ext=extrasDoCliente(c.id), como=comoQuerDoCliente(c.id);
   const ab=abertos[c.id];
   const peds=pedidosDe(c.id);
+  const mud=[...new Set(peds.flatMap(p=>p.mudancas||[]))];
   const semQtd=itens.some(i=>!(Number(i.qtd)>0));
 
   return '<div class="card cli">'+
@@ -1530,6 +1664,8 @@ function blocoCliente(c){
         ext.map(id=>'<span class="chip">'+esc((EXTRAS.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
         '</div>':'')+
       (como.length? '<div class="obs"><b>Como quer a peça</b><br>'+como.map(esc).join('<br>')+'</div>':'')+
+      (mud.length>1? '<div class="evol" style="margin-top:9px;"><b>Como a conversa evoluiu</b><ol>'+
+        mud.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ol></div>':'')+
       (fotos.length? '<div class="fotos" style="margin-top:10px;"><div>'+
         fotos.map(f=>'<div class="foto"><img src="'+f.thumb+'" alt="estampa" '+
           'onclick="abrirFoto(\''+f.pedId+'\',\''+f.id+'\')"></div>').join('')+'</div></div>':'')+
