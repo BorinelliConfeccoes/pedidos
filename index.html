@@ -1,0 +1,1430 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#3d4d32">
+<title>Pedidos · Borinelli</title>
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icone.png">
+<style>
+:root{
+  --verde:#3d4d32; --verde-esc:#2b3823; --creme:#f6fdeb; --dourado:#c7a581;
+  --ink:#22301c; --sub:#6b7a5e; --card:#ffffff; --linha:#dde5d2;
+  --fonte:'Century Gothic',CenturyGothic,'Futura','Segoe UI',system-ui,sans-serif;
+}
+*{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+html,body{margin:0; padding:0;}
+body{font-family:var(--fonte); background:var(--creme); color:var(--ink); font-size:15px; line-height:1.45;}
+h1,h2,h3{margin:0 0 8px; font-weight:600; letter-spacing:.2px;}
+h1{font-size:20px;} h2{font-size:17px;} h3{font-size:15px; color:var(--verde);}
+a{color:var(--verde);}
+
+/* ---------- estrutura ---------- */
+#topo{position:sticky; top:0; z-index:40; background:var(--verde); color:#fff;
+  display:flex; align-items:center; gap:10px; padding:10px 14px; padding-top:calc(10px + env(safe-area-inset-top));
+  box-shadow:0 2px 10px rgba(0,0,0,.18);}
+#logo{height:30px; width:auto; display:block;}
+#topo .marca{font-weight:600; font-size:16px; letter-spacing:1px;}
+#topo .marca span{color:var(--dourado); font-weight:400;}
+#sync{font-size:11px; margin-left:auto; white-space:nowrap;}
+#ver{font-size:11px; opacity:.6;}
+#menuBtn{display:none; background:transparent; border:1px solid rgba(255,255,255,.35); color:#fff;
+  border-radius:8px; font-size:18px; width:36px; height:32px; cursor:pointer;}
+
+#wrap{display:flex; min-height:calc(100vh - 53px);}
+#sidebar{flex:0 0 206px; background:var(--verde-esc); padding:14px 10px 30px;}
+nav{display:flex; flex-direction:column; gap:4px;}
+nav button{display:block; width:100%; text-align:left; background:transparent; border:0; color:#d9e4cc;
+  padding:11px 12px; border-radius:9px; font-family:inherit; font-size:14px; cursor:pointer;}
+nav button:hover{background:rgba(255,255,255,.07);}
+nav button.on{background:var(--creme); color:var(--verde-esc); font-weight:600;}
+nav .sep{height:1px; background:rgba(255,255,255,.12); margin:12px 4px;}
+nav .mini{color:#9fb28c; font-size:11px; padding:4px 12px;}
+main{flex:1 1 auto; padding:18px 20px 60px; max-width:1100px; overflow-x:hidden;}
+.tela{display:none;} .tela.on{display:block;}
+
+/* ---------- blocos ---------- */
+.card{background:var(--card); border:1px solid var(--linha); border-radius:13px; padding:15px; margin-bottom:13px;
+  box-shadow:0 1px 3px rgba(40,60,30,.05);}
+.vazio{color:var(--sub); text-align:center; padding:26px 10px;}
+label{display:block; font-size:11.5px; text-transform:uppercase; letter-spacing:.6px; color:var(--sub); margin-bottom:3px;}
+input,select,textarea{width:100%; font-family:inherit; font-size:15px; padding:9px 10px; border:1px solid var(--linha);
+  border-radius:9px; background:#fff; color:var(--ink);}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--dourado); outline-offset:-1px; border-color:var(--dourado);}
+textarea{resize:vertical;}
+.linha{display:flex; gap:10px; flex-wrap:wrap; margin-bottom:9px;}
+.linha>div{flex:1 1 160px;}
+
+button.acao{background:var(--verde); color:#fff; border:0; border-radius:9px; padding:10px 16px;
+  font-family:inherit; font-size:14px; font-weight:600; cursor:pointer; display:inline-block; text-decoration:none;}
+button.acao:hover{background:var(--verde-esc);}
+.acao.sec{background:#fff; color:var(--verde); border:1px solid var(--linha); font-weight:500;}
+.acao.sec:hover{background:#eef3e6;}
+.acao.alerta{background:#fff; color:#a63d2f; border:1px solid #e7cdc8; font-weight:500;}
+.acao.mini{padding:5px 10px; font-size:12px; border-radius:7px;}
+a.acao.wpp{background:#1f7a4d; margin-bottom:9px;}
+.mini{font-size:11.5px; color:var(--sub);}
+
+.aviso{background:#fff5e3; border:1px solid #e8d2a0; color:#7a5a16; border-radius:9px; padding:10px 12px; margin-bottom:11px; font-size:13.5px;}
+.dica{background:#eef5e4; border:1px solid var(--linha); color:var(--verde); border-radius:9px; padding:9px 12px; margin-bottom:11px; font-size:13px;}
+.obs{background:var(--creme); border-left:3px solid var(--dourado); padding:7px 10px; margin-top:7px; border-radius:0 7px 7px 0; font-size:13.5px;}
+
+.tag{display:inline-block; color:#fff; font-size:11px; font-weight:600; padding:2px 9px; border-radius:20px; letter-spacing:.3px;}
+.chips{display:flex; flex-wrap:wrap; gap:6px;}
+.chip{display:inline-block; border:1px solid var(--linha); background:#fff; color:var(--sub);
+  padding:5px 11px; border-radius:20px; font-size:12.5px; cursor:pointer; user-select:none;}
+.chip.on{background:var(--verde); border-color:var(--verde); color:#fff;}
+
+/* ---------- clientes ---------- */
+.card.cli{padding:0; overflow:hidden;}
+.cliTopo{display:flex; align-items:center; gap:10px; padding:13px 15px; cursor:pointer;}
+.cliTopo:hover{background:#fafcf6;}
+.cliCorpo{padding:0 15px 14px; border-top:1px solid var(--linha);}
+.ped{border:1px solid var(--linha); border-radius:10px; padding:11px; margin-top:11px; background:#fcfdf9;}
+.pedTopo{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:8px;}
+.item{border:1px dashed var(--linha); border-radius:10px; padding:11px; margin-bottom:9px; background:#fcfdf9;}
+
+/* ---------- fotos ---------- */
+.fotos>div{display:flex; flex-wrap:wrap; gap:7px;}
+.fotos>div:not(:empty){margin-bottom:8px;}
+.foto.peq{width:40px; height:40px; border-radius:6px;}
+.foto{position:relative; width:74px; height:74px; border-radius:9px; overflow:hidden; border:1px solid var(--linha); background:#fff;}
+.foto img{width:100%; height:100%; object-fit:cover; display:block; cursor:zoom-in;}
+.fotoX{position:absolute; top:2px; right:2px; width:20px; height:20px; border:0; border-radius:50%;
+  background:rgba(20,30,15,.72); color:#fff; font-size:11px; line-height:1; cursor:pointer; padding:0;}
+#fotosMsg:not(:empty){margin-top:6px;}
+
+/* ---------- tabelas ---------- */
+table{width:100%; border-collapse:collapse; font-size:13.5px;}
+th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--sub);
+  border-bottom:1px solid var(--linha); padding:6px 7px; font-weight:600; white-space:nowrap;}
+td{padding:7px; border-bottom:1px solid #eef2e8; vertical-align:top;}
+tr:last-child td{border-bottom:0;}
+.rolar{overflow-x:auto; -webkit-overflow-scrolling:touch;}
+
+/* ---------- resumo ---------- */
+.numerao{font-size:40px; font-weight:600; color:var(--verde); line-height:1;}
+.barraLinha{display:flex; align-items:center; gap:9px; margin-bottom:6px;}
+.barraNome{flex:0 0 150px; font-size:13px; text-align:right; color:var(--ink);}
+.barraFundo{flex:1 1 auto; background:#eef2e8; border-radius:5px; height:17px; overflow:hidden;}
+.barra{height:100%; border-radius:5px;}
+.barraVal{flex:0 0 62px; font-size:13px; font-weight:600; text-align:right;}
+
+/* ---------- modal ---------- */
+#modal{display:none; position:fixed; inset:0; z-index:60; background:rgba(25,35,20,.55); padding:20px; overflow:auto;}
+#modal.on{display:block;}
+#modalCorpo{background:#fff; border-radius:13px; padding:18px; max-width:700px; margin:20px auto;}
+#modalCorpo pre{white-space:pre-wrap; word-break:break-word; font-family:inherit; font-size:13.5px;
+  background:var(--creme); padding:12px; border-radius:9px; max-height:60vh; overflow:auto;}
+
+/* ---------- celular ---------- */
+@media(max-width:860px){
+  #menuBtn{display:block;}
+  #sidebar{position:fixed; top:53px; bottom:0; left:0; z-index:35; width:210px; transform:translateX(-100%);
+    transition:transform .2s; overflow:auto;}
+  #sidebar.aberto{transform:none; box-shadow:4px 0 18px rgba(0,0,0,.25);}
+  main{padding:14px 13px 70px;}
+  .barraNome{flex:0 0 100px; font-size:12px;}
+}
+</style>
+</head>
+<body>
+
+<div id="topo">
+  <button id="menuBtn" onclick="document.getElementById('sidebar').classList.toggle('aberto')">☰</button>
+  <img id="logo" src="data:image/png;base64,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" alt="Borinelli"><div class="marca">BORINELLI <span>pedidos</span></div>
+  <div id="sync">●</div>
+  <div id="ver"></div>
+</div>
+
+<div id="wrap">
+  <aside id="sidebar">
+    <nav>
+      <button data-a="nova"     onclick="irPara('nova')">＋ Nova conversa</button>
+      <button data-a="clientes" onclick="irPara('clientes')">Clientes <span id="nClientes" class="mini"></span></button>
+      <button data-a="pedidos"  onclick="irPara('pedidos')">Pedidos</button>
+      <button data-a="resumo"   onclick="irPara('resumo')">Resumo</button>
+      <div class="sep"></div>
+      <div class="mini">Segurança</div>
+      <button onclick="baixarBackup()">⤓ Baixar backup</button>
+      <button onclick="document.getElementById('arqBk').click()">⤒ Restaurar backup</button>
+      <input type="file" id="arqBk" accept=".json" style="display:none" onchange="restaurarBackup(this)">
+    </nav>
+  </aside>
+
+  <main>
+    <!-- ======== NOVA CONVERSA ======== -->
+    <section class="tela" id="tela-nova">
+      <h1>Nova conversa</h1>
+      <div class="card">
+        <label>Cole aqui a conversa do WhatsApp</label>
+        <textarea id="txtConversa" rows="9" placeholder="Pode colar a conversa inteira, do jeito que ela sai do WhatsApp.&#10;&#10;Exemplo:&#10;Marcos (47) 99812-3344&#10;Boa tarde! Queria 100 camisetas oversized em suedine strong preta, P ao GG, com estampa DTF na frente. Precisava pra 30 dias."></textarea>
+        <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+          <button class="acao" onclick="lerAgora()">Ler conversa</button>
+          <button class="acao sec" onclick="limparConversa()">Limpar</button>
+        </div>
+        <div class="mini" style="margin-top:9px;">Eu separo o que foi pedido e mostro aqui embaixo pra você conferir. Nada é salvo antes de você clicar em salvar.</div>
+      </div>
+
+      <div class="card" id="confBox" style="display:none;">
+        <h2>Confira antes de salvar</h2>
+        <div id="confCorpo"></div>
+      </div>
+
+      <div class="card">
+        <h3>Ou traga o histórico de uma vez</h3>
+        <div class="mini" style="margin-bottom:9px;">
+          No WhatsApp: abra a conversa → ⋮ → <b>Mais</b> → <b>Exportar conversa</b>. Pode ser <b>com mídia</b>: eu abro o .zip e já trago as fotos da estampa junto.
+          Pode exportar várias e jogar todos os arquivos aqui juntos.
+        </div>
+        <button class="acao sec" onclick="document.getElementById('arqConv').click()">⤒ Escolher os arquivos exportados</button>
+        <input type="file" id="arqConv" accept=".txt,.zip,text/plain,application/zip" multiple style="display:none" onchange="importarArquivos(this)">
+        <div class="mini" id="impMsg" style="margin-top:8px;"></div>
+      </div>
+
+      <div class="card" id="loteBox" style="display:none;"></div>
+    </section>
+
+    <!-- ======== CLIENTES ======== -->
+    <section class="tela" id="tela-clientes">
+      <h1>Clientes</h1>
+      <div class="card">
+        <div class="linha" style="margin:0;">
+          <div style="flex:2 1 220px;"><label>Buscar</label><input id="buscaCli" placeholder="nome, telefone, malha, peça…" oninput="renderClientes()"></div>
+          <div style="flex:1 1 150px;"><label>Etapa</label>
+            <select id="fEtapaCli" onchange="renderClientes()"><option value="">todas</option></select></div>
+        </div>
+      </div>
+      <div id="listaCli"></div>
+    </section>
+
+    <!-- ======== PEDIDOS ======== -->
+    <section class="tela" id="tela-pedidos">
+      <h1>Pedidos</h1>
+      <div class="card">
+        <div class="linha" style="margin:0;">
+          <div><label>Peça / corte</label><select id="fCorte" data-vazio="todas as peças" onchange="renderPedidos()"></select></div>
+          <div><label>Malha</label><select id="fMalha" data-vazio="todas as malhas" onchange="renderPedidos()"></select></div>
+          <div><label>Etapa</label><select id="fEtapa" data-vazio="todas as etapas" onchange="renderPedidos()"></select></div>
+        </div>
+        <div class="mini" id="resPedidos" style="margin-top:8px;"></div>
+      </div>
+      <div class="card rolar"><table id="tabPedidos"></table></div>
+    </section>
+
+    <!-- ======== RESUMO ======== -->
+    <section class="tela" id="tela-resumo">
+      <h1>Resumo</h1>
+      <div id="resumoOut"></div>
+    </section>
+  </main>
+</div>
+
+<div id="modal" onclick="if(event.target.id==='modal')fecharModal()">
+  <div id="modalCorpo"></div>
+  <div style="text-align:center;"><button class="acao" onclick="fecharModal()">Fechar</button></div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database-compat.js"></script>
+<script>
+/* ================= DICIONÁRIO BORINELLI =================
+   É daqui que o sistema sabe o que é malha, o que é corte e o que é cor.
+   Tudo em MAIÚSCULA e sem acento: o texto da conversa passa por normalizar()
+   antes de bater aqui, então "suedine strôngui" e "SUEDINE STRONG" caem no mesmo.
+   Para ensinar uma palavra nova ao sistema, é só acrescentar na lista certa. */
+
+/* ---- MALHAS ---- fora:true marca o que a Borinelli não vende mais, pra avisar
+   na tela em vez de aceitar calado um pedido que não dá pra atender. */
+const MALHAS = [
+  {id:'SUEDINE_STRONG', nome:'Suedine Strong', g:'240 g', termos:['SUEDINE STRONG','STRONG','SUEDINE 240','240G','240 G']},
+  {id:'SUEDINE_LIGHT',  nome:'Suedine Light',  g:'215 g', termos:['SUEDINE LIGHT','LIGHT','SUEDINE 215','215G','215 G']},
+  {id:'SUEDINE_PAP',    nome:'Suedine PAP',    g:'240 g', termos:['SUEDINE PAP','PAP']},
+  {id:'SUEDINE',        nome:'Suedine',        g:'',      termos:['SUEDINE']},
+  {id:'PENTEADA',       nome:'Penteada 30.1',  g:'',      termos:['PENTEADA','MEIA MALHA PENTEADA','30 1 PENTEADA','301 PENTEADA','FIO 30 1','PENTEADO']},
+  {id:'OE',             nome:'OE 30.1',        g:'',      termos:['OE','FIO OE','CARDADA','CARDADO','MALHA OE']},
+  {id:'PIMA',           nome:'Pima',           g:'165 g', termos:['PIMA','ALGODAO PIMA']},
+  {id:'COTTON',         nome:'Cotton Premium', g:'200 g', termos:['COTTON PREMIUM','COTTON LIGHT','COTTON']},
+  {id:'TACTEL',         nome:'Tactel',         g:'',      termos:['TACTEL']},
+  {id:'PV',             nome:'PV',             g:'',      termos:['PV','POLIVISCOSE','POLI VISCOSE'], fora:true,
+   aviso:'A Borinelli não trabalha mais com PV. Oferecer OE 30.1 no lugar.'},
+  {id:'MOLETOM',        nome:'Moletom',        g:'',      termos:['MOLETOM','MOLETON'], fora:true,
+   aviso:'Moletom está fora da linha atual (só camisetas).'}
+];
+
+/* ---- CORTES / MODELAGENS ----
+   A ordem importa: o casamento é do termo MAIS LONGO pro mais curto, senão
+   "oversized feminina" seria achado só como "oversized". */
+const CORTES = [
+  {id:'OVER_FEM',   nome:'Oversized Feminina Gola Alta', genero:'feminino',  termos:['OVERSIZED FEMININA','OVER FEMININA','OVERSIZED FEM','OVER FEM','OVERSIZED GOLA ALTA']},
+  {id:'OVER_INF',   nome:'Oversized Infantil',  genero:'infantil',  termos:['OVERSIZED INFANTIL','OVER INFANTIL','OVERSIZED KIDS','OVER KIDS']},
+  {id:'OVER_BOX',   nome:'Oversized BOX',       genero:'unissex',   termos:['OVERSIZED BOX','OVER BOX','BOX FIT','BOXY']},
+  {id:'OVER',       nome:'Oversized',           genero:'unissex',   termos:['OVERSIZED','OVERSIZE','OVER SIZE','OVER']},
+  {id:'REG_FEM',    nome:'Regata Feminina',     genero:'feminino',  termos:['REGATA FEMININA','REGATA FEM']},
+  {id:'REG_INF',    nome:'Regata Infantil',     genero:'infantil',  termos:['REGATA INFANTIL','REGATA KIDS']},
+  {id:'REGATA',     nome:'Regata',              genero:'masculino', termos:['REGATA','REGATAS','MACHAO','CAVADA']},
+  {id:'PLUS_FEM',   nome:'Plus Size Feminina',  genero:'feminino',  termos:['PLUS SIZE FEMININA','PLUS FEMININA','PLUS FEM']},
+  {id:'PLUS',       nome:'Plus Size',           genero:'masculino', termos:['PLUS SIZE','PLUS','TAMANHO GRANDE','G1 AO G4','G1 AO G6']},
+  {id:'MANGA_LONGA',nome:'Manga Longa',         genero:'unissex',   termos:['MANGA LONGA','MANGA COMPRIDA','MANGA LONGA UNISSEX']},
+  {id:'CROPPED',    nome:'Cropped',             genero:'feminino',  termos:['CROPPED','CROPED','CROP']},
+  {id:'FEM',        nome:'Camiseta Feminina',   genero:'feminino',  termos:['CAMISETA FEMININA','BABY LOOK','BABYLOOK','FEMININA','FEMININO','FEM']},
+  {id:'INF',        nome:'Camiseta Infantil',   genero:'infantil',  termos:['CAMISETA INFANTIL','INFANTIL','CRIANCA','KIDS','INFANTO']},
+  {id:'CORTA_VENTO',nome:'Corta-Vento',         genero:'unissex',   termos:['CORTA VENTO','CORTAVENTO','CORTA-VENTO','JAQUETA','WINDBREAKER']},
+  {id:'SHORT',      nome:'Short Tactel',        genero:'unissex',   termos:['SHORT','SHORTS','BERMUDA']},
+  /* fracos: palavra genérica demais pra decidir sozinha. "camiseta oversized" é
+     oversized, não duas peças — então estes só valem quando nenhum corte de
+     verdade apareceu no texto. */
+  {id:'TRAD', nome:'Camiseta Tradicional', genero:'masculino',
+   termos:['TRADICIONAL','BASICA','BASICO','CAMISETA NORMAL','GOLA CARECA','CARECA'],
+   fracos:['CAMISETA','CAMISA','BLUSA','PECA','MASCULINA','MASCULINO']}
+];
+
+/* ---- CORES ---- o que aparece no dia a dia da fábrica */
+const CORES = ['PRETO','PRETA','BRANCO','BRANCA','OFF WHITE','OFFWHITE','MARINHO','AZUL MARINHO','AZUL','AZUL CLARO','AZUL BEBE',
+  'CINZA','CINZA MESCLA','MESCLA','VERMELHO','VERMELHA','BORDO','VINHO','VERDE','VERDE MUSGO','VERDE BANDEIRA','VERDE OLIVA',
+  'AMARELO','AMARELA','LARANJA','ROSA','ROSA BEBE','PINK','LILAS','ROXO','BEGE','AREIA','MARROM','CARAMELO','NUDE','GELO','CREME','CHUMBO','GRAFITE'];
+
+/* ---- TAMANHOS ---- adulto e infantil */
+const TAMS_ADULTO = ['PP','P','M','G','GG','XG','XGG','G1','G2','G3','G4','G5','G6'];
+const TAMS_INFANTIL = ['2','4','6','8','10','12','14','16'];
+
+/* ---- ACABAMENTOS / EXTRAS ---- cada um é cobrado à parte */
+const EXTRAS = [
+  {id:'DTF',       nome:'Estampa DTF',            termos:['DTF','ESTAMPA DTF']},
+  {id:'SILK',      nome:'Silk / serigrafia',      termos:['SILK','SERIGRAFIA','SILK SCREEN']},
+  {id:'SUBLIM',    nome:'Sublimação',             termos:['SUBLIMACAO','SUBLIMADO','SUBLIMAR']},
+  {id:'BORDADO',   nome:'Bordado',                termos:['BORDADO','BORDAR']},
+  {id:'ESTAMPA',   nome:'Estampa (a definir)',    termos:['ESTAMPA','ESTAMPADA','ESTAMPAR','ARTE']},
+  {id:'ETIQUETA',  nome:'Etiqueta personalizada', termos:['ETIQUETA','ETIQUETAS','TAG INTERNA','ETIQUETA PERSONALIZADA']},
+  {id:'TAG',       nome:'Tag personalizada',      termos:['TAG','TAGS','TAG DE PAPEL']},
+  {id:'EMBALAGEM', nome:'Embalagem personalizada',termos:['EMBALAGEM','EMBALAGENS','SAQUINHO','SACOLA']}
+];
+
+/* ---- COMO A PESSOA QUER A PEÇA ----
+   Não é o que ela pede (isso é corte e malha), é como ela quer que seja feita.
+   Vira etiqueta marcada na tela, e as frases originais dela ficam guardadas
+   do lado, porque detalhe de acabamento é onde mora a briga depois. */
+const DETALHES = [
+  {id:'GOLA_ALTA',   nome:'Gola alta',          termos:['GOLA ALTA','RIBANA ALTA','GOLA 3 CM','GOLA 3CM'], perto:[['GOLA','ALTA']]},
+  {id:'GOLA_V',      nome:'Gola V',             termos:['GOLA V','DECOTE V','GOLA EM V']},
+  {id:'GOLA_POLO',   nome:'Gola polo',          termos:['GOLA POLO','POLO']},
+  {id:'MANGA_RAGLAN',nome:'Manga raglan',       termos:['RAGLAN']},
+  {id:'PUNHO',       nome:'Punho na manga',     termos:['PUNHO','PUNHOS']},
+  {id:'BOLSO',       nome:'Bolso',              termos:['BOLSO','BOLSINHO','COM BOLSO']},
+  {id:'BARRA_DUPLA', nome:'Barra dupla',        termos:['BARRA DUPLA','BAINHA DUPLA','DUPLA AGULHA'], perto:[['BARRA','DUPLA'],['BAINHA','DUPLA']]},
+  {id:'REFORCO',     nome:'Costura reforçada',  termos:['COSTURA REFORCADA','REFORCADA','REFORCO','OVERLOQUE REFORCADO'], perto:[['COSTURA','REFORC']]},
+  {id:'FOLGADA',     nome:'Modelagem folgada',  termos:['MAIS FOLGADA','FOLGADA','LARGA','AMPLA','SOLTA NO CORPO'], perto:[['MODELAGEM','FOLGAD'],['CAIMENTO','FOLGAD']]},
+  {id:'JUSTA',       nome:'Modelagem justa',    termos:['MAIS JUSTA','JUSTA','SLIM','AJUSTADA','COLADA'], perto:[['MODELAGEM','JUSTA'],['CAIMENTO','JUSTO']]},
+  {id:'COMPRIDA',    nome:'Mais comprida',      termos:['MAIS COMPRIDA','MAIS LONGA NO CORPO','ALONGADA']},
+  {id:'FIO_TINTO',   nome:'Fio tinto',          termos:['FIO TINTO','FIO TINGIDO']},
+  {id:'ESTONADA',    nome:'Lavagem estonada',   termos:['ESTONADA','ESTONADO','LAVAGEM ESTONADA','LAVADA']},
+  {id:'EST_FRENTE',  nome:'Estampa na frente',  termos:['ESTAMPA NA FRENTE','ARTE NA FRENTE','LOGO NA FRENTE'], perto:[['ESTAMPA','FRENTE'],['ARTE','FRENTE'],['LOGO','FRENTE']]},
+  {id:'EST_COSTAS',  nome:'Estampa nas costas', termos:['ESTAMPA NAS COSTAS','ARTE NAS COSTAS'], perto:[['ESTAMPA','COSTAS'],['ARTE','COSTAS'],['LOGO','COSTAS']]},
+  {id:'EST_PEITO',   nome:'Estampa no peito',   termos:['PEITO ESQUERDO','PEITO DIREITO','LOGO PEQUENO'], perto:[['ESTAMPA','PEITO'],['LOGO','PEITO'],['BORDADO','PEITO']]},
+  {id:'EST_MANGA',   nome:'Estampa na manga',   termos:['ESTAMPA NA MANGA'], perto:[['ESTAMPA','MANGA'],['ARTE','MANGA']]},
+  {id:'SEM_ETQ',     nome:'Sem etiqueta',       termos:['SEM ETIQUETA','SEM MARCA','ETIQUETA NEUTRA','SEM TAG']},
+  {id:'ETQ_MARCA',   nome:'Etiqueta da marca dele', termos:['MINHA ETIQUETA','ETIQUETA DA MINHA MARCA','ETIQUETA PROPRIA','MARCA PROPRIA']},
+  {id:'PILOTO',      nome:'Quer piloto / amostra',  termos:['PILOTO','AMOSTRA','PROTOTIPO','PROVA','UMA PECA PRIMEIRO']}
+];
+/* palavras que marcam uma frase como "detalhe do jeito que ele quer" */
+const CHAVES_DETALHE = /GOLA|MANGA|BARRA|BAINHA|COSTURA|REFORC|MODELAGEM|FOLGAD|JUSTA|SLIM|COMPRID|ALONGAD|CAIMENTO|ACABAMENTO|ESTAMPA|ARTE|LOGO|BORDAD|ETIQUETA|TAG|EMBALAGEM|PILOTO|AMOSTRA|LAVAGEM|ESTONAD|FIO TINTO|GRAMATURA|RIBANA|DECOTE|BOLSO|PUNHO|MEDIDA|TABELA/;
+
+/* ---- ETAPAS DO ATENDIMENTO ---- */
+const ETAPAS = [
+  {id:'novo',       nome:'Novo',        cor:'#3a6b8f'},
+  {id:'orcado',     nome:'Orçado',      cor:'#8a7a2e'},
+  {id:'negociando', nome:'Negociando',  cor:'#b06b3a'},
+  {id:'piloto',     nome:'Piloto',      cor:'#7d5ba6'},
+  {id:'fechado',    nome:'Fechado',     cor:'#3d4d32'},
+  {id:'perdido',    nome:'Perdido',     cor:'#a63d2f'}
+];
+
+/* ================= LEITOR DE CONVERSA =================
+   Pega o texto colado do WhatsApp e separa o que o cliente está pedindo.
+   NUNCA salva sozinho: devolve o que achou pra conferência na tela.
+   O que ele não entender fica em branco pro Patrick preencher — é melhor
+   um campo vazio do que um campo preenchido com chute. */
+
+function normalizar(s){
+  return String(s==null?'':s)
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .toUpperCase()
+    .replace(/[^\wÀ-ÿ0-9,.\/\-\s]/g,' ')
+    .replace(/\s+/g,' ');
+}
+
+/* O export do WhatsApp vem "10/10/2026 14:32 - Fulano: mensagem".
+   Quando é esse formato, as linhas do PRÓPRIO Patrick são descartadas: o preço
+   que ELE mandou não é pedido do cliente, e sem isso o leitor lê o orçamento
+   dele de volta como se fosse coisa que o cliente pediu. */
+const EU = ['BORINELLI','PATRICK','EU','VOCE'];
+function separarFalas(txt){
+  const linhas=String(txt||'').split(/\r?\n/);
+  const re=/^\s*\[?\d{1,2}\/\d{1,2}\/\d{2,4}[,\s]+\d{1,2}:\d{2}(?::\d{2})?\]?\s*[-–]?\s*([^:]{1,40}):\s?(.*)$/;
+  let temFormato=false;
+  const cliente=[], todos=[], autores=new Set();
+  linhas.forEach(l=>{
+    const m=l.match(re);
+    if(m){
+      temFormato=true;
+      const autor=m[1].trim(), msg=m[2];
+      autores.add(autor);
+      todos.push(msg);
+      const an=normalizar(autor);
+      const meu=EU.some(e=>an===e || an.startsWith(e+' ') || an.includes('BORINELLI'));
+      if(!meu) cliente.push(msg);
+    } else if(l.trim()) {
+      todos.push(l);
+    }
+  });
+  if(!temFormato) return {texto:String(txt||''), formato:false, autores:[]};
+  // se só tem UM autor, não dá pra saber quem é quem: usa tudo
+  const usar = (cliente.length && autores.size>1)? cliente : todos;
+  return {texto:usar.join('\n'), formato:true, autores:[...autores]};
+}
+
+function acharTelefone(txt){
+  const m=String(txt||'').match(/(?:\+?55\s*)?\(?\s*(\d{2})\s*\)?[\s.-]*(\d{4,5})[\s.-]?(\d{4})(?!\d)/);
+  if(!m) return '';
+  const ddd=m[1];
+  if(Number(ddd)<11 || Number(ddd)>99) return '';
+  return '('+ddd+') '+m[2]+'-'+m[3];
+}
+
+function acharNome(txt, autores){
+  // 1) nome do autor do export: é o contato como está salvo no celular, costuma
+  //    vir completo ("João Mendes") e é mais confiável que o apelido no texto
+  const outro=(autores||[]).find(a=>{ const an=normalizar(a); return !EU.some(e=>an===e)&&!an.includes('BORINELLI'); });
+  if(outro && !/^\+?\d[\d\s()-]+$/.test(outro)) return outro.trim();
+  // 2) nome que a pessoa falou de si (conversa colada à mão, sem autores)
+  const m=String(txt||'').match(/(?:meu nome (?:e|é)|aqui (?:e|é) (?:o|a)?|falo com|sou (?:o|a))\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-zá-ÿ]{2,})/i);
+  if(m) return m[1].charAt(0).toUpperCase()+m[1].slice(1);
+  return '';
+}
+
+/* O cliente escreve no plural ("camisetas tradicionais", "moletons", "regatas").
+   Transforma o termo do dicionário num padrão que aceita as duas formas, senão
+   só o singular é reconhecido e o pedido inteiro passa batido. */
+function padraoPlural(termo){
+  const esc=x=>x.replace(/[.*+?^${}()|[\]\\]/g,'\\/* <<<PARSER>>> */');
+  const partes=termo.split(' ');
+  const ult=partes.pop();
+  let p;
+  if(/AL$/.test(ult))      p=esc(ult.slice(0,-2))+'A(?:L|IS)';     // tradicional/tradicionais
+  else if(/EL$/.test(ult)) p=esc(ult.slice(0,-2))+'E(?:L|IS)';     // tactel/tacteis
+  else if(/M$/.test(ult))  p=esc(ult.slice(0,-1))+'(?:M|NS)';      // moletom/moletons
+  else if(/[RZ]$/.test(ult)) p=esc(ult)+'(?:ES)?';
+  else if(/S$/.test(ult))  p=esc(ult);
+  else                     p=esc(ult)+'S?';
+  return (partes.length? partes.map(esc).join('\\s+')+'\\s+' : '')+p;
+}
+
+/* acha todos os termos de uma lista no texto, devolvendo a posição.
+   Casa do termo mais LONGO pro mais curto e marca o trecho como usado, pra
+   "oversized feminina" não ser contado também como "oversized". */
+function acharTermos(t, lista){
+  const usado=new Array(t.length).fill(false);
+  const achados=[];
+  const itens=lista.slice().sort((a,b)=>
+    Math.max(...b.termos.map(x=>x.length)) - Math.max(...a.termos.map(x=>x.length)));
+  itens.forEach(it=>{
+    it.termos.slice().sort((a,b)=>b.length-a.length).forEach(termo=>{
+      const re=new RegExp('(^|[^A-Z0-9])('+padraoPlural(termo)+')($|[^A-Z0-9])','g');
+      let m;
+      while((m=re.exec(t))!==null){
+        const ini=m.index+m[1].length, fim=ini+m[2].length;
+        let livre=true;
+        for(let i=ini;i<fim;i++) if(usado[i]) livre=false;
+        if(!livre){ re.lastIndex=fim; continue; }
+        for(let i=ini;i<fim;i++) usado[i]=true;
+        achados.push({item:it, pos:ini, termo});
+        re.lastIndex=fim;
+      }
+    });
+  });
+  return achados.sort((a,b)=>a.pos-b.pos);
+}
+
+/* quantidade: número seguido de peça/unidade, ou número colado numa cor.
+   Descarta o que NÃO é quantidade: preço (R$ 39,90), fio (30.1), ribana (2x1),
+   gramatura (240g), ano (2027) e telefone. */
+function acharQtds(t){
+  const out=[];
+  const NUM='(\\d{1,3}(?:\\.\\d{3})+|\\d{2,6})';   // aceita 1.500 e 1500
+  const lerNum=x=>Number(String(x).replace(/\./g,''));
+  const reUn=new RegExp('(^|[^\\d,.])'+NUM+'\\s*(PECAS|PECA|PCS|PC|UNIDADES|UNIDADE|UN|CAMISETAS|CAMISETA|CAMISAS|CAMISA|BLUSAS|BLUSA)\\b','g');
+  let m;
+  while((m=reUn.exec(t))!==null) out.push({qtd:lerNum(m[2]), pos:m.index+m[1].length, forte:true});
+  const coresRe=CORES.map(c=>c.replace(/ /g,'\\s')).join('|');
+  const reCor=new RegExp('(^|[^\\d,.])'+NUM+'\\s+(?:'+coresRe+')\\b','g');
+  while((m=reCor.exec(t))!==null){
+    const pos=m.index+m[1].length;
+    if(!out.some(o=>Math.abs(o.pos-pos)<4)) out.push({qtd:lerNum(m[2]), pos, forte:true});
+  }
+  return out.filter(o=>{
+    const ctx=t.slice(Math.max(0,o.pos-6), o.pos+String(o.qtd).length+6);
+    if(/R\s*\$/.test(ctx)) return false;                 // preço
+    if(new RegExp(o.qtd+'\\s*[,.]\\d(?!\\d\\d)').test(ctx)) return false;  // 39,90 / 30.1 (mas 1.500 passa)
+    if(/\dX\d/.test(ctx)) return false;                  // ribana 2x1
+    if(new RegExp(o.qtd+'\\s*G\\b').test(ctx)) return false;     // 240 g
+    if(o.qtd>=2020 && o.qtd<=2035) return false;         // ano
+    return o.qtd>0 && o.qtd<=100000;
+  });
+}
+
+/* "30 baby look", "100 oversized": número solto logo antes do nome da peça.
+   Só vale coladinho (até ~25 caracteres), senão qualquer número da conversa
+   viraria quantidade. */
+function qtdAntesDoCorte(trecho, posCorte){
+  const antes=trecho.slice(Math.max(0,posCorte-25), posCorte);
+  const m=antes.match(/(?:^|[^\d,.])(\d{1,3}(?:\.\d{3})+|\d{1,6})\s*(?:[A-Z]{0,12}\s*)?$/);
+  if(!m) return 0;
+  const n=Number(String(m[1]).replace(/\./g,''));
+  if(/R\s*\$/.test(antes)) return 0;
+  if(n>=2020 && n<=2035) return 0;
+  if(new RegExp(n+'\\s*[,.]\\d').test(antes)) return 0;
+  return (n>0 && n<=100000)? n : 0;
+}
+
+function acharCores(t){
+  const out=[];
+  CORES.slice().sort((a,b)=>b.length-a.length).forEach(c=>{
+    const re=new RegExp('(^|[^A-Z])'+c.replace(/ /g,'\\s')+'($|[^A-Z])','g');
+    let m;
+    while((m=re.exec(t))!==null){
+      const pos=m.index+m[1].length;
+      if(!out.some(o=>Math.abs(o.pos-pos)<3)) out.push({cor:c, pos});
+    }
+  });
+  return out.sort((a,b)=>a.pos-b.pos);
+}
+
+function acharTamanhos(t, infantil){
+  const achados=[];
+  if(infantil){
+    TAMS_INFANTIL.forEach(x=>{ if(new RegExp('(^|[^\\d])'+x+'($|[^\\d])').test(t)) achados.push(x); });
+    if(/\b(2 AO 16|DO 2 AO 16|GRADE INFANTIL)\b/.test(t)) return TAMS_INFANTIL.slice();
+  }
+  TAMS_ADULTO.slice().sort((a,b)=>b.length-a.length).forEach(x=>{
+    if(new RegExp('(^|[^A-Z0-9])'+x+'($|[^A-Z0-9])').test(t) && achados.indexOf(x)<0) achados.push(x);
+  });
+  if(/\bP AO GG\b|\bDO P AO GG\b/.test(t)) return ['P','M','G','GG'];
+  if(/\bPP AO GG\b/.test(t)) return ['PP','P','M','G','GG'];
+  // "G1 ao G4" / "do 4 ao 12": abre a faixa inteira em vez de só as pontas
+  const faixa=t.match(/\b([A-Z]{0,2}\d{0,2}|PP|P|M|G|GG)\s+AO\s+([A-Z]{0,2}\d{0,2}|PP|P|M|G|GG)\b/);
+  if(faixa){
+    const lista=infantil? TAMS_INFANTIL : TAMS_ADULTO;
+    const a=lista.indexOf(faixa[1]), b=lista.indexOf(faixa[2]);
+    if(a>=0 && b>a) return lista.slice(a,b+1);
+  }
+  return achados;
+}
+
+function acharNaJanela(t, pos, raio, fn){
+  const ini=Math.max(0,pos-raio), fim=Math.min(t.length,pos+raio);
+  return fn(t.slice(ini,fim));
+}
+
+/* ---- a leitura ---- */
+function lerConversa(txtBruto){
+  const sep=separarFalas(txtBruto);
+  const t=normalizar(sep.texto);
+  const tudo=normalizar(txtBruto);
+
+  /* primeiro procura só os cortes de verdade; a palavra genérica ("camiseta")
+     só entra em campo quando nenhum deles apareceu */
+  let cortes=acharTermos(t, CORTES);
+  if(!cortes.length){
+    const genericos=CORTES.filter(c=>c.fracos).map(c=>({...c, termos:c.fracos}));
+    cortes=acharTermos(t, genericos);
+  }
+  const malhas=acharTermos(t, MALHAS);
+  const qtds=acharQtds(t);
+  const cores=acharCores(t);
+  const extras=acharTermos(t, EXTRAS).map(x=>x.item);
+  const extrasUnicos=[...new Set(extras.map(e=>e.id))].map(id=>EXTRAS.find(e=>e.id===id));
+
+  const avisos=[];
+  malhas.forEach(m=>{ if(m.item.fora && avisos.indexOf(m.item.aviso)<0) avisos.push(m.item.aviso); });
+
+  let itens=[];
+  if(cortes.length){
+    /* Quando o cliente pede mais de uma peça na mesma mensagem, o texto é fatiado
+       no meio do caminho entre uma citação e a outra. Assim "50 tradicionais
+       marinho e mais 30 baby look branca" não mistura as duas quantidades. */
+    const unicos=[];
+    cortes.forEach(c=>{ if(!unicos.some(u=>u.item.id===c.item.id)) unicos.push(c); });
+    /* o corte do texto é feito no conector ("e mais", "+", vírgula, nova linha),
+       não no meio cego: a quantidade vem ANTES do nome da peça, então cortar no
+       meio jogaria o "30" do segundo pedido no trecho do primeiro. */
+    const divisa=(a,b)=>{
+      const meio=t.slice(a,b);
+      const conectores=[/\s+E\s+MAIS\s+/g, /\n/g, /\s*[;+]\s*/g, /\s+MAIS\s+/g, /\s*,\s*/g, /\s+E\s+/g];
+      for(const re of conectores){
+        let ult=-1, m;
+        re.lastIndex=0;
+        while((m=re.exec(meio))!==null) ult=m.index+m[0].length;
+        if(ult>=0) return a+ult;
+      }
+      return Math.floor((a+b)/2);
+    };
+    unicos.forEach((c,i)=>{
+      const ini = i===0? 0 : divisa(unicos[i-1].pos, c.pos);
+      const fim = i===unicos.length-1? t.length : divisa(c.pos, unicos[i+1].pos);
+      const tr = t.slice(ini, fim);
+      const um = unicos.length===1;
+      const mTr=acharTermos(tr, MALHAS).map(x=>x.item);
+      const qTr=acharQtds(tr);
+      const cTr=acharCores(tr).map(x=>x.cor);
+      const infantil=c.item.genero==='infantil';
+      const malha=mTr[0] || (um? (malhas[0]||{}).item : null) || {};
+      itens.push({
+        corte: c.item.nome,
+        corteId: c.item.id,
+        genero: c.item.genero,
+        malha: malha.nome||'',
+        gramatura: malha.g||'',
+        qtd: qTr.length? qTr[0].qtd : (qtdAntesDoCorte(tr, c.pos-ini) || (um && qtds.length? qtds[0].qtd : '')),
+        cores: cTr.length? cTr : (um? cores.map(x=>x.cor) : []),
+        tamanhos: acharTamanhos(tr, infantil)
+      });
+    });
+  } else if(qtds.length || malhas.length){
+    // falou de quantidade/malha mas não disse o corte: cria um item pra ele completar
+    itens.push({
+      corte:'', corteId:'', genero:'',
+      malha:(malhas[0]||{item:{}}).item.nome||'',
+      gramatura:(malhas[0]||{item:{}}).item.g||'',
+      qtd: qtds.length? qtds[0].qtd : '',
+      cores: cores.map(x=>x.cor),
+      tamanhos: acharTamanhos(t, false)
+    });
+  }
+
+  // prazo que o cliente citou
+  let prazo='';
+  const mp=t.match(/(\d{1,3})\s*(DIAS|DIA|SEMANAS|SEMANA)/);
+  if(mp) prazo=mp[1]+' '+mp[2].toLowerCase();
+  if(/\bURGENTE|PRA ONTEM|O QUANTO ANTES\b/.test(t)) prazo=(prazo?prazo+' · ':'')+'urgente';
+
+  /* como ele quer a peça: as etiquetas de acabamento e, junto, as frases que o
+     próprio cliente escreveu sobre isso — palavra dele vale mais que resumo meu */
+  const detalhes=acharTermos(t, DETALHES).map(x=>x.item).concat(acharPerto(t, DETALHES, 45));
+  const detalhesUnicos=[...new Set(detalhes.map(d=>d.id))].map(id=>DETALHES.find(d=>d.id===id));
+  const comoQuer=frasesDeDetalhe(sep.texto);
+
+  return {
+    telefone: acharTelefone(txtBruto),
+    nome: acharNome(txtBruto, sep.autores),
+    itens,
+    extras: extrasUnicos,
+    detalhes: detalhesUnicos,
+    comoQuer,
+    prazo,
+    avisos,
+    formatoExport: sep.formato,
+    totalPecas: itens.reduce((s,i)=>s+(Number(i.qtd)||0),0)
+  };
+}
+
+/* "a gola tem que ser mais alta" não é "gola alta" grudado, mas é a mesma coisa:
+   aceita as duas palavras separadas desde que estejam perto uma da outra. */
+function acharPerto(t, lista, raio){
+  const achados=[];
+  lista.forEach(d=>{
+    (d.perto||[]).some(par=>{
+      let p=-1;
+      while((p=t.indexOf(par[0], p+1))>=0){
+        if(t.slice(p, p+par[0].length+(raio||45)).indexOf(par[1])>par[0].length-1){
+          achados.push(d); return true;
+        }
+      }
+      return false;
+    });
+  });
+  return achados;
+}
+
+/* devolve as frases do cliente que falam de acabamento, no original, com acento */
+function frasesDeDetalhe(textoCliente){
+  const bruto=String(textoCliente||'')
+    .replace(/(?:IMG|VID|AUD|PTT|STK|DOC)-[\w.-]+\s*\((?:arquivo anexado|file attached)\)/gi,'')
+    .replace(/<\s*(?:anexado|attached|mídia oculta|midia oculta|media omitted)[^>]*>/gi,'');
+  const fatias=bruto.split(/\n+|(?<=[.!?…])\s+/);
+  const vistas=new Set(), out=[];
+  fatias.forEach(s=>{
+    const f=s.trim().replace(/\s{2,}/g,' ');
+    if(f.length<10 || f.length>240) return;
+    if(!CHAVES_DETALHE.test(normalizar(f))) return;
+    const ch=normalizar(f);
+    if(vistas.has(ch)) return;
+    vistas.add(ch); out.push(f);
+  });
+  return out.slice(0,8);
+}
+
+if(typeof module!=='undefined') module.exports={normalizar,lerConversa,separarFalas,acharQtds,acharTermos};
+
+/* ================= ESTADO E SINCRONIZAÇÃO ================= */
+const VERSAO='1.3.0';
+const firebaseConfig = {
+  apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
+  authDomain: "borinelli-producao.firebaseapp.com",
+  databaseURL: "https://borinelli-producao-default-rtdb.firebaseio.com",
+  projectId: "borinelli-producao",
+  storageBucket: "borinelli-producao.firebasestorage.app",
+  messagingSenderId: "508417981257",
+  appId: "1:508417981257:web:0268f6235838be2605b898"
+};
+/* nó PRÓPRIO no banco: não encosta no 'estado' do sistema de produção */
+const NO='pedidos';
+const CHAVE_LOCAL='borinelli-pedidos';
+
+var S={clientes:[], pedidos:[], removidos:[]};
+let fbDB=null, fbOnline=false, aplicandoRemoto=false, jaRecebeu=false;
+const meuId='p-'+Math.random().toString(36).slice(2,9);
+
+function salvar(){
+  try{ localStorage.setItem(CHAVE_LOCAL, JSON.stringify(S)); }catch(e){ alert('Falha ao salvar no navegador.'); }
+  if(fbDB && !aplicandoRemoto && jaRecebeu){
+    fbDB.ref(NO).set({dados:JSON.stringify(S), origem:meuId, ts:Date.now()}).catch(()=>{});
+  }
+}
+function carregar(){
+  try{ const v=localStorage.getItem(CHAVE_LOCAL); if(v) S=Object.assign(S, JSON.parse(v)); }catch(e){}
+  S.clientes=S.clientes||[]; S.pedidos=S.pedidos||[]; S.removidos=S.removidos||[];
+}
+/* junta em vez de sobrescrever: dois aparelhos podem cadastrar ao mesmo tempo */
+function mesclar(remoto){
+  const por=(a,b)=>{ const m=new Map();
+    (a||[]).forEach(x=>m.set(x.id,x));
+    (b||[]).forEach(x=>{ const v=m.get(x.id); if(!v || (Number(x.ts)||0)>=(Number(v.ts)||0)) m.set(x.id,x); });
+    return [...m.values()]; };
+  const mortos=new Set([...(S.removidos||[]), ...(remoto.removidos||[])]);
+  S.clientes=por(S.clientes, remoto.clientes).filter(x=>!mortos.has(x.id));
+  S.pedidos =por(S.pedidos,  remoto.pedidos ).filter(x=>!mortos.has(x.id));
+  S.removidos=[...mortos];
+}
+function iniciarFirebase(){
+  if(typeof firebase==='undefined') return pintarSync('sem biblioteca');
+  try{
+    firebase.initializeApp(firebaseConfig);
+    firebase.auth().onAuthStateChanged(u=>{ if(u) ligarBanco(); });
+    firebase.auth().signInAnonymously().catch(e=>{
+      console.error('auth', e);
+      pintarSync(/unauthorized-domain/.test((e&&e.code)||'')? 'fora do endereço' : 'sem banco');
+    });
+  }catch(e){ pintarSync('sem banco'); }
+}
+function ligarBanco(){
+  if(fbDB) return;
+  fbDB=firebase.database();
+  fbDB.ref('.info/connected').on('value', s=>{ fbOnline=!!s.val(); pintarSync(); });
+  fbDB.ref(NO).on('value', snap=>{
+    jaRecebeu=true;
+    const v=snap.val();
+    if(!v || !v.dados){ if(S.clientes.length||S.pedidos.length) salvar(); return; }
+    if(v.origem===meuId) return;
+    try{
+      aplicandoRemoto=true;
+      mesclar(JSON.parse(v.dados));
+      aplicandoRemoto=false;
+      try{ localStorage.setItem(CHAVE_LOCAL, JSON.stringify(S)); }catch(e){}
+      render();
+    }catch(e){ aplicandoRemoto=false; }
+  });
+}
+function pintarSync(erro){
+  const el=document.getElementById('sync'); if(!el) return;
+  if(erro){ el.textContent='● '+erro; el.style.color='#e8b4ac'; el.title='Os dados estão salvos neste aparelho, mas não sobem pra nuvem.'; return; }
+  el.textContent=fbOnline? '● Sincronizado' : '● Sem conexão';
+  el.style.color=fbOnline? '#cfe0b8' : '#e8d9a8';
+}
+
+/* ================= AJUDANTES ================= */
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,6);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmtData=ts=>new Date(ts).toLocaleDateString('pt-BR');
+const soDigitos=s=>String(s||'').replace(/\D/g,'');
+const etapaDe=id=>ETAPAS.find(e=>e.id===id)||ETAPAS[0];
+function tituloCaixa(s){ return String(s||'').toLowerCase().replace(/(^|\s)([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase()); }
+
+function clienteDe(id){ return S.clientes.find(c=>c.id===id)||null; }
+function pedidosDe(id){ return S.pedidos.filter(p=>p.clienteId===id).sort((a,b)=>b.criado-a.criado); }
+function pecasDo(p){ return (p.itens||[]).reduce((s,i)=>s+(Number(i.qtd)||0),0); }
+
+/* o mesmo número é o mesmo cliente, mesmo escrito de outro jeito */
+function acharCliente(tel, nome){
+  const d=soDigitos(tel);
+  if(d.length>=8){
+    const achou=S.clientes.find(c=>{ const cd=soDigitos(c.telefone); return cd.length>=8 && cd.slice(-8)===d.slice(-8); });
+    if(achou) return achou;
+  }
+  if(nome){ const n=normalizar(nome); return S.clientes.find(c=>normalizar(c.nome)===n)||null; }
+  return null;
+}
+
+/* ================= FOTOS DA ESTAMPA =================
+   A foto grande fica guardada no próprio aparelho (IndexedDB), que aguenta
+   bastante. Só uma miniatura leve viaja pra nuvem, pra foto também aparecer
+   no celular quando o pedido foi cadastrado no computador. */
+let idb=null;
+function abrirIDB(){
+  if(idb) return Promise.resolve(idb);
+  return new Promise(res=>{
+    try{
+      const r=indexedDB.open('borinelli-fotos',1);
+      r.onupgradeneeded=()=>{ if(!r.result.objectStoreNames.contains('f')) r.result.createObjectStore('f'); };
+      r.onsuccess=()=>{ idb=r.result; res(idb); };
+      r.onerror=()=>res(null);
+    }catch(e){ res(null); }
+  });
+}
+function idbPut(id, dataUrl){
+  return abrirIDB().then(db=>{ if(!db) return;
+    try{ db.transaction('f','readwrite').objectStore('f').put(dataUrl, id); }catch(e){} });
+}
+function idbGet(id){
+  return abrirIDB().then(db=>new Promise(res=>{ if(!db) return res(null);
+    try{ const q=db.transaction('f','readonly').objectStore('f').get(id);
+      q.onsuccess=()=>res(q.result||null); q.onerror=()=>res(null); }catch(e){ res(null); } }));
+}
+function idbDel(id){
+  return abrirIDB().then(db=>{ if(!db) return;
+    try{ db.transaction('f','readwrite').objectStore('f').delete(id); }catch(e){} });
+}
+
+/* reduz a foto antes de guardar: foto de celular tem 4 MB, não precisa disso */
+function encolher(file, lado, qual){
+  return new Promise((res,rej)=>{
+    const fr=new FileReader();
+    fr.onerror=()=>rej(new Error('não consegui ler o arquivo'));
+    fr.onload=()=>{
+      const im=new Image();
+      im.onerror=()=>rej(new Error('arquivo não é uma imagem'));
+      im.onload=()=>{
+        const e=Math.min(1, lado/Math.max(im.width, im.height));
+        const cv=document.createElement('canvas');
+        cv.width=Math.max(1,Math.round(im.width*e)); cv.height=Math.max(1,Math.round(im.height*e));
+        const cx=cv.getContext('2d');
+        cx.fillStyle='#fff'; cx.fillRect(0,0,cv.width,cv.height);   /* PNG transparente não vira preto */
+        cx.drawImage(im,0,0,cv.width,cv.height);
+        res(cv.toDataURL('image/jpeg', qual));
+      };
+      im.src=fr.result;
+    };
+    fr.readAsDataURL(file);
+  });
+}
+
+var fotosTemp=[];
+function addFotos(inp){
+  const arqs=[...(inp.files||[])]; inp.value='';
+  if(!arqs.length) return;
+  const msg=document.getElementById('fotosMsg');
+  if(msg) msg.textContent='Preparando '+arqs.length+' foto'+(arqs.length>1?'s':'')+'…';
+  Promise.all(arqs.map(f=>{
+    if(!/^image\//.test(f.type)) return Promise.resolve({erro:f.name+' não é uma imagem'});
+    return Promise.all([encolher(f,1400,.78), encolher(f,220,.6)])
+      .then(([grande,thumb])=>({id:'f'+uid(), nome:f.name, thumb, grande}))
+      .catch(e=>({erro:f.name+': '+e.message}));
+  })).then(novas=>{
+    const erros=novas.filter(x=>x.erro).map(x=>x.erro);
+    fotosTemp=fotosTemp.concat(novas.filter(x=>!x.erro));
+    if(msg) msg.textContent=erros.length? erros.join(' · ') : '';
+    renderFotos();
+  });
+}
+function delFoto(id){ fotosTemp=fotosTemp.filter(f=>f.id!==id); renderFotos(); }
+function renderFotos(){
+  const box=document.getElementById('fotosTiras'); if(!box) return;
+  box.innerHTML=fotosTemp.map(f=>
+    '<div class="foto"><img src="'+f.thumb+'" alt="'+esc(f.nome||'estampa')+'">'+
+    '<button class="fotoX" title="tirar essa foto" onclick="delFoto(\''+f.id+'\')">✕</button></div>').join('');
+}
+/* abre a grande; se o pedido veio de outro aparelho, mostra a miniatura e avisa */
+function abrirFoto(pedId, fotoId){
+  const p=S.pedidos.find(x=>x.id===pedId); if(!p) return;
+  const f=(p.fotos||[]).find(x=>x.id===fotoId); if(!f) return;
+  const mostra=(src, aviso)=>{
+    document.getElementById('modalCorpo').innerHTML=
+      '<h3>Estampa'+(f.nome? ' · '+esc(f.nome):'')+'</h3>'+
+      (aviso? '<div class="dica">'+aviso+'</div>':'')+
+      '<img src="'+src+'" style="width:100%; border-radius:9px;">';
+    document.getElementById('modal').classList.add('on');
+  };
+  idbGet(fotoId).then(g=> g? mostra(g,'') :
+    mostra(f.thumb, 'Essa foto foi anexada em outro aparelho, então aqui só tenho a miniatura.'));
+}
+
+/* ================= NAVEGAÇÃO ================= */
+let aba='nova';
+function irPara(a){
+  aba=a;
+  document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on', b.dataset.a===a));
+  document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on', t.id==='tela-'+a));
+  if(window.innerWidth<860) document.getElementById('sidebar').classList.remove('aberto');
+  render();
+}
+
+/* ================= 1. NOVA CONVERSA ================= */
+let lidoAtual=null, editandoPedido=null;
+
+function lerAgora(){
+  const txt=document.getElementById('txtConversa').value;
+  if(!txt.trim()) return alert('Cole a conversa primeiro.');
+  const r=lerConversa(txt);
+  lidoAtual={bruto:txt, r};
+  montarConferencia(r, txt);
+  document.getElementById('confBox').style.display='';
+  const cb=document.getElementById('confBox');
+  if(cb.scrollIntoView) cb.scrollIntoView({behavior:'smooth', block:'start'});
+}
+function limparConversa(){
+  document.getElementById('txtConversa').value='';
+  document.getElementById('confBox').style.display='none';
+  lidoAtual=null; editandoPedido=null;
+}
+
+function selHTML(id, lista, valor, vazio){
+  return '<select id="'+id+'"><option value="">'+(vazio||'—')+'</option>'+
+    lista.map(x=>'<option'+(x===valor?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>';
+}
+
+function montarConferencia(r, bruto){
+  const nomesCorte=CORTES.map(c=>c.nome);
+  const nomesMalha=MALHAS.filter(m=>!m.fora).map(m=>m.nome);
+  const cli=acharCliente(r.telefone, r.nome);
+
+  let h='';
+  if(r.avisos.length) h+='<div class="aviso">⚠ '+r.avisos.map(esc).join('<br>⚠ ')+'</div>';
+  if(r.formatoExport) h+='<div class="dica">Reconheci o formato de exportação do WhatsApp. As suas próprias mensagens foram ignoradas — só li o que o cliente escreveu.</div>';
+
+  h+='<div class="linha">'+
+     '<div><label>Cliente</label><input id="cfNome" value="'+esc(cli? cli.nome : tituloCaixa(r.nome))+'" placeholder="nome de quem pediu"></div>'+
+     '<div><label>WhatsApp</label><input id="cfTel" value="'+esc(cli? cli.telefone : r.telefone)+'" placeholder="(47) 99999-9999"></div>'+
+     '<div><label>Empresa / marca</label><input id="cfEmpresa" value="'+esc(cli? cli.empresa||'' : '')+'" placeholder="opcional"></div>'+
+     '</div>';
+  if(cli) h+='<div class="dica">Já conheço esse número: os itens entram no histórico de <b>'+esc(cli.nome)+'</b>.</div>';
+
+  h+='<h3>O que ele está pedindo</h3><div id="itens"></div>'+
+     '<button class="acao sec mini" onclick="addItem()">+ acrescentar peça</button>';
+
+  h+='<div class="linha" style="margin-top:14px;">'+
+     '<div><label>Etapa</label>'+selHTML('cfEtapa', ETAPAS.map(e=>e.nome), 'Novo', null)+'</div>'+
+     '<div><label>Prazo pedido</label><input id="cfPrazo" value="'+esc(r.prazo)+'" placeholder="ex: 30 dias"></div>'+
+     '</div>';
+
+  h+='<label style="margin-top:10px; display:block;">Acabamentos citados</label><div class="chips" id="chipsExtras">'+
+     EXTRAS.map(e=>'<span class="chip'+(r.extras.some(x=>x.id===e.id)?' on':'')+'" data-id="'+e.id+'" onclick="this.classList.toggle(\'on\')">'+esc(e.nome)+'</span>').join('')+
+     '</div>';
+
+  h+='<h3 style="margin-top:16px;">Como ele quer a peça</h3>'+
+     '<div class="chips" id="chipsDet">'+
+     DETALHES.map(dd=>'<span class="chip'+((r.detalhes||[]).some(x=>x.id===dd.id)?' on':'')+
+       '" data-id="'+dd.id+'" onclick="this.classList.toggle(\'on\')">'+esc(dd.nome)+'</span>').join('')+
+     '</div>'+
+     '<div style="margin-top:9px;"><label>Nas palavras dele</label>'+
+     '<textarea id="cfComo" rows="3" placeholder="gola, manga, barra, posição da estampa, medidas — o que ele falou sobre o jeito da peça">'+
+     esc((r.comoQuer||[]).join('\n'))+'</textarea>'+
+     '<div class="mini" style="margin-top:4px;">Puxei as frases dele que falam de acabamento. Corrija à vontade — é esse texto que vai pra costura.</div></div>';
+
+  h+='<label style="margin-top:14px; display:block;">Foto da estampa / arte</label>'+
+     '<div class="fotos"><div id="fotosTiras"></div>'+
+     '<button class="acao sec mini" onclick="document.getElementById(\'arqFoto\').click()">＋ anexar foto</button>'+
+     '<input type="file" id="arqFoto" accept="image/*" multiple style="display:none" onchange="addFotos(this)">'+
+     '<div class="mini" id="fotosMsg"></div></div>';
+
+  h+='<div style="margin-top:12px;"><label>Observação</label><textarea id="cfObs" rows="2" placeholder="o que mais importa lembrar desse contato"></textarea></div>';
+  h+='<div style="margin-top:14px; display:flex; gap:8px; flex-wrap:wrap;">'+
+     '<button class="acao" onclick="salvarPedido()">✓ Salvar pedido</button>'+
+     '<button class="acao sec" onclick="limparConversa()">Cancelar</button></div>';
+
+  document.getElementById('confCorpo').innerHTML=h;
+  itensTemp = r.itens.length? r.itens.map(i=>({...i})) : [itemVazio()];
+  renderItens();
+  if(!editandoPedido) fotosTemp=[];
+  renderFotos();
+}
+function itemVazio(){ return {corte:'', malha:'', qtd:'', cores:[], tamanhos:[], gramatura:'', genero:''}; }
+let itensTemp=[];
+
+function renderItens(){
+  const nomesCorte=CORTES.map(c=>c.nome);
+  const nomesMalha=MALHAS.filter(m=>!m.fora).map(m=>m.nome);
+  document.getElementById('itens').innerHTML=itensTemp.map((it,ix)=>
+    '<div class="item">'+
+      '<div class="linha">'+
+        '<div style="flex:2 1 190px;"><label>Peça / corte</label>'+selHTML('it-corte-'+ix, nomesCorte, it.corte, '— escolher —')+'</div>'+
+        '<div style="flex:2 1 170px;"><label>Malha</label>'+selHTML('it-malha-'+ix, nomesMalha, it.malha, '— escolher —')+'</div>'+
+        '<div style="flex:0 1 110px;"><label>Quantidade</label><input type="number" min="0" id="it-qtd-'+ix+'" value="'+esc(it.qtd)+'"></div>'+
+        (itensTemp.length>1? '<div style="flex:0 0 auto; align-self:flex-end;"><button class="acao mini alerta" onclick="delItem('+ix+')">✕</button></div>':'')+
+      '</div>'+
+      '<div class="linha">'+
+        '<div style="flex:1 1 200px;"><label>Cores</label><input id="it-cores-'+ix+'" value="'+esc((it.cores||[]).map(tituloCaixa).join(', '))+'" placeholder="preto, branco"></div>'+
+        '<div style="flex:1 1 200px;"><label>Tamanhos</label><input id="it-tams-'+ix+'" value="'+esc((it.tamanhos||[]).join(' '))+'" placeholder="P M G GG"></div>'+
+      '</div>'+
+    '</div>').join('');
+}
+function lerItensDaTela(){
+  return itensTemp.map((it,ix)=>{
+    const g=id=>{ const e=document.getElementById(id); return e? e.value : ''; };
+    const corte=g('it-corte-'+ix), malha=g('it-malha-'+ix);
+    const defC=CORTES.find(c=>c.nome===corte), defM=MALHAS.find(m=>m.nome===malha);
+    return {
+      corte, malha,
+      corteId: defC? defC.id : '',
+      genero: defC? defC.genero : '',
+      gramatura: defM? defM.g : '',
+      qtd: Number(g('it-qtd-'+ix))||0,
+      cores: g('it-cores-'+ix).split(/[,;]/).map(x=>x.trim()).filter(Boolean),
+      tamanhos: g('it-tams-'+ix).split(/[\s,;]+/).map(x=>x.trim().toUpperCase()).filter(Boolean)
+    };
+  }).filter(i=>i.corte||i.malha||i.qtd);
+}
+function addItem(){ itensTemp=lerItensDaTela(); itensTemp.push(itemVazio()); renderItens(); }
+function delItem(ix){ itensTemp=lerItensDaTela(); itensTemp.splice(ix,1); if(!itensTemp.length) itensTemp=[itemVazio()]; renderItens(); }
+
+function salvarPedido(){
+  const nome=document.getElementById('cfNome').value.trim();
+  const tel=document.getElementById('cfTel').value.trim();
+  if(!nome && !tel) return alert('Preciso pelo menos do nome ou do telefone do cliente.');
+  const itens=lerItensDaTela();
+  if(!itens.length) return alert('Nenhuma peça preenchida. Escolha ao menos o corte ou a malha.');
+
+  let cli=editandoPedido? clienteDe(editandoPedido.clienteId) : acharCliente(tel, nome);
+  if(!cli){
+    cli={id:uid(), nome:nome||tel, telefone:tel, empresa:document.getElementById('cfEmpresa').value.trim(), criado:Date.now(), ts:Date.now()};
+    S.clientes.push(cli);
+  } else {
+    if(nome) cli.nome=nome;
+    if(tel) cli.telefone=tel;
+    const emp=document.getElementById('cfEmpresa').value.trim(); if(emp) cli.empresa=emp;
+    cli.ts=Date.now();
+  }
+  const etapaNome=document.getElementById('cfEtapa').value;
+  const ped={
+    id: editandoPedido? editandoPedido.id : uid(),
+    clienteId: cli.id,
+    criado: editandoPedido? editandoPedido.criado : Date.now(),
+    ts: Date.now(),
+    etapa: (ETAPAS.find(e=>e.nome===etapaNome)||ETAPAS[0]).id,
+    prazo: document.getElementById('cfPrazo').value.trim(),
+    obs: document.getElementById('cfObs').value.trim(),
+    extras: [...document.querySelectorAll('#chipsExtras .chip.on')].map(c=>c.dataset.id),
+    detalhes: [...document.querySelectorAll('#chipsDet .chip.on')].map(c=>c.dataset.id),
+    comoQuer: (document.getElementById('cfComo')||{}).value||'',
+    conversa: lidoAtual? lidoAtual.bruto : (editandoPedido? editandoPedido.conversa : ''),
+    fotos: fotosTemp.map(f=>({id:f.id, nome:f.nome, thumb:f.thumb})),
+    itens
+  };
+  /* a foto grande vai pro aparelho; só a miniatura entra no estado que sincroniza */
+  fotosTemp.forEach(f=>{ if(f.grande) idbPut(f.id, f.grande); });
+  if(editandoPedido){
+    const ficou=new Set(fotosTemp.map(f=>f.id));
+    (editandoPedido.fotos||[]).forEach(f=>{ if(!ficou.has(f.id)) idbDel(f.id); });
+  }
+  if(editandoPedido){ S.pedidos=S.pedidos.filter(p=>p.id!==ped.id); }
+  S.pedidos.push(ped);
+  fotosTemp=[];
+  salvar();
+  limparConversa();
+  irPara('clientes');
+  setTimeout(()=>abrirCliente(cli.id), 60);
+}
+
+/* ================= 1b. IMPORTAR CONVERSAS EXPORTADAS =================
+   O WhatsApp exporta cada conversa num .txt. Aqui dá pra jogar vários de uma
+   vez: eu leio todos, mostro numa lista o que entendi de cada um, e você marca
+   quais valem. O nome do arquivo já traz o nome do contato. */
+var lote=[];
+
+/* ---- abrir o .zip que o WhatsApp gera quando se exporta COM mídia ----
+   Feito à mão de propósito: sem biblioteca de fora, então funciona offline
+   e não depende de nenhum site continuar no ar. */
+function lerZip(file){
+  return file.arrayBuffer().then(ab=>{
+    const buf=new Uint8Array(ab), dv=new DataView(ab);
+    let fim=-1;
+    for(let i=buf.length-22; i>=Math.max(0,buf.length-66000); i--){
+      if(dv.getUint32(i,true)===0x06054b50){ fim=i; break; }
+    }
+    if(fim<0) throw new Error('não parece um .zip');
+    const n=dv.getUint16(fim+10,true);
+    let p=dv.getUint32(fim+16,true);
+    const td=new TextDecoder('utf-8');
+    const entradas=[];
+    for(let k=0;k<n && p+46<=buf.length;k++){
+      if(dv.getUint32(p,true)!==0x02014b50) break;
+      const metodo=dv.getUint16(p+10,true);
+      const tamComp=dv.getUint32(p+20,true);
+      const lNome=dv.getUint16(p+28,true), lExtra=dv.getUint16(p+30,true), lCom=dv.getUint16(p+32,true);
+      const off=dv.getUint32(p+42,true);
+      const nome=td.decode(buf.subarray(p+46, p+46+lNome));
+      p+=46+lNome+lExtra+lCom;
+      if(/\/$/.test(nome) || /^__MACOSX\//.test(nome)) continue;
+      if(dv.getUint32(off,true)!==0x04034b50) continue;
+      const hNome=dv.getUint16(off+26,true), hExtra=dv.getUint16(off+28,true);
+      const ini=off+30+hNome+hExtra;
+      entradas.push({nome, metodo, dados:buf.subarray(ini, ini+tamComp)});
+    }
+    return entradas;
+  });
+}
+function abrirEntrada(e){
+  if(e.metodo===0) return Promise.resolve(new Blob([e.dados]));
+  if(e.metodo!==8) return Promise.reject(new Error('compressão '+e.metodo+' não suportada'));
+  if(typeof DecompressionStream==='undefined')
+    return Promise.reject(new Error('este navegador não abre .zip — exporte sem mídia ou use outro aparelho'));
+  return new Response(new Blob([e.dados]).stream().pipeThrough(new DecompressionStream('deflate-raw'))).blob();
+}
+const EH_FOTO=n=>/\.(jpe?g|png|webp)$/i.test(n);
+const EH_TXT =n=>/\.txt$/i.test(n);
+
+/* transforma um zip exportado numa conversa: texto + as fotos que vieram junto */
+function conversaDoZip(file){
+  return lerZip(file).then(entradas=>{
+    const eTxt=entradas.find(e=>/_chat\.txt$/i.test(e.nome)) || entradas.find(e=>EH_TXT(e.nome));
+    if(!eTxt) throw new Error('não achei o texto da conversa dentro do zip');
+    const fotos=entradas.filter(e=>EH_FOTO(e.nome)).sort((a,b)=>a.nome.localeCompare(b.nome));
+    const corte=fotos.length>MAX_FOTOS_ZIP;
+    return abrirEntrada(eTxt).then(b=>b.text()).then(txt=>
+      Promise.all(fotos.slice(0,MAX_FOTOS_ZIP).map(e=>
+        abrirEntrada(e)
+          .then(b=>Promise.all([encolher(b,1400,.78), encolher(b,220,.6)]))
+          .then(([grande,thumb])=>({id:'f'+uid(), nome:e.nome, thumb, grande}))
+          .catch(()=>null)))
+      .then(fs=>({arq:file.name, txt, fotos:fs.filter(Boolean),
+                  cortou: corte? fotos.length : 0})));
+  });
+}
+const MAX_FOTOS_ZIP=25;
+
+function nomeDoArquivo(n){
+  const m=String(n).replace(/\.(txt|zip)$/i,'')
+    .match(/(?:conversa do whatsapp com|whatsapp chat with|conversa com|chat com)\s+(.+)/i);
+  return m? m[1].trim() : '';
+}
+function lerTexto(f){
+  return new Promise(res=>{
+    const fr=new FileReader();
+    fr.onerror=()=>res(null);
+    fr.onload =()=>res(String(fr.result||''));
+    fr.readAsText(f);
+  });
+}
+function importarArquivos(inp){
+  const arqs=[...(inp.files||[])]; inp.value='';
+  if(!arqs.length) return;
+  const msg=document.getElementById('impMsg');
+  const zips=arqs.filter(f=>/\.zip$/i.test(f.name)).length;
+  if(msg) msg.textContent='Lendo '+arqs.length+' arquivo'+(arqs.length>1?'s':'')+
+    (zips? ' (abrindo '+zips+' zip e as fotos de dentro — pode demorar um pouco)':'')+'…';
+  Promise.all(arqs.map(f=>
+    /\.zip$/i.test(f.name)
+      ? conversaDoZip(f).catch(e=>({erro:f.name+': '+e.message}))
+      : lerTexto(f).then(t=> t==null? {erro:f.name+': não consegui abrir'} : {arq:f.name, txt:t, fotos:[]})
+  )).then(lidos=>{
+    lote=[]; const erros=[];
+    lidos.forEach(l=>{
+      if(l.erro) return erros.push(l.erro);
+      if(!String(l.txt||'').trim()) return erros.push(l.arq+': conversa vazia');
+      const r=lerConversa(l.txt);
+      const doTitulo=nomeDoArquivo(l.arq);
+      if(doTitulo && !r.nome) r.nome=doTitulo;
+      if(l.cortou) r.avisos=[...r.avisos, 'o zip trazia '+l.cortou+' fotos; peguei as '+MAX_FOTOS_ZIP+' primeiras'];
+      lote.push({arq:l.arq, txt:l.txt, r, fotos:l.fotos||[]});
+    });
+    if(msg) msg.textContent=erros.join(' · ');
+    renderLote();
+  });
+}
+function renderLote(){
+  const box=document.getElementById('loteBox'); if(!box) return;
+  if(!lote.length){ box.style.display='none'; return; }
+  box.style.display='';
+  const achou=lote.filter(l=>l.r.itens.length).length;
+  box.innerHTML='<h2>'+lote.length+' conversa'+(lote.length>1?'s':'')+' lida'+(lote.length>1?'s':'')+'</h2>'+
+    '<div class="dica">Reconheci pedido em <b>'+achou+'</b>. As que ficaram sem nada você pode abrir à mão depois — '+
+    'nada entra no sistema sem você marcar e salvar.</div>'+
+    '<div class="rolar"><table id="loteTab"><tr><th></th><th>Cliente</th><th>WhatsApp</th><th>O que pediu</th><th>Peças</th></tr>'+
+    lote.map((l,ix)=>{
+      const it=l.r.itens, tot=it.reduce((s,i)=>s+(Number(i.qtd)||0),0);
+      return '<tr>'+
+        '<td><input type="checkbox" data-ix="'+ix+'" style="width:auto;"'+(it.length?' checked':'')+'></td>'+
+        '<td><input id="lt-nome-'+ix+'" value="'+esc(tituloCaixa(l.r.nome)||'')+'" placeholder="sem nome"></td>'+
+        '<td><input id="lt-tel-'+ix+'" value="'+esc(l.r.telefone||'')+'" placeholder="sem número"></td>'+
+        '<td>'+(it.length? it.map(i=>esc((i.qtd? i.qtd+' ':'')+(i.corte||'?')+(i.malha? ' · '+i.malha:'')+
+            ((i.cores||[]).length? ' · '+i.cores.map(tituloCaixa).join('/'):''))).join('<br>')
+          : '<span class="mini">nada reconhecido</span>')+
+          ((l.r.detalhes||[]).length? '<div class="mini" style="margin-top:4px;">Quer: '+
+            l.r.detalhes.map(dd=>esc(dd.nome)).join(' · ')+'</div>':'')+
+          (l.fotos.length? '<div class="fotos" style="margin-top:5px;"><div>'+
+            l.fotos.slice(0,6).map(f=>'<div class="foto peq"><img src="'+f.thumb+'" alt=""></div>').join('')+
+            (l.fotos.length>6? '<span class="mini" style="align-self:center;">+'+(l.fotos.length-6)+'</span>':'')+
+            '</div></div>':'')+
+          (l.r.avisos.length? '<div class="mini" style="color:#8a6a16;">⚠ '+l.r.avisos.map(esc).join(' · ')+'</div>':'')+'</td>'+
+        '<td><b>'+(tot||'—')+'</b></td></tr>';
+    }).join('')+'</table></div>'+
+    '<div style="margin-top:12px; display:flex; gap:8px; flex-wrap:wrap;">'+
+      '<button class="acao" onclick="salvarLote()">✓ Salvar as marcadas</button>'+
+      '<button class="acao sec" onclick="lote=[];renderLote();">Descartar</button></div>';
+}
+function salvarLote(){
+  const marcados=[...document.querySelectorAll('#loteTab input[type=checkbox]')]
+    .filter(c=>c.checked).map(c=>Number(c.dataset.ix));
+  if(!marcados.length) return alert('Nenhuma conversa marcada.');
+  let novos=0, juntados=0;
+  marcados.forEach(ix=>{
+    const l=lote[ix]; if(!l) return;
+    const nome=(document.getElementById('lt-nome-'+ix)||{}).value||'';
+    const tel =(document.getElementById('lt-tel-'+ix )||{}).value||'';
+    if(!nome.trim() && !tel.trim()) return;
+    let cli=acharCliente(tel, nome);
+    if(cli){ juntados++; if(nome.trim()) cli.nome=nome.trim(); if(tel.trim()) cli.telefone=tel.trim(); cli.ts=Date.now(); }
+    else { novos++; cli={id:uid(), nome:nome.trim()||tel.trim(), telefone:tel.trim(), empresa:'', criado:Date.now(), ts:Date.now()};
+           S.clientes.push(cli); }
+    S.pedidos.push({
+      id:uid(), clienteId:cli.id, criado:Date.now(), ts:Date.now(), etapa:'novo',
+      prazo:l.r.prazo||'', obs:'', extras:(l.r.extras||[]).map(e=>e.id),
+      detalhes:(l.r.detalhes||[]).map(dd=>dd.id),
+      comoQuer:(l.r.comoQuer||[]).join('\n'),
+      conversa:l.txt,
+      fotos:(l.fotos||[]).map(f=>({id:f.id, nome:f.nome, thumb:f.thumb})),
+      itens:(l.r.itens||[]).map(i=>{
+        const dC=CORTES.find(c=>c.nome===i.corte), dM=MALHAS.find(m=>m.nome===i.malha);
+        return {corte:i.corte||'', malha:i.malha||'', corteId:dC?dC.id:'', genero:dC?dC.genero:'',
+                gramatura:dM?dM.g:'', qtd:Number(i.qtd)||0, cores:i.cores||[], tamanhos:i.tamanhos||[]};
+      })
+    });
+  });
+  /* as fotos grandes das conversas salvas vão pro aparelho */
+  marcados.forEach(ix=>{ (lote[ix]&&lote[ix].fotos||[]).forEach(f=>{ if(f.grande) idbPut(f.id, f.grande); }); });
+  lote=[]; renderLote(); salvar(); irPara('clientes');
+  alert('Importado: '+novos+' cliente'+(novos!==1?'s':'')+' novo'+(novos!==1?'s':'')+
+        (juntados? ' e '+juntados+' pedido'+(juntados!==1?'s':'')+' em cliente que já existia':'')+'.');
+}
+
+/* ================= 2. CLIENTES ================= */
+let abertos={};
+function abrirCliente(id){ abertos[id]=!abertos[id]; render(); }
+
+function renderClientes(){
+  const busca=normalizar(document.getElementById('buscaCli').value||'');
+  const fEtapa=document.getElementById('fEtapaCli').value;
+  let lista=S.clientes.slice();
+  if(busca) lista=lista.filter(c=>{
+    const peds=pedidosDe(c.id);
+    const txt=normalizar([c.nome,c.telefone,c.empresa, peds.map(p=>(p.itens||[]).map(i=>i.corte+' '+i.malha+' '+(i.cores||[]).join(' ')).join(' ')).join(' ')].join(' '));
+    return txt.includes(busca);
+  });
+  if(fEtapa) lista=lista.filter(c=>pedidosDe(c.id).some(p=>p.etapa===fEtapa));
+  lista.sort((a,b)=>{
+    const ua=Math.max(a.ts||0, ...pedidosDe(a.id).map(p=>p.criado||0));
+    const ub=Math.max(b.ts||0, ...pedidosDe(b.id).map(p=>p.criado||0));
+    return ub-ua;
+  });
+
+  const box=document.getElementById('listaCli');
+  if(!lista.length){ box.innerHTML='<div class="card vazio">'+(S.clientes.length? 'Nenhum cliente nesse filtro.' : 'Nenhum cliente ainda. Cole uma conversa na aba <b>Nova conversa</b>.')+'</div>'; return; }
+
+  box.innerHTML=lista.map(c=>{
+    const peds=pedidosDe(c.id);
+    const total=peds.reduce((s,p)=>s+pecasDo(p),0);
+    const ult=peds[0];
+    const ab=abertos[c.id];
+    return '<div class="card cli">'+
+      '<div class="cliTopo" onclick="abrirCliente(\''+c.id+'\')">'+
+        '<div><b>'+esc(c.nome)+'</b>'+(c.empresa?' <span class="mini">· '+esc(c.empresa)+'</span>':'')+
+          '<div class="mini">'+(c.telefone? esc(c.telefone)+' · ':'')+peds.length+' pedido'+(peds.length!==1?'s':'')+
+          (total? ' · '+total.toLocaleString('pt-BR')+' peças':'')+'</div></div>'+
+        '<div style="text-align:right; white-space:nowrap;">'+
+          (ult? '<span class="tag" style="background:'+etapaDe(ult.etapa).cor+'">'+esc(etapaDe(ult.etapa).nome)+'</span>':'')+
+          '<div class="mini">'+(ult? fmtData(ult.criado):'')+'</div></div>'+
+      '</div>'+
+      (ab? '<div class="cliCorpo">'+(c.telefone? '<a class="acao mini wpp" target="_blank" href="https://wa.me/55'+soDigitos(c.telefone)+'">Abrir no WhatsApp</a>':'')+
+        peds.map(p=>cardPedido(p)).join('')+'</div>' : '')+
+    '</div>';
+  }).join('');
+}
+
+function cardPedido(p){
+  const e=etapaDe(p.etapa);
+  return '<div class="ped">'+
+    '<div class="pedTopo">'+
+      '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>'+
+      '<span class="mini">'+fmtData(p.criado)+(p.prazo? ' · prazo '+esc(p.prazo):'')+'</span>'+
+      '<span style="margin-left:auto;">'+
+        ETAPAS.map(x=>'<button class="acao mini '+(x.id===p.etapa?'':'sec')+'" style="margin-left:3px;'+(x.id===p.etapa?'background:'+x.cor+';':'')+'" onclick="mudarEtapa(\''+p.id+'\',\''+x.id+'\')">'+esc(x.nome)+'</button>').join('')+
+      '</span>'+
+    '</div>'+
+    '<table class="tabItens"><tr><th>Peça</th><th>Malha</th><th>Qtd</th><th>Cores</th><th>Tamanhos</th></tr>'+
+    (p.itens||[]).map(i=>'<tr><td><b>'+esc(i.corte||'—')+'</b></td><td>'+esc(i.malha||'—')+
+      (i.gramatura? ' <span class="mini">'+esc(i.gramatura)+'</span>':'')+'</td>'+
+      '<td><b>'+(Number(i.qtd)||0).toLocaleString('pt-BR')+'</b></td>'+
+      '<td>'+esc((i.cores||[]).map(tituloCaixa).join(', ')||'—')+'</td>'+
+      '<td>'+esc((i.tamanhos||[]).join(' ')||'—')+'</td></tr>').join('')+
+    '</table>'+
+    ((p.fotos||[]).length? '<div class="fotos" style="margin-top:9px;"><div>'+
+      p.fotos.map(f=>'<div class="foto"><img src="'+f.thumb+'" alt="estampa" title="'+esc(f.nome||'')+'" '+
+        'onclick="abrirFoto(\''+p.id+'\',\''+f.id+'\')"></div>').join('')+'</div></div>':'')+
+    ((p.detalhes||[]).length? '<div class="chips" style="margin-top:7px;">'+
+      p.detalhes.map(id=>'<span class="chip on">'+esc((DETALHES.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+'</div>':'')+
+    (p.comoQuer? '<div class="obs"><b>Como quer a peça</b><br>'+esc(p.comoQuer).replace(/\n/g,'<br>')+'</div>':'')+
+    ((p.extras||[]).length? '<div class="mini" style="margin-top:6px;">Acabamentos: '+p.extras.map(id=>esc((EXTRAS.find(x=>x.id===id)||{}).nome||id)).join(' · ')+'</div>':'')+
+    (p.obs? '<div class="obs">'+esc(p.obs)+'</div>':'')+
+    '<div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">'+
+      '<button class="acao mini sec" onclick="editarPedido(\''+p.id+'\')">Editar</button>'+
+      (p.conversa? '<button class="acao mini sec" onclick="verConversa(\''+p.id+'\')">Ver conversa</button>':'')+
+      '<button class="acao mini alerta" onclick="excluirPedido(\''+p.id+'\')">Excluir</button>'+
+    '</div></div>';
+}
+function mudarEtapa(id, etapa){
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  p.etapa=etapa; p.ts=Date.now(); salvar(); render();
+}
+function verConversa(id){
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  document.getElementById('modalCorpo').innerHTML='<h3>Conversa original</h3><pre>'+esc(p.conversa)+'</pre>';
+  document.getElementById('modal').classList.add('on');
+}
+function fecharModal(){ document.getElementById('modal').classList.remove('on'); }
+function excluirPedido(id){
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  if(!confirm('Excluir este pedido?\n\nO cliente continua cadastrado.')) return;
+  (p.fotos||[]).forEach(f=>idbDel(f.id));
+  S.removidos=[...new Set([...(S.removidos||[]), id])];
+  S.pedidos=S.pedidos.filter(x=>x.id!==id);
+  salvar(); render();
+}
+function editarPedido(id){
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  const c=clienteDe(p.clienteId)||{};
+  editandoPedido=p; lidoAtual=null;
+  fotosTemp=(p.fotos||[]).map(f=>({...f}));
+  /* repõe as grandes que estão neste aparelho, senão salvar de novo perderia elas */
+  fotosTemp.forEach(f=>idbGet(f.id).then(g=>{ if(g) f.grande=g; }));
+  irPara('nova');
+  document.getElementById('txtConversa').value=p.conversa||'';
+  montarConferencia({itens:p.itens||[], extras:(p.extras||[]).map(x=>({id:x})),
+                     detalhes:(p.detalhes||[]).map(x=>({id:x})), comoQuer:(p.comoQuer||'').split('\n'),
+                     prazo:p.prazo||'', avisos:[], telefone:c.telefone||'', nome:c.nome||'', formatoExport:false}, '');
+  document.getElementById('cfEtapa').value=etapaDe(p.etapa).nome;
+  document.getElementById('cfObs').value=p.obs||'';
+  document.getElementById('confBox').style.display='';
+}
+
+/* ================= 3. PEDIDOS (tudo numa tabela) ================= */
+function linhasPedidos(){
+  const out=[];
+  S.pedidos.forEach(p=>{
+    const c=clienteDe(p.clienteId)||{nome:'(sem cliente)'};
+    (p.itens||[]).forEach(i=>out.push({p, c, i}));
+  });
+  return out.sort((a,b)=>b.p.criado-a.p.criado);
+}
+function renderPedidos(){
+  const fC=document.getElementById('fCorte').value, fM=document.getElementById('fMalha').value, fE=document.getElementById('fEtapa').value;
+  let L=linhasPedidos();
+  if(fC) L=L.filter(x=>x.i.corte===fC);
+  if(fM) L=L.filter(x=>x.i.malha===fM);
+  if(fE) L=L.filter(x=>x.p.etapa===fE);
+  const tot=L.reduce((s,x)=>s+(Number(x.i.qtd)||0),0);
+  document.getElementById('resPedidos').innerHTML=L.length?
+    '<b>'+L.length+'</b> linha'+(L.length!==1?'s':'')+' · <b>'+tot.toLocaleString('pt-BR')+'</b> peças':'';
+  document.getElementById('tabPedidos').innerHTML = L.length?
+    '<tr><th>Cliente</th><th>Peça</th><th>Malha</th><th>Qtd</th><th>Cores</th><th>Tamanhos</th><th>Etapa</th><th>Data</th></tr>'+
+    L.map(x=>'<tr><td><b>'+esc(x.c.nome)+'</b></td><td>'+esc(x.i.corte||'—')+'</td><td>'+esc(x.i.malha||'—')+'</td>'+
+      '<td><b>'+(Number(x.i.qtd)||0).toLocaleString('pt-BR')+'</b></td>'+
+      '<td>'+esc((x.i.cores||[]).map(tituloCaixa).join(', ')||'—')+'</td>'+
+      '<td>'+esc((x.i.tamanhos||[]).join(' ')||'—')+'</td>'+
+      '<td><span class="tag" style="background:'+etapaDe(x.p.etapa).cor+'">'+esc(etapaDe(x.p.etapa).nome)+'</span></td>'+
+      '<td class="mini">'+fmtData(x.p.criado)+'</td></tr>').join('')
+    : '<tr><td class="vazio">Nenhum pedido nesse filtro.</td></tr>';
+}
+function preencherFiltros(){
+  const L=linhasPedidos();
+  const enche=(id, vals)=>{
+    const el=document.getElementById(id); const atual=el.value;
+    el.innerHTML='<option value="">'+el.dataset.vazio+'</option>'+vals.map(v=>'<option'+(v===atual?' selected':'')+'>'+esc(v)+'</option>').join('');
+  };
+  enche('fCorte', [...new Set(L.map(x=>x.i.corte).filter(Boolean))].sort());
+  enche('fMalha', [...new Set(L.map(x=>x.i.malha).filter(Boolean))].sort());
+  const el=document.getElementById('fEtapa'); const at=el.value;
+  el.innerHTML='<option value="">todas as etapas</option>'+ETAPAS.map(e=>'<option value="'+e.id+'"'+(e.id===at?' selected':'')+'>'+esc(e.nome)+'</option>').join('');
+}
+
+/* ================= 4. RESUMO ================= */
+function renderResumo(){
+  const L=linhasPedidos().filter(x=>x.p.etapa!=='perdido');
+  const soma=(chave)=>{
+    const m={};
+    L.forEach(x=>{ const k=chave(x)||'(não informado)'; m[k]=(m[k]||0)+(Number(x.i.qtd)||0); });
+    return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+  };
+  const bloco=(tit, pares, cor)=>{
+    if(!pares.length) return '';
+    const max=Math.max(...pares.map(p=>p[1]))||1;
+    return '<div class="card"><h3>'+tit+'</h3>'+pares.map(([k,v])=>
+      '<div class="barraLinha"><div class="barraNome">'+esc(k)+'</div>'+
+      '<div class="barraFundo"><div class="barra" style="width:'+Math.round(v/max*100)+'%; background:'+cor+'"></div></div>'+
+      '<div class="barraVal">'+v.toLocaleString('pt-BR')+'</div></div>').join('')+'</div>';
+  };
+  const porEtapa={};
+  S.pedidos.forEach(p=>{ porEtapa[p.etapa]=(porEtapa[p.etapa]||0)+pecasDo(p); });
+  const totGeral=L.reduce((s,x)=>s+(Number(x.i.qtd)||0),0);
+
+  document.getElementById('resumoOut').innerHTML=
+    '<div class="card"><div class="numerao">'+totGeral.toLocaleString('pt-BR')+'</div>'+
+    '<div class="mini">peças em negociação ou fechadas · '+S.clientes.length+' cliente'+(S.clientes.length!==1?'s':'')+' · '+S.pedidos.length+' pedido'+(S.pedidos.length!==1?'s':'')+'</div></div>'+
+    '<div class="card"><h3>Por etapa</h3><div class="chips">'+ETAPAS.map(e=>
+      '<span class="chip" style="border-color:'+e.cor+'; color:'+e.cor+';">'+esc(e.nome)+': <b>'+(porEtapa[e.id]||0).toLocaleString('pt-BR')+'</b></span>').join('')+'</div></div>'+
+    bloco('Por malha', soma(x=>x.i.malha), '#7d9553')+
+    bloco('Por peça', soma(x=>x.i.corte), '#3a6b8f')+
+    bloco('Por cor', (()=>{ const m={};
+      L.forEach(x=>{ const cs=(x.i.cores||[]); const q=Number(x.i.qtd)||0;
+        if(!cs.length){ m['(não informada)']=(m['(não informada)']||0)+q; return; }
+        cs.forEach(c=>{ const k=tituloCaixa(c); m[k]=(m[k]||0)+Math.round(q/cs.length); }); });
+      return Object.entries(m).sort((a,b)=>b[1]-a[1]); })(), '#b08d5f');
+}
+
+/* ================= BACKUP ================= */
+function baixarBackup(){
+  const b=new Blob([JSON.stringify(S,null,2)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+  a.download='pedidos-borinelli-'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+}
+function restaurarBackup(inp){
+  const f=inp.files && inp.files[0]; if(!f) return;
+  const r=new FileReader();
+  r.onload=()=>{ try{
+      const d=JSON.parse(r.result);
+      if(!confirm('Restaurar o backup?\n\n'+(d.clientes||[]).length+' clientes e '+(d.pedidos||[]).length+' pedidos vão ser juntados com o que já existe.')) return;
+      mesclar(d); salvar(); render(); alert('Backup restaurado.');
+    }catch(e){ alert('Arquivo inválido.'); } };
+  r.readAsText(f); inp.value='';
+}
+
+/* ================= RENDER ================= */
+function render(){
+  if(aba==='clientes') renderClientes();
+  if(aba==='pedidos'){ preencherFiltros(); renderPedidos(); }
+  if(aba==='resumo') renderResumo();
+  const n=document.getElementById('nClientes'); if(n) n.textContent=S.clientes.length? '('+S.clientes.length+')':'';
+}
+
+carregar();
+document.addEventListener('DOMContentLoaded', ()=>{
+  document.getElementById('ver').textContent='v'+VERSAO;
+  document.getElementById('fEtapaCli').innerHTML='<option value="">todas</option>'+
+    ETAPAS.map(e=>'<option value="'+e.id+'">'+esc(e.nome)+'</option>').join('');
+  irPara('nova');
+  iniciarFirebase();
+});
+
+if('serviceWorker' in navigator){ window.addEventListener('load',()=>navigator.serviceWorker.register('sw.js').catch(()=>{})); }
+</script>
+</body>
+</html>

@@ -1,0 +1,12 @@
+{
+  "name": "Pedidos · Borinelli",
+  "short_name": "Pedidos",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#f6fdeb",
+  "theme_color": "#3d4d32",
+  "icons": [
+    {"src": "icone.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}

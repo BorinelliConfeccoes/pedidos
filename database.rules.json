@@ -1,0 +1,6 @@
+{
+  "rules": {
+    "estado":  { ".read": "auth != null", ".write": "auth != null" },
+    "pedidos": { ".read": "auth != null", ".write": "auth != null" }
+  }
+}
