@@ -105,6 +105,29 @@ table.tabPrinc tr:last-child td{border-bottom:0;}
 .evol .mini{color:#8a7245; margin-top:6px;}
 .mudou{color:#8a6a16; margin-top:4px;}
 
+/* ---------- orçamento ---------- */
+.orc{border:1px solid var(--linha); border-radius:11px; overflow:hidden; margin-bottom:12px; background:#fff;}
+.orcTopo{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; padding:10px 13px; background:#f4f8ec; border-bottom:1px solid var(--linha);}
+table.tabOrc th{padding:5px 10px; background:#fff;}
+table.tabOrc td{padding:7px 10px;}
+.tabOrc tr.semTab td{background:#fdf6ee;}
+.precoIn{width:84px; padding:4px 6px; font-size:13.5px; text-align:right;}
+.alertaTx{color:#a87d2f;}
+.orcSoma{padding:11px 13px; background:#fbfdf7; border-top:1px solid var(--linha);}
+.orcSoma>div{display:flex; justify-content:space-between; gap:12px; font-size:13.5px; padding:2px 0;}
+.orcSoma>div>span{color:var(--sub);}
+.orcLinha{border-top:1px solid var(--linha); margin-top:5px; padding-top:7px !important;}
+.orcLucro{border-top:2px solid var(--verde); margin-top:6px; padding-top:8px !important; font-size:16px !important;}
+.orc .aviso{margin:10px 13px 0;}
+.orc>.mini{padding:0 13px;}
+
+@media print{
+  #topo,#sidebar,nav,.cliBotoes,.cliTopo .seta,.precoIn~*,button{display:none !important;}
+  .precoIn{border:0; background:transparent;}
+  main{padding:0;} body{background:#fff;}
+  .card{break-inside:avoid; box-shadow:none;}
+}
+
 /* ---------- fotos ---------- */
 .fotos>div{display:flex; flex-wrap:wrap; gap:7px;}
 .fotos>div:not(:empty){margin-bottom:8px;}
@@ -842,8 +865,125 @@ function frasesDeDetalhe(textoCliente){
 
 if(typeof module!=='undefined') module.exports={normalizar,lerConversa,separarFalas,acharQtds,acharTermos};
 
+/* ================= CUSTO E PREÇO =================
+   Tabela oficial do Catálogo 2027 + o custo direto de cada peça.
+   Regra do Patrick: o custo direto é a âncora. Em cima dele entra o imposto
+   (10% do preço) e a margem líquida. Preço mínimo = custo ÷ 0,75 (15% líquido).
+   Mínimo do mínimo é 10% líquido — abaixo disso o app reclama.
+
+   As quatro faixas, sempre nesta ordem: 30-50 · 50-100 · 100-300 · 300-600. */
+
+const FAIXAS = ['30 a 50', '50 a 100', '100 a 300', '300 a 600'];
+
+/* chave: idDoCorte + '|' + idDaMalha  →  {custo, precos:[4]}
+   custo em branco = ainda não fechado, o app avisa em vez de inventar. */
+const TABELA = {};
+function pr(cortes, malhas, custo, precos, obs){
+  cortes.forEach(c=>malhas.forEach(m=>{ TABELA[c+'|'+m]={custo, precos, obs}; }));
+}
+
+/* ---- linha 30.1 (Giro Rápido) ---- */
+pr(['TRAD','REGATA'],            ['PENTEADA'], 21.81, [39.90,34.90,29.90,27.90]);
+pr(['TRAD','REGATA'],            ['OE'],       13.40, [24.90,22.90,19.90,17.90]);
+pr(['TRAD','REGATA'],            ['PV'],       13.40, [21.90,19.90,17.90,16.90]);
+
+pr(['MANGA_LONGA','PLUS','PLUS_FEM'], ['PENTEADA'], 27.25, [49.90,41.90,38.90,36.90]);
+pr(['MANGA_LONGA','PLUS','PLUS_FEM'], ['OE'],       16.03, [29.90,24.90,22.90,21.90]);
+pr(['MANGA_LONGA','PLUS','PLUS_FEM'], ['PV'],       16.03, [26.90,21.90,21.90,20.90]);
+
+pr(['FEM','REG_FEM'],  ['PENTEADA'], 18.55, [29.90,26.90,24.90,23.90]);
+pr(['FEM','REG_FEM'],  ['OE'],       11.82, [21.90,18.90,16.90,15.90]);
+pr(['FEM','REG_FEM'],  ['PV'],       11.82, [18.90,16.90,14.90,14.90]);
+
+pr(['CROPPED'],        ['PENTEADA'], 16.37, [27.90,24.90,22.90,20.90]);
+pr(['CROPPED'],        ['OE'],       10.77, [19.90,16.90,15.90,14.90]);
+pr(['CROPPED'],        ['PV'],       10.77, [17.90,14.90,13.90,13.90]);
+
+pr(['INF','REG_INF'],  ['PENTEADA'], 15.54, [29.90,26.90,24.90,19.90]);
+pr(['INF','REG_INF'],  ['OE'],       10.37, [21.90,18.90,16.90,15.90]);
+pr(['INF','REG_INF'],  ['PV'],       10.37, [18.90,16.90,14.90,13.90]);
+
+/* ---- Hype (oversized) ---- */
+pr(['OVER','OVER_FEM','OVER_INF','OVER_BOX'], ['SUEDINE_STRONG'], 45.13, [84.90,74.90,69.90,64.90]);
+pr(['OVER','OVER_FEM','OVER_INF','OVER_BOX'], ['SUEDINE_LIGHT'],  45.93, [79.90,69.90,64.90,59.90]);
+pr(['OVER','OVER_FEM','OVER_INF','OVER_BOX'], ['SUEDINE_PAP'],    0,     [54.90,49.90,45.90,39.90],
+   'o custo da PAP ainda não foi fechado — o lucro aqui é estimativa');
+pr(['OVER'],                                  ['PENTEADA'],       27.25, [49.90,41.90,38.90,36.90],
+   'Meia Malha Penteada 30.1 só existe na Camiseta Oversized');
+
+/* ---- Black Label ---- */
+pr(['TRAD'], ['PIMA'],   50.82, [89.90,79.90,74.90,69.90]);
+pr(['TRAD'], ['COTTON'], 27.89, [59.90,54.90,49.90,44.90]);
+
+/* ---- compra pronta ---- */
+pr(['CORTA_VENTO'], ['','TACTEL'], 35.00, [65.90,59.90,54.90,49.90]);
+pr(['SHORT'],       ['','TACTEL'], 17.00, [29.90,27.90,25.90,22.90]);
+
+/* adicionais cobrados por peça, fora do preço da camiseta */
+const ADICIONAIS = [
+  {id:'BORDADO',  nome:'Bordado',            valor:2.00, custo:1.33},
+  {id:'NECK',     nome:'Neck print na gola', valor:0.80, custo:0.53}
+];
+/* DTF é por m², muda com o tamanho da arte — entra como valor digitado */
+
+function faixaDe(q){
+  if(q<30)   return {ix:0, aviso:'abaixo do mínimo de 30 peças'};
+  if(q<50)   return {ix:0};
+  if(q<100)  return {ix:1};
+  if(q<300)  return {ix:2};
+  if(q<=600) return {ix:3};
+  return {ix:3, aviso:'acima de 600 peças — confirme o preço'};
+}
+
+/* o que o item custa e por quanto sai */
+function precoDe(corteId, malhaId, qtd){
+  const q=Number(qtd)||0;
+  const f=faixaDe(q);
+  let reg=TABELA[corteId+'|'+malhaId];
+  if(!reg && malhaId==='SUEDINE') reg=TABELA[corteId+'|SUEDINE_STRONG'];   /* "suedine" solto: assume Strong */
+  if(!reg) return {achou:false, faixa:FAIXAS[f.ix], aviso:f.aviso};
+  return {
+    achou:true,
+    custo:reg.custo,
+    preco:reg.precos[f.ix],
+    faixa:FAIXAS[f.ix],
+    aviso:[f.aviso, reg.obs].filter(Boolean).join(' · '),
+    semCusto:!reg.custo
+  };
+}
+
+/* preço mínimo: custo + imposto + 15% líquido, arredondado pra cima no ,90 */
+function precoMinimo(custo){ return arredonda90(custo/0.75); }
+function arredonda90(v){
+  /* sempre pra cima até o próximo valor terminado em 4,90 ou 9,90 */
+  const base=Math.floor(v/5)*5;
+  const c1=base+4.90, c2=base+9.90;
+  if(v<=c1+1e-9) return c1;
+  if(v<=c2+1e-9) return c2;
+  return base+14.90;
+}
+
+/* a conta de uma linha do orçamento */
+function contaItem(it){
+  const q=Number(it.qtd)||0;
+  const p=precoDe(it.corteId||'', malhaIdDe(it.malha), q);
+  const preco = Number(it.precoManual)>0 ? Number(it.precoManual) : (p.preco||0);
+  const custo = p.custo||0;
+  const fat=q*preco, cst=q*custo, imp=fat*0.10;
+  const lucro=fat-cst-imp;
+  return {
+    q, preco, custo, faixa:p.faixa, aviso:p.aviso, achou:p.achou, semCusto:p.semCusto,
+    manual: Number(it.precoManual)>0,
+    minimo: custo? precoMinimo(custo) : 0,
+    fat, cst, imp, lucro,
+    margem: fat>0? lucro/fat*100 : 0
+  };
+}
+function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id : ''; }
+const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
+
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='1.6.0';
+const VERSAO='1.7.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -1659,6 +1799,7 @@ function blocoCliente(c){
 
     (ab? '<div class="cliCorpo">'+
       (semQtd? '<div class="aviso" style="margin-bottom:10px;">Tem peça sem quantidade. Clique em <b>Editar</b> e preencha.</div>':'')+
+      blocoOrcamento(c.id)+
       (det.length||ext.length? '<div class="chips" style="margin-bottom:9px;">'+
         det.map(id=>'<span class="chip on">'+esc((DETALHES.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
         ext.map(id=>'<span class="chip">'+esc((EXTRAS.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
@@ -1732,6 +1873,87 @@ function editarPedido(id){
   document.getElementById('cfObs').value=p.obs||'';
   document.getElementById('cfEmpresa').value=c.empresa||'';
   document.getElementById('confBox').style.display='';
+}
+
+
+/* ================= ORÇAMENTO =================
+   Custo direto é a âncora: em cima dele vai o imposto (10%) e a margem.
+   O que o app mostra é quanto entra, quanto sai e o que sobra. */
+function orcamentoDoCliente(cid){
+  const linhas=itensDoCliente(cid).map(i=>({it:i, c:contaItem(i)}));
+  const t={fat:0, cst:0, imp:0, lucro:0, pecas:0};
+  linhas.forEach(({c})=>{ t.fat+=c.fat; t.cst+=c.cst; t.imp+=c.imp; t.lucro+=c.lucro; t.pecas+=c.q; });
+  t.margem=t.fat>0? t.lucro/t.fat*100 : 0;
+  return {linhas, t};
+}
+function blocoOrcamento(cid){
+  const {linhas, t}=orcamentoDoCliente(cid);
+  if(!linhas.length) return '';
+  const semTab=linhas.filter(x=>!x.c.achou);
+  const semQ  =linhas.filter(x=>!x.c.q);
+  const corMargem=m=>m<10? '#a63d2f' : (m<15? '#a87d2f' : '#3d6b32');
+
+  return '<div class="orc">'+
+    '<div class="orcTopo"><b>Orçamento</b>'+
+      '<span class="mini">preços do Catálogo 2027 · faixa pela quantidade de cada peça</span></div>'+
+    '<div class="rolar"><table class="tabOrc">'+
+      '<tr><th>Peça</th><th class="num">Qtd</th><th class="num">Custo un</th>'+
+      '<th class="num">Mínimo</th><th class="num">Preço un</th><th class="num">Total</th><th class="num">Lucro</th></tr>'+
+      linhas.map(({it,c},ix)=>{
+        if(!c.achou) return '<tr class="semTab"><td><b>'+esc(it.corte||'?')+'</b> <span class="mini">'+esc(it.malha||'sem malha')+'</span></td>'+
+          '<td class="num">'+(c.q||'—')+'</td><td colspan="5" class="mini">não tenho preço fechado pra essa combinação</td></tr>';
+        return '<tr>'+
+          '<td><b>'+esc(it.corte)+'</b> <span class="mini">'+esc(it.malha)+'</span>'+
+            '<div class="mini">faixa '+esc(c.faixa)+(c.aviso? ' · <span class="alertaTx">'+esc(c.aviso)+'</span>':'')+'</div></td>'+
+          '<td class="num">'+(c.q||'<span class="falta">—</span>')+'</td>'+
+          '<td class="num mini">'+(c.custo? reais(c.custo):'—')+'</td>'+
+          '<td class="num mini">'+(c.minimo? reais(c.minimo):'—')+'</td>'+
+          '<td class="num"><input class="precoIn" type="number" step="0.01" min="0" value="'+(c.preco||'')+
+            '" onchange="mudarPreco(\''+cid+'\','+ix+',this.value)"'+(c.manual?' style="border-color:var(--dourado)"':'')+'></td>'+
+          '<td class="num"><b>'+(c.fat? reais(c.fat):'—')+'</b></td>'+
+          '<td class="num"><span style="color:'+corMargem(c.margem)+'">'+(c.fat? reais(c.lucro)+' <span class="mini">'+c.margem.toFixed(1)+'%</span>':'—')+'</span></td>'+
+        '</tr>';
+      }).join('')+
+    '</table></div>'+
+
+    '<div class="orcSoma">'+
+      '<div><span>Custo direto</span><b>'+reais(t.cst)+'</b></div>'+
+      '<div><span>Imposto (10%)</span><b>'+reais(t.imp)+'</b></div>'+
+      '<div class="orcLinha"><span>Faturamento</span><b>'+reais(t.fat)+'</b></div>'+
+      '<div class="orcLucro"><span>Lucro líquido</span><b style="color:'+corMargem(t.margem)+'">'+
+        reais(t.lucro)+' · '+t.margem.toFixed(1)+'%</b></div>'+
+    '</div>'+
+    (t.margem>0 && t.margem<10? '<div class="aviso">Margem abaixo de 10% — o seu mínimo do mínimo. Suba o preço ou reveja a quantidade.</div>':'')+
+    (semQ.length? '<div class="aviso">'+semQ.length+' peça'+(semQ.length>1?'s':'')+' sem quantidade. O total está por baixo.</div>':'')+
+    (semTab.length? '<div class="aviso">'+semTab.length+' combinação'+(semTab.length>1?'ões':'')+' sem preço fechado — digite o preço na mão ou me peça pra incluir.</div>':'')+
+    '<div class="mini" style="margin-top:8px;">Etiqueta, tag, embalagem, estampa e modelagem são cobrados à parte e não estão aqui.</div>'+
+    '<div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">'+
+      '<button class="acao mini sec" onclick="copiarOrcamento(\''+cid+'\')">Copiar resumo</button>'+
+      '<button class="acao mini sec" onclick="window.print()">Imprimir</button>'+
+    '</div></div>';
+}
+/* preço digitado à mão vence a tabela; fica gravado no item */
+function mudarPreco(cid, ix, valor){
+  const alvo=itensDoCliente(cid)[ix]; if(!alvo) return;
+  const v=Number(valor)||0;
+  pedidosDe(cid).forEach(p=>(p.itens||[]).forEach(i=>{
+    if(mesmoItem(i, alvo)){ i.precoManual = v>0? v : ''; p.ts=Date.now(); }
+  }));
+  salvar(); render();
+}
+function copiarOrcamento(cid){
+  const c=clienteDe(cid), {linhas,t}=orcamentoDoCliente(cid);
+  const txt=[c.nome, ''].concat(
+    linhas.filter(x=>x.c.achou && x.c.q).map(x=>
+      x.c.q+' × '+x.it.corte+' '+x.it.malha+
+      ((x.it.cores||[]).length? ' '+x.it.cores.map(tituloCaixa).join('/'):'')+
+      ' — '+reais(x.c.preco)+' un = '+reais(x.c.fat)),
+    ['', 'Total: '+reais(t.fat)+' ('+t.pecas.toLocaleString('pt-BR')+' peças)',
+     'Etiqueta, tag, embalagem e estampa à parte.']).join('\n');
+  if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>alert('Resumo copiado.'),()=>{});
+  document.getElementById('modalCorpo').innerHTML='<h3>Resumo do orçamento</h3><pre>'+esc(txt)+'</pre>'+
+    '<div class="mini">Só o valor unitário vai pro cliente — o total fica com você.</div>';
+  document.getElementById('modal').classList.add('on');
 }
 
 /* ================= 3. PEDIDOS: tudo numa tabela só ================= */
