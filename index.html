@@ -76,14 +76,28 @@ a.acao.wpp{background:#1f7a4d; margin-bottom:9px;}
   padding:5px 11px; border-radius:20px; font-size:12.5px; cursor:pointer; user-select:none;}
 .chip.on{background:var(--verde); border-color:var(--verde); color:#fff;}
 
-/* ---------- clientes ---------- */
+/* ---------- clientes: bloco limpo, tabela na cara ---------- */
 .card.cli{padding:0; overflow:hidden;}
 .cliTopo{display:flex; align-items:center; gap:10px; padding:13px 15px; cursor:pointer;}
 .cliTopo:hover{background:#fafcf6;}
-.cliCorpo{padding:0 15px 14px; border-top:1px solid var(--linha);}
-.ped{border:1px solid var(--linha); border-radius:10px; padding:11px; margin-top:11px; background:#fcfdf9;}
-.pedTopo{display:flex; align-items:center; gap:9px; flex-wrap:wrap; margin-bottom:8px;}
-.item{border:1px dashed var(--linha); border-radius:10px; padding:11px; margin-bottom:9px; background:#fcfdf9;}
+.cliNome{flex:1 1 auto; min-width:0;}
+.cliNome b{font-size:16px;}
+.seta{color:var(--sub); font-size:12px; width:12px;}
+table.tabPrinc{border-top:1px solid var(--linha);}
+table.tabPrinc th{background:#f4f8ec; padding:5px 15px;}
+table.tabPrinc td{padding:8px 15px;}
+table.tabPrinc tr:last-child td{border-bottom:0;}
+.num{text-align:right; white-space:nowrap;}
+.falta{color:#a87d2f; font-size:12px; font-style:italic;}
+.somaLinha td{background:#f4f8ec; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--sub);}
+.somaLinha td b{font-size:14px; color:var(--ink); letter-spacing:0;}
+.cliBotoes{display:flex; flex-wrap:wrap; gap:4px; padding:9px 15px; border-top:1px solid var(--linha); background:#fbfdf7;}
+.pill{border:1px solid var(--linha); background:#fff; color:var(--sub); border-radius:20px;
+  padding:3px 11px; font-family:inherit; font-size:11.5px; cursor:pointer;}
+.pill:hover{background:#eef3e6;}
+.pill.on{color:#fff; font-weight:600;}
+.cliCorpo{padding:13px 15px; border-top:1px solid var(--linha);}
+.cliAcoes{display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;}
 
 /* ---------- fotos ---------- */
 .fotos>div{display:flex; flex-wrap:wrap; gap:7px;}
@@ -96,6 +110,11 @@ a.acao.wpp{background:#1f7a4d; margin-bottom:9px;}
 #fotosMsg:not(:empty){margin-top:6px;}
 
 /* ---------- tabelas ---------- */
+th.ord{cursor:pointer; user-select:none;}
+th.ord:hover{color:var(--verde);}
+th.ord.on{color:var(--verde);}
+#tabPedidos tr:not(:first-child):not(.somaLinha){cursor:pointer;}
+#tabPedidos tr:not(:first-child):not(.somaLinha):hover td{background:#fafcf6;}
 table{width:100%; border-collapse:collapse; font-size:13.5px;}
 th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--sub);
   border-bottom:1px solid var(--linha); padding:6px 7px; font-weight:600; white-space:nowrap;}
@@ -206,6 +225,7 @@ tr:last-child td{border-bottom:0;}
         <div class="linha" style="margin:0;">
           <div><label>Peça / corte</label><select id="fCorte" data-vazio="todas as peças" onchange="renderPedidos()"></select></div>
           <div><label>Malha</label><select id="fMalha" data-vazio="todas as malhas" onchange="renderPedidos()"></select></div>
+          <div><label>Cor</label><select id="fCor" data-vazio="todas as cores" onchange="renderPedidos()"></select></div>
           <div><label>Etapa</label><select id="fEtapa" data-vazio="todas as etapas" onchange="renderPedidos()"></select></div>
         </div>
         <div class="mini" id="resPedidos" style="margin-top:8px;"></div>
@@ -700,7 +720,7 @@ function frasesDeDetalhe(textoCliente){
 if(typeof module!=='undefined') module.exports={normalizar,lerConversa,separarFalas,acharQtds,acharTermos};
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='1.4.0';
+const VERSAO='1.5.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -1059,13 +1079,19 @@ function salvarPedido(){
     const ficou=new Set(fotosTemp.map(f=>f.id));
     (editandoPedido.fotos||[]).forEach(f=>{ if(!ficou.has(f.id)) idbDel(f.id); });
   }
-  if(editandoPedido){ S.pedidos=S.pedidos.filter(p=>p.id!==ped.id); }
-  S.pedidos.push(ped);
+  if(editandoPedido){
+    S.pedidos=S.pedidos.filter(p=>p.id!==ped.id);
+    S.pedidos.push(ped);
+  } else {
+    /* mesmo cliente é um registro só: junta no que ele já tem */
+    const ja=pedidosDe(cli.id)[0];
+    if(ja) fundirNoPedido(ja, ped); else S.pedidos.push(ped);
+  }
   fotosTemp=[];
   salvar();
   limparConversa();
   irPara('clientes');
-  setTimeout(()=>abrirCliente(cli.id), 60);
+  setTimeout(()=>{ abertos[cli.id]=true; render(); }, 60);
 }
 
 /* ================= 1b. IMPORTAR CONVERSAS EXPORTADAS =================
@@ -1380,9 +1406,9 @@ function salvarLote(){
     if(candidato.itens.length>1)
       candidato.itens=candidato.itens.filter(i=>i.corte||i.malha||i.qtd>0);
 
-    /* já existe um pedido com essa mesma conversa? então é ela de novo, não outra */
-    const igual=pedidosDe(cli.id).find(p=>mesmaConversa(p.conversa, candidato.conversa));
-    if(igual){ fundirNoPedido(igual, candidato); fundidos++; }
+    /* mesmo número é uma coisa só: entra no registro que o cliente já tem */
+    const ja=pedidosDe(cli.id)[0];
+    if(ja){ fundirNoPedido(ja, candidato); fundidos++; }
     else S.pedidos.push(candidato);
     g.salvo=true;
   });
@@ -1399,87 +1425,141 @@ function salvarLote(){
   alert('Importado: '+(partes.join(' · ')||'nada')+'.');
 }
 
-/* ================= 2. CLIENTES ================= */
-let abertos={};
+/* ================= 2. CLIENTES =================
+   Um cliente, um bloco, uma tabela: peça · malha · cor · quantidade.
+   Foto, detalhe e conversa ficam atrás de botão — na tela principal só entra
+   o que ele precisa bater o olho e entender. */
+var abertos={};
 function abrirCliente(id){ abertos[id]=!abertos[id]; render(); }
+
+/* tudo o que o cliente pediu, de todos os pedidos dele, numa lista só */
+function itensDoCliente(cid){
+  const out=[];
+  pedidosDe(cid).forEach(p=>(p.itens||[]).forEach(i=>{
+    const ja=out.find(x=>mesmoItem(x,i));
+    if(!ja) return out.push({...i, cores:[...(i.cores||[])], tamanhos:[...(i.tamanhos||[])]});
+    ja.qtd=Math.max(Number(ja.qtd)||0, Number(i.qtd)||0);
+    ja.cores=[...new Set([...ja.cores, ...(i.cores||[])])];
+    ja.tamanhos=[...new Set([...ja.tamanhos, ...(i.tamanhos||[])])];
+    if(!ja.malha && i.malha){ ja.malha=i.malha; ja.gramatura=i.gramatura||''; }
+  }));
+  return out;
+}
+const fotosDoCliente=cid=>pedidosDe(cid).flatMap(p=>(p.fotos||[]).map(f=>({...f, pedId:p.id})));
+const detalhesDoCliente=cid=>[...new Set(pedidosDe(cid).flatMap(p=>p.detalhes||[]))];
+const extrasDoCliente=cid=>[...new Set(pedidosDe(cid).flatMap(p=>p.extras||[]))];
+function comoQuerDoCliente(cid){
+  const l=new Set();
+  pedidosDe(cid).forEach(p=>(p.comoQuer||'').split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>l.add(x)));
+  return [...l];
+}
+const qtdDoCliente=cid=>itensDoCliente(cid).reduce((s,i)=>s+(Number(i.qtd)||0),0);
+/* a etapa do cliente é a do pedido mais recente */
+const etapaDoCliente=cid=>{ const p=pedidosDe(cid)[0]; return p? p.etapa : 'novo'; };
 
 function renderClientes(){
   const busca=normalizar(document.getElementById('buscaCli').value||'');
   const fEtapa=document.getElementById('fEtapaCli').value;
   let lista=S.clientes.slice();
   if(busca) lista=lista.filter(c=>{
-    const peds=pedidosDe(c.id);
-    const txt=normalizar([c.nome,c.telefone,c.empresa, peds.map(p=>(p.itens||[]).map(i=>i.corte+' '+i.malha+' '+(i.cores||[]).join(' ')).join(' ')).join(' ')].join(' '));
+    const txt=normalizar([c.nome, c.telefone, c.empresa,
+      itensDoCliente(c.id).map(i=>i.corte+' '+i.malha+' '+(i.cores||[]).join(' ')).join(' ')].join(' '));
     return txt.includes(busca);
   });
-  if(fEtapa) lista=lista.filter(c=>pedidosDe(c.id).some(p=>p.etapa===fEtapa));
+  if(fEtapa) lista=lista.filter(c=>etapaDoCliente(c.id)===fEtapa);
   lista.sort((a,b)=>{
-    const ua=Math.max(a.ts||0, ...pedidosDe(a.id).map(p=>p.criado||0));
-    const ub=Math.max(b.ts||0, ...pedidosDe(b.id).map(p=>p.criado||0));
-    return ub-ua;
+    const u=c=>Math.max(c.ts||0, ...pedidosDe(c.id).map(p=>p.criado||0), 0);
+    return u(b)-u(a);
   });
 
   const box=document.getElementById('listaCli');
-  if(!lista.length){ box.innerHTML='<div class="card vazio">'+(S.clientes.length? 'Nenhum cliente nesse filtro.' : 'Nenhum cliente ainda. Cole uma conversa na aba <b>Nova conversa</b>.')+'</div>'; return; }
+  if(!lista.length){
+    box.innerHTML='<div class="card vazio">'+(S.clientes.length? 'Nenhum cliente nesse filtro.'
+      : 'Ainda não tem ninguém aqui. Vá em <b>Nova conversa</b> e cole ou importe as conversas.')+'</div>';
+    return;
+  }
+  box.innerHTML=lista.map(c=>blocoCliente(c)).join('');
+}
 
-  box.innerHTML=lista.map(c=>{
-    const peds=pedidosDe(c.id);
-    const total=peds.reduce((s,p)=>s+pecasDo(p),0);
-    const ult=peds[0];
-    const ab=abertos[c.id];
-    return '<div class="card cli">'+
-      '<div class="cliTopo" onclick="abrirCliente(\''+c.id+'\')">'+
-        '<div><b>'+esc(c.nome)+'</b>'+(c.empresa?' <span class="mini">· '+esc(c.empresa)+'</span>':'')+
-          '<div class="mini">'+(c.telefone? esc(c.telefone)+' · ':'')+peds.length+' pedido'+(peds.length!==1?'s':'')+
-          (total? ' · '+total.toLocaleString('pt-BR')+' peças':'')+'</div></div>'+
-        '<div style="text-align:right; white-space:nowrap;">'+
-          (ult? '<span class="tag" style="background:'+etapaDe(ult.etapa).cor+'">'+esc(etapaDe(ult.etapa).nome)+'</span>':'')+
-          '<div class="mini">'+(ult? fmtData(ult.criado):'')+'</div></div>'+
+function blocoCliente(c){
+  const itens=itensDoCliente(c.id);
+  const total=itens.reduce((s,i)=>s+(Number(i.qtd)||0),0);
+  const e=etapaDe(etapaDoCliente(c.id));
+  const fotos=fotosDoCliente(c.id);
+  const det=detalhesDoCliente(c.id), ext=extrasDoCliente(c.id), como=comoQuerDoCliente(c.id);
+  const ab=abertos[c.id];
+  const peds=pedidosDe(c.id);
+  const semQtd=itens.some(i=>!(Number(i.qtd)>0));
+
+  return '<div class="card cli">'+
+    '<div class="cliTopo" onclick="abrirCliente(\''+c.id+'\')">'+
+      '<div class="cliNome">'+
+        '<b>'+esc(c.nome)+'</b>'+(c.empresa? ' <span class="mini">· '+esc(c.empresa)+'</span>':'')+
+        '<div class="mini">'+[c.telefone? esc(c.telefone):'',
+           total? total.toLocaleString('pt-BR')+' peças':'',
+           fotos.length? fotos.length+(fotos.length>1?' fotos':' foto'):''].filter(Boolean).join(' · ')+'</div>'+
       '</div>'+
-      (ab? '<div class="cliCorpo">'+
-        '<div style="display:flex; gap:7px; flex-wrap:wrap; margin-bottom:4px;">'+
-        (c.telefone? '<a class="acao mini wpp" target="_blank" href="https://wa.me/55'+soDigitos(c.telefone)+'">Abrir no WhatsApp</a>':'')+
-        (peds.length>1? '<button class="acao mini sec" onclick="juntarPedidosDoCliente(\''+c.id+'\')">⇅ Juntar os '+peds.length+' num só</button>':'')+
-        '</div>'+
-        peds.map(p=>cardPedido(p)).join('')+'</div>' : '')+
-    '</div>';
-  }).join('');
+      '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>'+
+      '<span class="seta">'+(ab?'▾':'▸')+'</span>'+
+    '</div>'+
+
+    (itens.length? '<div class="rolar"><table class="tabPrinc">'+
+      '<tr><th>Peça</th><th>Malha</th><th>Cor</th><th class="num">Qtd</th><th>Tam</th></tr>'+
+      itens.map(i=>'<tr>'+
+        '<td><b>'+esc(i.corte||'—')+'</b></td>'+
+        '<td>'+esc(i.malha||'—')+(i.gramatura? ' <span class="mini">'+esc(i.gramatura)+'</span>':'')+'</td>'+
+        '<td>'+esc((i.cores||[]).map(tituloCaixa).join(', ')||'—')+'</td>'+
+        '<td class="num">'+(Number(i.qtd)>0? '<b>'+Number(i.qtd).toLocaleString('pt-BR')+'</b>'
+                            : '<span class="falta">a definir</span>')+'</td>'+
+        '<td class="mini">'+esc((i.tamanhos||[]).join(' ')||'—')+'</td></tr>').join('')+
+      (itens.length>1? '<tr class="somaLinha"><td colspan="3">total</td><td class="num"><b>'+
+        total.toLocaleString('pt-BR')+'</b></td><td></td></tr>':'')+
+      '</table></div>'
+     : '<div class="mini" style="padding:10px 15px;">Nada reconhecido nessa conversa — abra e preencha à mão.</div>')+
+
+    '<div class="cliBotoes">'+
+      ETAPAS.map(x=>'<button class="pill'+(x.id===etapaDoCliente(c.id)?' on':'')+'"'+
+        (x.id===etapaDoCliente(c.id)?' style="background:'+x.cor+';border-color:'+x.cor+'"':'')+
+        ' onclick="mudarEtapaCliente(\''+c.id+'\',\''+x.id+'\')">'+esc(x.nome)+'</button>').join('')+
+    '</div>'+
+
+    (ab? '<div class="cliCorpo">'+
+      (semQtd? '<div class="aviso" style="margin-bottom:10px;">Tem peça sem quantidade. Clique em <b>Editar</b> e preencha.</div>':'')+
+      (det.length||ext.length? '<div class="chips" style="margin-bottom:9px;">'+
+        det.map(id=>'<span class="chip on">'+esc((DETALHES.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
+        ext.map(id=>'<span class="chip">'+esc((EXTRAS.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
+        '</div>':'')+
+      (como.length? '<div class="obs"><b>Como quer a peça</b><br>'+como.map(esc).join('<br>')+'</div>':'')+
+      (fotos.length? '<div class="fotos" style="margin-top:10px;"><div>'+
+        fotos.map(f=>'<div class="foto"><img src="'+f.thumb+'" alt="estampa" '+
+          'onclick="abrirFoto(\''+f.pedId+'\',\''+f.id+'\')"></div>').join('')+'</div></div>':'')+
+      '<div class="cliAcoes">'+
+        (c.telefone? '<a class="acao mini wpp" target="_blank" href="https://wa.me/55'+soDigitos(c.telefone)+'">WhatsApp</a>':'')+
+        peds.map((p,k)=>'<button class="acao mini sec" onclick="editarPedido(\''+p.id+'\')">Editar'+
+          (peds.length>1? ' ('+(k+1)+')':'')+'</button>').join('')+
+        (peds.some(p=>p.conversa)? '<button class="acao mini sec" onclick="verConversa(\''+
+          (peds.find(p=>p.conversa)||{}).id+'\')">Ver conversa</button>':'')+
+        (peds.length>1? '<button class="acao mini sec" onclick="juntarPedidosDoCliente(\''+c.id+'\')">⇅ Juntar '+peds.length+' num só</button>':'')+
+        '<button class="acao mini alerta" onclick="excluirCliente(\''+c.id+'\')">Excluir cliente</button>'+
+      '</div></div>' : '')+
+  '</div>';
 }
 
-function cardPedido(p){
-  const e=etapaDe(p.etapa);
-  return '<div class="ped">'+
-    '<div class="pedTopo">'+
-      '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>'+
-      '<span class="mini">'+fmtData(p.criado)+(p.prazo? ' · prazo '+esc(p.prazo):'')+'</span>'+
-      '<span style="margin-left:auto;">'+
-        ETAPAS.map(x=>'<button class="acao mini '+(x.id===p.etapa?'':'sec')+'" style="margin-left:3px;'+(x.id===p.etapa?'background:'+x.cor+';':'')+'" onclick="mudarEtapa(\''+p.id+'\',\''+x.id+'\')">'+esc(x.nome)+'</button>').join('')+
-      '</span>'+
-    '</div>'+
-    '<table class="tabItens"><tr><th>Peça</th><th>Malha</th><th>Qtd</th><th>Cores</th><th>Tamanhos</th></tr>'+
-    (p.itens||[]).map(i=>'<tr><td><b>'+esc(i.corte||'—')+'</b></td><td>'+esc(i.malha||'—')+
-      (i.gramatura? ' <span class="mini">'+esc(i.gramatura)+'</span>':'')+'</td>'+
-      '<td>'+(Number(i.qtd)>0? '<b>'+Number(i.qtd).toLocaleString('pt-BR')+'</b>':'—')+'</td>'+
-      '<td>'+esc((i.cores||[]).map(tituloCaixa).join(', ')||'—')+'</td>'+
-      '<td>'+esc((i.tamanhos||[]).join(' ')||'—')+'</td></tr>').join('')+
-    '</table>'+
-    ((p.fotos||[]).length? '<div class="fotos" style="margin-top:9px;"><div>'+
-      p.fotos.map(f=>'<div class="foto"><img src="'+f.thumb+'" alt="estampa" title="'+esc(f.nome||'')+'" '+
-        'onclick="abrirFoto(\''+p.id+'\',\''+f.id+'\')"></div>').join('')+'</div></div>':'')+
-    ((p.detalhes||[]).length? '<div class="chips" style="margin-top:7px;">'+
-      p.detalhes.map(id=>'<span class="chip on">'+esc((DETALHES.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+'</div>':'')+
-    (p.comoQuer? '<div class="obs"><b>Como quer a peça</b><br>'+esc(p.comoQuer).replace(/\n/g,'<br>')+'</div>':'')+
-    ((p.extras||[]).length? '<div class="mini" style="margin-top:6px;">Acabamentos: '+p.extras.map(id=>esc((EXTRAS.find(x=>x.id===id)||{}).nome||id)).join(' · ')+'</div>':'')+
-    (p.obs? '<div class="obs">'+esc(p.obs)+'</div>':'')+
-    '<div style="margin-top:8px; display:flex; gap:6px; flex-wrap:wrap;">'+
-      '<button class="acao mini sec" onclick="editarPedido(\''+p.id+'\')">Editar</button>'+
-      (p.conversa? '<button class="acao mini sec" onclick="verConversa(\''+p.id+'\')">Ver conversa</button>':'')+
-      '<button class="acao mini alerta" onclick="excluirPedido(\''+p.id+'\')">Excluir</button>'+
-    '</div></div>';
+function mudarEtapaCliente(cid, etapa){
+  event && event.stopPropagation && event.stopPropagation();
+  pedidosDe(cid).forEach(p=>{ p.etapa=etapa; p.ts=Date.now(); });
+  salvar(); render();
 }
-function mudarEtapa(id, etapa){
-  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
-  p.etapa=etapa; p.ts=Date.now(); salvar(); render();
+function excluirCliente(cid){
+  const c=clienteDe(cid); if(!c) return;
+  const peds=pedidosDe(cid);
+  if(!confirm('Excluir '+c.nome+' e tudo que ele pediu?\n\nIsso apaga '+peds.length+
+              ' pedido'+(peds.length!==1?'s':'')+'. Não dá pra desfazer.')) return;
+  peds.forEach(p=>{ (p.fotos||[]).forEach(f=>idbDel(f.id)); S.removidos=[...new Set([...(S.removidos||[]), p.id])]; });
+  S.removidos=[...new Set([...(S.removidos||[]), cid])];
+  S.pedidos=S.pedidos.filter(p=>p.clienteId!==cid);
+  S.clientes=S.clientes.filter(x=>x.id!==cid);
+  salvar(); render();
 }
 function verConversa(id){
   const p=S.pedidos.find(x=>x.id===id); if(!p) return;
@@ -1487,103 +1567,143 @@ function verConversa(id){
   document.getElementById('modal').classList.add('on');
 }
 function fecharModal(){ document.getElementById('modal').classList.remove('on'); }
+function mudarEtapa(id, etapa){
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  p.etapa=etapa; p.ts=Date.now(); salvar(); render();
+}
 function excluirPedido(id){
   const p=S.pedidos.find(x=>x.id===id); if(!p) return;
-  if(!confirm('Excluir este pedido?\n\nO cliente continua cadastrado.')) return;
+  if(!confirm('Excluir este pedido?')) return;
   (p.fotos||[]).forEach(f=>idbDel(f.id));
   S.removidos=[...new Set([...(S.removidos||[]), id])];
   S.pedidos=S.pedidos.filter(x=>x.id!==id);
   salvar(); render();
 }
+
 function editarPedido(id){
   const p=S.pedidos.find(x=>x.id===id); if(!p) return;
   const c=clienteDe(p.clienteId)||{};
   editandoPedido=p; lidoAtual=null;
   fotosTemp=(p.fotos||[]).map(f=>({...f}));
-  /* repõe as grandes que estão neste aparelho, senão salvar de novo perderia elas */
   fotosTemp.forEach(f=>idbGet(f.id).then(g=>{ if(g) f.grande=g; }));
   irPara('nova');
   document.getElementById('txtConversa').value=p.conversa||'';
   montarConferencia({itens:p.itens||[], extras:(p.extras||[]).map(x=>({id:x})),
-                     detalhes:(p.detalhes||[]).map(x=>({id:x})), comoQuer:(p.comoQuer||'').split('\n'),
-                     prazo:p.prazo||'', avisos:[], telefone:c.telefone||'', nome:c.nome||'', formatoExport:false}, '');
+    detalhes:(p.detalhes||[]).map(x=>({id:x})), comoQuer:(p.comoQuer||'').split('\n'),
+    prazo:p.prazo||'', avisos:[], telefone:c.telefone||'', nome:c.nome||'',
+    autores:[], formatoExport:false}, '');
   document.getElementById('cfEtapa').value=etapaDe(p.etapa).nome;
   document.getElementById('cfObs').value=p.obs||'';
+  document.getElementById('cfEmpresa').value=c.empresa||'';
   document.getElementById('confBox').style.display='';
 }
 
-/* ================= 3. PEDIDOS (tudo numa tabela) ================= */
+/* ================= 3. PEDIDOS: tudo numa tabela só ================= */
+var ordem={campo:'cliente', cresc:true};
 function linhasPedidos(){
   const out=[];
-  S.pedidos.forEach(p=>{
-    const c=clienteDe(p.clienteId)||{nome:'(sem cliente)'};
-    (p.itens||[]).forEach(i=>out.push({p, c, i}));
+  S.clientes.forEach(c=>{
+    const et=etapaDoCliente(c.id);
+    itensDoCliente(c.id).forEach(i=>out.push({
+      cliente:c.nome, telefone:c.telefone||'', cid:c.id, etapa:et,
+      peca:i.corte||'', malha:i.malha||'',
+      cor:(i.cores||[]).map(tituloCaixa).join(', '),
+      qtd:Number(i.qtd)||0, tam:(i.tamanhos||[]).join(' ')
+    }));
   });
-  return out.sort((a,b)=>b.p.criado-a.p.criado);
+  return out;
+}
+function ordenar(campo){
+  ordem = ordem.campo===campo? {campo, cresc:!ordem.cresc} : {campo, cresc:true};
+  renderPedidos();
 }
 function renderPedidos(){
-  const fC=document.getElementById('fCorte').value, fM=document.getElementById('fMalha').value, fE=document.getElementById('fEtapa').value;
+  const fC=document.getElementById('fCorte').value, fM=document.getElementById('fMalha').value,
+        fE=document.getElementById('fEtapa').value, fCor=document.getElementById('fCor').value;
   let L=linhasPedidos();
-  if(fC) L=L.filter(x=>x.i.corte===fC);
-  if(fM) L=L.filter(x=>x.i.malha===fM);
-  if(fE) L=L.filter(x=>x.p.etapa===fE);
-  const tot=L.reduce((s,x)=>s+(Number(x.i.qtd)||0),0);
-  document.getElementById('resPedidos').innerHTML=L.length?
-    '<b>'+L.length+'</b> linha'+(L.length!==1?'s':'')+' · <b>'+tot.toLocaleString('pt-BR')+'</b> peças':'';
+  if(fC)   L=L.filter(x=>x.peca===fC);
+  if(fM)   L=L.filter(x=>x.malha===fM);
+  if(fE)   L=L.filter(x=>x.etapa===fE);
+  if(fCor) L=L.filter(x=>x.cor.split(', ').includes(fCor));
+  const s=ordem.cresc?1:-1;
+  L.sort((a,b)=>{
+    const va=a[ordem.campo], vb=b[ordem.campo];
+    if(typeof va==='number') return (va-vb)*s;
+    return String(va).localeCompare(String(vb),'pt-BR')*s;
+  });
+  const tot=L.reduce((x,y)=>x+y.qtd,0);
+  document.getElementById('resPedidos').innerHTML = L.length?
+    '<b>'+L.length+'</b> linha'+(L.length!==1?'s':'')+' · <b>'+tot.toLocaleString('pt-BR')+'</b> peças' : '';
+
+  const th=(campo,rot,cls)=>'<th class="'+(cls||'')+' ord'+(ordem.campo===campo?' on':'')+'" onclick="ordenar(\''+campo+'\')">'+
+    rot+(ordem.campo===campo? (ordem.cresc?' ▲':' ▼'):'')+'</th>';
   document.getElementById('tabPedidos').innerHTML = L.length?
-    '<tr><th>Cliente</th><th>Peça</th><th>Malha</th><th>Qtd</th><th>Cores</th><th>Tamanhos</th><th>Etapa</th><th>Data</th></tr>'+
-    L.map(x=>'<tr><td><b>'+esc(x.c.nome)+'</b></td><td>'+esc(x.i.corte||'—')+'</td><td>'+esc(x.i.malha||'—')+'</td>'+
-      '<td>'+(Number(x.i.qtd)>0? '<b>'+Number(x.i.qtd).toLocaleString('pt-BR')+'</b>':'—')+'</td>'+
-      '<td>'+esc((x.i.cores||[]).map(tituloCaixa).join(', ')||'—')+'</td>'+
-      '<td>'+esc((x.i.tamanhos||[]).join(' ')||'—')+'</td>'+
-      '<td><span class="tag" style="background:'+etapaDe(x.p.etapa).cor+'">'+esc(etapaDe(x.p.etapa).nome)+'</span></td>'+
-      '<td class="mini">'+fmtData(x.p.criado)+'</td></tr>').join('')
-    : '<tr><td class="vazio">Nenhum pedido nesse filtro.</td></tr>';
+    '<tr>'+th('cliente','Nome')+th('cor','Cor')+th('malha','Malha')+th('qtd','Qtd','num')+
+      th('peca','Peça')+'<th>Tam</th>'+th('etapa','Etapa')+'</tr>'+
+    L.map(x=>'<tr onclick="irAoCliente(\''+x.cid+'\')">'+
+      '<td><b>'+esc(x.cliente)+'</b></td>'+
+      '<td>'+esc(x.cor||'—')+'</td>'+
+      '<td>'+esc(x.malha||'—')+'</td>'+
+      '<td class="num">'+(x.qtd? '<b>'+x.qtd.toLocaleString('pt-BR')+'</b>':'<span class="falta">a definir</span>')+'</td>'+
+      '<td>'+esc(x.peca||'—')+'</td>'+
+      '<td class="mini">'+esc(x.tam||'—')+'</td>'+
+      '<td><span class="tag" style="background:'+etapaDe(x.etapa).cor+'">'+esc(etapaDe(x.etapa).nome)+'</span></td></tr>').join('')+
+    '<tr class="somaLinha"><td colspan="3">total</td><td class="num"><b>'+tot.toLocaleString('pt-BR')+
+      '</b></td><td colspan="3"></td></tr>'
+    : '<tr><td class="vazio">Nada nesse filtro.</td></tr>';
 }
+function irAoCliente(cid){ abertos[cid]=true; irPara('clientes'); }
 function preencherFiltros(){
   const L=linhasPedidos();
   const enche=(id, vals)=>{
-    const el=document.getElementById(id); const atual=el.value;
-    el.innerHTML='<option value="">'+el.dataset.vazio+'</option>'+vals.map(v=>'<option'+(v===atual?' selected':'')+'>'+esc(v)+'</option>').join('');
+    const el=document.getElementById(id), atual=el.value;
+    el.innerHTML='<option value="">'+el.dataset.vazio+'</option>'+
+      vals.map(v=>'<option'+(v===atual?' selected':'')+'>'+esc(v)+'</option>').join('');
   };
-  enche('fCorte', [...new Set(L.map(x=>x.i.corte).filter(Boolean))].sort());
-  enche('fMalha', [...new Set(L.map(x=>x.i.malha).filter(Boolean))].sort());
-  const el=document.getElementById('fEtapa'); const at=el.value;
-  el.innerHTML='<option value="">todas as etapas</option>'+ETAPAS.map(e=>'<option value="'+e.id+'"'+(e.id===at?' selected':'')+'>'+esc(e.nome)+'</option>').join('');
+  enche('fCorte',[...new Set(L.map(x=>x.peca).filter(Boolean))].sort());
+  enche('fMalha',[...new Set(L.map(x=>x.malha).filter(Boolean))].sort());
+  enche('fCor',  [...new Set(L.flatMap(x=>x.cor.split(', ')).filter(Boolean))].sort());
+  const el=document.getElementById('fEtapa'), at=el.value;
+  el.innerHTML='<option value="">todas as etapas</option>'+
+    ETAPAS.map(e=>'<option value="'+e.id+'"'+(e.id===at?' selected':'')+'>'+esc(e.nome)+'</option>').join('');
 }
 
 /* ================= 4. RESUMO ================= */
 function renderResumo(){
-  const L=linhasPedidos().filter(x=>x.p.etapa!=='perdido');
-  const soma=(chave)=>{
+  const L=linhasPedidos().filter(x=>x.etapa!=='perdido');
+  const soma=chave=>{
     const m={};
-    L.forEach(x=>{ const k=chave(x)||'(não informado)'; m[k]=(m[k]||0)+(Number(x.i.qtd)||0); });
-    return Object.entries(m).sort((a,b)=>b[1]-a[1]);
+    L.forEach(x=>{ const k=chave(x)||'(não informado)'; m[k]=(m[k]||0)+x.qtd; });
+    return Object.entries(m).filter(p=>p[1]>0).sort((a,b)=>b[1]-a[1]);
   };
   const bloco=(tit, pares, cor)=>{
     if(!pares.length) return '';
     const max=Math.max(...pares.map(p=>p[1]))||1;
     return '<div class="card"><h3>'+tit+'</h3>'+pares.map(([k,v])=>
       '<div class="barraLinha"><div class="barraNome">'+esc(k)+'</div>'+
-      '<div class="barraFundo"><div class="barra" style="width:'+Math.round(v/max*100)+'%; background:'+cor+'"></div></div>'+
+      '<div class="barraFundo"><div class="barra" style="width:'+Math.max(3,Math.round(v/max*100))+'%; background:'+cor+'"></div></div>'+
       '<div class="barraVal">'+v.toLocaleString('pt-BR')+'</div></div>').join('')+'</div>';
   };
   const porEtapa={};
-  S.pedidos.forEach(p=>{ porEtapa[p.etapa]=(porEtapa[p.etapa]||0)+pecasDo(p); });
-  const totGeral=L.reduce((s,x)=>s+(Number(x.i.qtd)||0),0);
+  S.clientes.forEach(c=>{ const e=etapaDoCliente(c.id); porEtapa[e]=(porEtapa[e]||0)+qtdDoCliente(c.id); });
+  const totGeral=L.reduce((s,x)=>s+x.qtd,0);
+  const semQtd=L.filter(x=>!x.qtd).length;
 
   document.getElementById('resumoOut').innerHTML=
     '<div class="card"><div class="numerao">'+totGeral.toLocaleString('pt-BR')+'</div>'+
-    '<div class="mini">peças em negociação ou fechadas · '+S.clientes.length+' cliente'+(S.clientes.length!==1?'s':'')+' · '+S.pedidos.length+' pedido'+(S.pedidos.length!==1?'s':'')+'</div></div>'+
+    '<div class="mini">peças pedidas, fora as perdidas · '+S.clientes.length+' cliente'+(S.clientes.length!==1?'s':'')+'</div>'+
+    (semQtd? '<div class="aviso" style="margin:10px 0 0;">'+semQtd+' linha'+(semQtd!==1?'s':'')+
+      ' sem quantidade — esse total está por baixo.</div>':'')+'</div>'+
     '<div class="card"><h3>Por etapa</h3><div class="chips">'+ETAPAS.map(e=>
-      '<span class="chip" style="border-color:'+e.cor+'; color:'+e.cor+';">'+esc(e.nome)+': <b>'+(porEtapa[e.id]||0).toLocaleString('pt-BR')+'</b></span>').join('')+'</div></div>'+
-    bloco('Por malha', soma(x=>x.i.malha), '#7d9553')+
-    bloco('Por peça', soma(x=>x.i.corte), '#3a6b8f')+
+      '<span class="chip" style="border-color:'+e.cor+'; color:'+e.cor+';">'+esc(e.nome)+': <b>'+
+      (porEtapa[e.id]||0).toLocaleString('pt-BR')+'</b></span>').join('')+'</div></div>'+
+    bloco('Por malha', soma(x=>x.malha), '#7d9553')+
     bloco('Por cor', (()=>{ const m={};
-      L.forEach(x=>{ const cs=(x.i.cores||[]); const q=Number(x.i.qtd)||0;
-        if(!cs.length){ m['(não informada)']=(m['(não informada)']||0)+q; return; }
-        cs.forEach(c=>{ const k=tituloCaixa(c); m[k]=(m[k]||0)+Math.round(q/cs.length); }); });
-      return Object.entries(m).sort((a,b)=>b[1]-a[1]); })(), '#b08d5f');
+      L.forEach(x=>{ const cs=x.cor? x.cor.split(', ') : [];
+        if(!cs.length){ m['(não informada)']=(m['(não informada)']||0)+x.qtd; return; }
+        cs.forEach(c=>{ m[c]=(m[c]||0)+Math.round(x.qtd/cs.length); }); });
+      return Object.entries(m).filter(p=>p[1]>0).sort((a,b)=>b[1]-a[1]); })(), '#b08d5f')+
+    bloco('Por peça', soma(x=>x.peca), '#3a6b8f');
 }
 
 /* ================= BACKUP ================= */
