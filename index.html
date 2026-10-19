@@ -76,34 +76,33 @@ a.acao.wpp{background:#1f7a4d; margin-bottom:9px;}
   padding:5px 11px; border-radius:20px; font-size:12.5px; cursor:pointer; user-select:none;}
 .chip.on{background:var(--verde); border-color:var(--verde); color:#fff;}
 
-/* ---------- clientes: bloco limpo, tabela na cara ---------- */
-.card.cli{padding:0; overflow:hidden;}
-.cliTopo{display:flex; align-items:center; gap:10px; padding:13px 15px; cursor:pointer;}
-.cliTopo:hover{background:#fafcf6;}
-.cliNome{flex:1 1 auto; min-width:0;}
-.cliNome b{font-size:16px;}
+/* ---------- OPs ---------- */
+.card.op{padding:0; overflow:hidden; border-left:4px solid transparent;}
+.card.op.at-alto{border-left-color:#a63d2f;}
+.card.op.at-medio{border-left-color:#c79a3a;}
+.opTopo{display:flex; align-items:center; gap:11px; padding:12px 14px; cursor:pointer;}
+.opTopo:hover{background:#fafcf6;}
+.opCod{font-size:12px; font-weight:600; color:var(--verde); background:#eef3e6;
+  border-radius:6px; padding:3px 7px; white-space:nowrap; letter-spacing:.3px;}
+.opNome{flex:1 1 auto; min-width:0;}
+.opNome b{font-size:15.5px;}
+.at{color:#a63d2f; font-weight:600;}
 .seta{color:var(--sub); font-size:12px; width:12px;}
-table.tabPrinc{border-top:1px solid var(--linha);}
-table.tabPrinc th{background:#f4f8ec; padding:5px 15px;}
-table.tabPrinc td{padding:8px 15px;}
+.opCorpo{padding:13px 14px; border-top:1px solid var(--linha); background:#fcfdf9;}
+.opEtapas{display:flex; flex-wrap:wrap; gap:4px; margin-top:12px; padding-top:11px; border-top:1px solid var(--linha);}
+.pill{border:1px solid var(--linha); background:#fff; color:var(--sub); border-radius:20px;
+  padding:3px 10px; font-family:inherit; font-size:11.5px; cursor:pointer;}
+.pill:hover{background:#eef3e6;}
+.pill.on{color:#fff; font-weight:600;}
+.cliAcoes{display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;}
+table.tabPrinc{border:1px solid var(--linha); border-radius:9px; margin:4px 0 11px;}
+table.tabPrinc th{background:#f4f8ec; padding:5px 10px;}
+table.tabPrinc td{padding:7px 10px;}
 table.tabPrinc tr:last-child td{border-bottom:0;}
 .num{text-align:right; white-space:nowrap;}
 .falta{color:#a87d2f; font-size:12px; font-style:italic;}
 .somaLinha td{background:#f4f8ec; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--sub);}
 .somaLinha td b{font-size:14px; color:var(--ink); letter-spacing:0;}
-.cliBotoes{display:flex; flex-wrap:wrap; gap:4px; padding:9px 15px; border-top:1px solid var(--linha); background:#fbfdf7;}
-.pill{border:1px solid var(--linha); background:#fff; color:var(--sub); border-radius:20px;
-  padding:3px 11px; font-family:inherit; font-size:11.5px; cursor:pointer;}
-.pill:hover{background:#eef3e6;}
-.pill.on{color:#fff; font-weight:600;}
-.cliCorpo{padding:13px 15px; border-top:1px solid var(--linha);}
-.cliAcoes{display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;}
-
-.evol{background:#fff7e9; border:1px solid #ecd9b4; border-radius:9px; padding:10px 12px; font-size:13.5px; color:#6b5520;}
-.evol ol{margin:6px 0 0; padding-left:20px;}
-.evol li{margin-bottom:2px;}
-.evol .mini{color:#8a7245; margin-top:6px;}
-.mudou{color:#8a6a16; margin-top:4px;}
 
 /* ---------- orçamento ---------- */
 .orc{border:1px solid var(--linha); border-radius:11px; overflow:hidden; margin-bottom:12px; background:#fff;}
@@ -190,8 +189,8 @@ tr:last-child td{border-bottom:0;}
   <aside id="sidebar">
     <nav>
       <button data-a="nova"     onclick="irPara('nova')">＋ Nova conversa</button>
-      <button data-a="clientes" onclick="irPara('clientes')">Clientes <span id="nClientes" class="mini"></span></button>
-      <button data-a="pedidos"  onclick="irPara('pedidos')">Pedidos</button>
+      <button data-a="clientes" onclick="irPara('clientes')">OPs <span id="nClientes" class="mini"></span></button>
+      <button data-a="pedidos"  onclick="irPara('pedidos')">Tabela geral</button>
       <button data-a="resumo"   onclick="irPara('resumo')">Resumo</button>
       <div class="sep"></div>
       <div class="mini">Segurança</div>
@@ -236,20 +235,21 @@ tr:last-child td{border-bottom:0;}
 
     <!-- ======== CLIENTES ======== -->
     <section class="tela" id="tela-clientes">
-      <h1>Clientes</h1>
+      <h1>Ordens de produção</h1>
       <div class="card">
         <div class="linha" style="margin:0;">
-          <div style="flex:2 1 220px;"><label>Buscar</label><input id="buscaCli" placeholder="nome, telefone, malha, peça…" oninput="renderClientes()"></div>
+          <div style="flex:2 1 220px;"><label>Buscar</label><input id="buscaCli" placeholder="OP, cliente, ref, malha, peça…" oninput="renderOPs()"></div>
           <div style="flex:1 1 150px;"><label>Etapa</label>
-            <select id="fEtapaCli" onchange="renderClientes()"><option value="">todas</option></select></div>
+            <select id="fEtapaCli" onchange="renderOPs()"></select></div>
         </div>
       </div>
+      <div class="mini" id="resOPs" style="margin:-4px 0 10px;"></div>
       <div id="listaCli"></div>
     </section>
 
     <!-- ======== PEDIDOS ======== -->
     <section class="tela" id="tela-pedidos">
-      <h1>Pedidos</h1>
+      <h1>Tabela geral</h1>
       <div class="card">
         <div class="linha" style="margin:0;">
           <div><label>Peça / corte</label><select id="fCorte" data-vazio="todas as peças" onchange="renderPedidos()"></select></div>
@@ -380,15 +380,23 @@ const DETALHES = [
 /* palavras que marcam uma frase como "detalhe do jeito que ele quer" */
 const CHAVES_DETALHE = /GOLA|MANGA|BARRA|BAINHA|COSTURA|REFORC|MODELAGEM|FOLGAD|JUSTA|SLIM|COMPRID|ALONGAD|CAIMENTO|ACABAMENTO|ESTAMPA|ARTE|LOGO|BORDAD|ETIQUETA|TAG|EMBALAGEM|PILOTO|AMOSTRA|LAVAGEM|ESTONAD|FIO TINTO|GRAMATURA|RIBANA|DECOTE|BOLSO|PUNHO|MEDIDA|TABELA/;
 
-/* ---- ETAPAS DO ATENDIMENTO ---- */
+/* ---- ETAPAS DA OP ----
+   Não é funil de vendas, é o caminho real da peça até sair pela porta. */
 const ETAPAS = [
-  {id:'novo',       nome:'Novo',        cor:'#3a6b8f'},
-  {id:'orcado',     nome:'Orçado',      cor:'#8a7a2e'},
-  {id:'negociando', nome:'Negociando',  cor:'#b06b3a'},
-  {id:'piloto',     nome:'Piloto',      cor:'#7d5ba6'},
-  {id:'fechado',    nome:'Fechado',     cor:'#3d4d32'},
-  {id:'perdido',    nome:'Perdido',     cor:'#a63d2f'}
+  {id:'novo',       nome:'Novo',        cor:'#3a6b8f', grupo:'venda'},
+  {id:'orcado',     nome:'Orçado',      cor:'#8a7a2e', grupo:'venda'},
+  {id:'negociando', nome:'Negociando',  cor:'#b06b3a', grupo:'venda'},
+  {id:'piloto',     nome:'Piloto',      cor:'#7d5ba6', grupo:'venda'},
+  {id:'aprovado',   nome:'Aprovado',    cor:'#2f7d54', grupo:'fabrica'},
+  {id:'malha',      nome:'Malha',       cor:'#4a7f6b', grupo:'fabrica'},
+  {id:'corte',      nome:'Corte',       cor:'#5a7a3a', grupo:'fabrica'},
+  {id:'costura',    nome:'Costura',     cor:'#3d4d32', grupo:'fabrica'},
+  {id:'acabamento', nome:'Acabamento',  cor:'#6b6a2e', grupo:'fabrica'},
+  {id:'entregue',   nome:'Entregue',    cor:'#4a4a4a', grupo:'fim'},
+  {id:'perdido',    nome:'Perdido',     cor:'#a63d2f', grupo:'fim'}
 ];
+/* motivos de perda: três meses disso valem mais que relatório nenhum */
+const MOTIVOS_PERDA = ['Preço','Prazo','Sumiu','Fechou com outro','Desistiu do projeto','Outro'];
 
 /* ================= LEITOR DE CONVERSA =================
    Pega o texto colado do WhatsApp e separa o que o cliente está pedindo.
@@ -608,6 +616,51 @@ function coresUnicas(lista){
   return out;
 }
 
+
+/* ---- REFERÊNCIAS DE ARTE ----
+   Cliente grande manda "500 peças" e embaixo a lista das refs com a divisão.
+   Sem isso o app lê 500 e perde a divisão, que é justamente o que vai pro corte.
+   Aceita: REF 01, REF.: AB-12, ARTE 3, #7, e lista solta "01 - 50". */
+const RE_REF_PALAVRA = /\b(?:REFERENCIAS|REFERENCIA|REFS|REF|ARTES|ARTE|ESTAMPAS|ESTAMPA|MODELO|CODIGO|COD)\.?\s*:?\s*#?\s*([A-Z0-9][A-Z0-9\-\/\.]{0,11})/;
+const RE_REF_LISTA   = /^\s*#?\s*([A-Z]{0,3}\s?\d{1,4}[A-Z]?)\s*[-–—:)\.]\s*(\d{1,4})\b/;
+const RE_REF_SOLTA   = /^\s*#\s*([A-Z0-9][A-Z0-9\-\/\.]{0,11})\b/;
+
+function acharRefs(textoCliente){
+  const linhas=String(textoCliente||'').split(/\r?\n/);
+  const out=[];
+  linhas.forEach(l=>{
+    /* conversa colada à mão vem "Fulano: 01 - 100": tira o nome ANTES de
+       normalizar, porque normalizar come os dois-pontos */
+    const t=normalizar(String(l).replace(/^\s*[A-Za-zÀ-ÿ][^:\n]{0,30}:\s*/, ''));
+    if(!t.trim()) return;
+    let ref='', qtd=0;
+
+    const mL=t.match(RE_REF_LISTA);
+    if(mL){ ref=mL[1].replace(/\s+/g,''); qtd=Number(mL[2]); }
+    else {
+      const mP=t.match(RE_REF_PALAVRA) || t.match(RE_REF_SOLTA);
+      if(!mP) return;
+      ref=mP[1];
+      /* a quantidade dessa ref é um número na MESMA linha, depois da ref */
+      const resto=t.slice(t.indexOf(mP[0])+mP[0].length);
+      const mQ=resto.match(/(\d{1,4})\s*(?:PECAS|PECA|PCS|PC|UN|UNIDADES)?\b/);
+      if(mQ) qtd=Number(mQ[1]);
+    }
+    /* toda ref tem número; sem número é palavra solta ('artes', 'modelo novo') */
+    if(!ref || !/\d/.test(ref)) return;
+    if(/^\d+$/.test(ref) && Number(ref)>2000) return;      /* ano ou valor, não é ref */
+    const cores=acharCores(t).map(x=>x.cor);
+    const tams=acharTamanhos(t, false);
+    const jaTem=out.find(x=>x.ref===ref);
+    if(jaTem){ if(qtd) jaTem.qtd=qtd; return; }
+    out.push({ref, qtd:qtd||'', cores:coresUnicas(cores), tamanhos:tams, linha:l.trim()});
+  });
+  /* uma ref sozinha no meio de um papo não é lista de pedido: exige 2+ ou
+     que a única tenha quantidade colada nela */
+  if(out.length===1 && !out[0].qtd) return [];
+  return out;
+}
+
 /* ---- extrai o que UMA mensagem está pedindo ---- */
 function extrairItens(t){
   let cortes=acharTermos(t, CORTES);
@@ -810,11 +863,13 @@ function lerConversa(txtBruto, meusNomes){
   const detalhes=acharTermos(t, DETALHES).map(x=>x.item).concat(acharPerto(t, DETALHES, 45));
   const detalhesUnicos=[...new Set(detalhes.map(d=>d.id))].map(id=>DETALHES.find(d=>d.id===id));
   const comoQuer=frasesDeDetalhe(sep.texto);
+  const refs=acharRefs(sep.texto);
 
   return {
     telefone: acharTelefone(txtBruto),
     nome: acharNome(txtBruto, sep.autores),
-    itens: estado,
+    itens: espalharRefs(estado, refs),
+    refs,
     mudancas,
     extras: extrasUnicos,
     detalhes: detalhesUnicos,
@@ -845,6 +900,28 @@ function acharPerto(t, lista, raio){
   return achados;
 }
 
+
+/* Com a lista de refs em mãos, uma peça de 500 vira várias linhas, uma por
+   ref, cada uma com a sua quantidade. Se a soma das refs não bate com o total
+   que ele falou, o app não corrige sozinho: mostra as duas e você decide. */
+function espalharRefs(estado, refs){
+  if(!refs.length) return estado;
+  const comQtd=refs.filter(r=>Number(r.qtd)>0);
+  if(!comQtd.length) return estado;
+  /* a ref se pendura na peça que estava sendo falada; sem peça, cria uma vazia */
+  const base = estado.length===1 ? estado[0]
+             : (estado.find(i=>Number(i.qtd)>0) || estado[0] ||
+                {corte:'', corteId:'', genero:'', malha:'', gramatura:'', qtd:'', cores:[], tamanhos:[]});
+  const outras = estado.filter(i=>i!==base);
+  const linhas = comQtd.map(r=>({
+    ...base,
+    ref: r.ref,
+    qtd: Number(r.qtd),
+    cores: r.cores.length? r.cores : base.cores,
+    tamanhos: r.tamanhos.length? r.tamanhos : base.tamanhos
+  }));
+  return [...outras, ...linhas];
+}
 /* devolve as frases do cliente que falam de acabamento, no original, com acento */
 function frasesDeDetalhe(textoCliente){
   const bruto=String(textoCliente||'')
@@ -964,9 +1041,10 @@ function arredonda90(v){
 }
 
 /* a conta de uma linha do orçamento */
-function contaItem(it){
+function contaItem(it, qtdDaFaixa){
   const q=Number(it.qtd)||0;
-  const p=precoDe(it.corteId||'', malhaIdDe(it.malha), q);
+  /* a faixa pode vir do total do pedido (várias refs da mesma peça somam) */
+  const p=precoDe(it.corteId||'', malhaIdDe(it.malha), Number(qtdDaFaixa)||q);
   const preco = Number(it.precoManual)>0 ? Number(it.precoManual) : (p.preco||0);
   const custo = p.custo||0;
   const fat=q*preco, cst=q*custo, imp=fat*0.10;
@@ -983,7 +1061,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='1.7.0';
+const VERSAO='2.0.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -1010,6 +1088,7 @@ function salvar(){
 function carregar(){
   try{ const v=localStorage.getItem(CHAVE_LOCAL); if(v) S=Object.assign(S, JSON.parse(v)); }catch(e){}
   S.clientes=S.clientes||[]; S.pedidos=S.pedidos||[]; S.removidos=S.removidos||[]; S.meusNomes=S.meusNomes||[];
+  migrarCodigos();
 }
 /* junta em vez de sobrescrever: dois aparelhos podem cadastrar ao mesmo tempo */
 function mesclar(remoto){
@@ -1046,6 +1125,7 @@ function ligarBanco(){
     try{
       aplicandoRemoto=true;
       mesclar(JSON.parse(v.dados));
+      migrarCodigos();
       aplicandoRemoto=false;
       try{ localStorage.setItem(CHAVE_LOCAL, JSON.stringify(S)); }catch(e){}
       render();
@@ -1268,7 +1348,7 @@ function montarConferencia(r, bruto){
   if(!editandoPedido) fotosTemp=[];
   renderFotos();
 }
-function itemVazio(){ return {corte:'', malha:'', qtd:'', cores:[], tamanhos:[], gramatura:'', genero:''}; }
+function itemVazio(){ return {ref:'', corte:'', malha:'', qtd:'', cores:[], tamanhos:[], gramatura:'', genero:''}; }
 let itensTemp=[];
 
 function renderItens(){
@@ -1277,7 +1357,8 @@ function renderItens(){
   document.getElementById('itens').innerHTML=itensTemp.map((it,ix)=>
     '<div class="item">'+
       '<div class="linha">'+
-        '<div style="flex:2 1 190px;"><label>Peça / corte</label>'+selHTML('it-corte-'+ix, nomesCorte, it.corte, '— escolher —')+'</div>'+
+        '<div style="flex:0 1 92px;"><label>Ref</label><input id="it-ref-'+ix+'" value="'+esc(it.ref||'')+'" placeholder="arte"></div>'+
+        '<div style="flex:2 1 170px;"><label>Peça / corte</label>'+selHTML('it-corte-'+ix, nomesCorte, it.corte, '— escolher —')+'</div>'+
         '<div style="flex:2 1 170px;"><label>Malha</label>'+selHTML('it-malha-'+ix, nomesMalha, it.malha, '— escolher —')+'</div>'+
         '<div style="flex:0 1 110px;"><label>Quantidade</label><input type="number" min="0" id="it-qtd-'+ix+'" value="'+esc(it.qtd)+'"></div>'+
         (itensTemp.length>1? '<div style="flex:0 0 auto; align-self:flex-end;"><button class="acao mini alerta" onclick="delItem('+ix+')">✕</button></div>':'')+
@@ -1294,6 +1375,7 @@ function lerItensDaTela(){
     const corte=g('it-corte-'+ix), malha=g('it-malha-'+ix);
     const defC=CORTES.find(c=>c.nome===corte), defM=MALHAS.find(m=>m.nome===malha);
     return {
+      ref: g('it-ref-'+ix).trim().toUpperCase(),
       corte, malha,
       corteId: defC? defC.id : '',
       genero: defC? defC.genero : '',
@@ -1302,7 +1384,7 @@ function lerItensDaTela(){
       cores: g('it-cores-'+ix).split(/[,;]/).map(x=>x.trim()).filter(Boolean),
       tamanhos: g('it-tams-'+ix).split(/[\s,;]+/).map(x=>x.trim().toUpperCase()).filter(Boolean)
     };
-  }).filter(i=>i.corte||i.malha||i.qtd);
+  }).filter(i=>i.corte||i.malha||i.qtd||i.ref);
 }
 function addItem(){ itensTemp=lerItensDaTela(); itensTemp.push(itemVazio()); renderItens(); }
 function delItem(ix){ itensTemp=lerItensDaTela(); itensTemp.splice(ix,1); if(!itensTemp.length) itensTemp=[itemVazio()]; renderItens(); }
@@ -1327,6 +1409,7 @@ function salvarPedido(){
   const etapaNome=document.getElementById('cfEtapa').value;
   const ped={
     id: editandoPedido? editandoPedido.id : uid(),
+    codigo: editandoPedido? editandoPedido.codigo : proximoCodigo(),
     clienteId: cli.id,
     criado: editandoPedido? editandoPedido.criado : Date.now(),
     ts: Date.now(),
@@ -1359,7 +1442,7 @@ function salvarPedido(){
   salvar();
   limparConversa();
   irPara('clientes');
-  setTimeout(()=>{ abertos[cli.id]=true; render(); }, 60);
+  setTimeout(()=>{ abertos[ped.id]=true; render(); }, 60);
 }
 
 /* ================= 1b. IMPORTAR CONVERSAS EXPORTADAS =================
@@ -1524,8 +1607,8 @@ function fundirNoPedido(alvo, novo){
 function juntarPedidosDoCliente(cid){
   const peds=pedidosDe(cid);
   if(peds.length<2) return;
-  if(!confirm('Juntar os '+peds.length+' pedidos deste cliente num só?\n\n'+
-              'Peças, fotos e detalhes de todos entram no mesmo pedido. Não dá pra desfazer.')) return;
+  if(!confirm('Juntar as '+peds.length+' OPs deste cliente numa só?\n\n'+
+              'Peças, fotos e detalhes de todas entram na mesma OP. Não dá pra desfazer.')) return;
   const base=peds[peds.length-1];            /* o mais antigo vira o dono */
   peds.slice(0,-1).reverse().forEach(p=>{
     fundirNoPedido(base, p);
@@ -1648,7 +1731,7 @@ function salvarLote(){
     g.partes.forEach(l=>{
       (l.r.itens||[]).forEach(i=>{
         const dC=CORTES.find(c=>c.nome===i.corte), dM=MALHAS.find(m=>m.nome===i.malha);
-        juntoItens.push({corte:i.corte||'', malha:i.malha||'', corteId:dC?dC.id:'', genero:dC?dC.genero:'',
+        juntoItens.push({ref:i.ref||'', corte:i.corte||'', malha:i.malha||'', corteId:dC?dC.id:'', genero:dC?dC.genero:'',
           gramatura:dM?dM.g:'', qtd:Number(i.qtd)||0, cores:i.cores||[], tamanhos:i.tamanhos||[]});
       });
       (l.fotos||[]).forEach(f=>{ if(!juntoFotos.some(x=>x.nome===f.nome)) juntoFotos.push(f); });
@@ -1660,7 +1743,7 @@ function salvarLote(){
       if((l.txt||'').length>juntoConversa.length) juntoConversa=l.txt;
     });
     const candidato={
-      id:uid(), clienteId:cli.id, criado:Date.now(), ts:Date.now(), etapa:'novo',
+      id:uid(), codigo:proximoCodigo(), clienteId:cli.id, criado:Date.now(), ts:Date.now(), etapa:'novo',
       prazo:juntoPrazo, obs:'',
       extras:[...new Set(juntoExtras)], detalhes:[...new Set(juntoDet)], mudancas:juntoMud,
       comoQuer:[...new Set(juntoComo.map(x=>x.trim()).filter(Boolean))].join('\n'),
@@ -1698,159 +1781,200 @@ function salvarLote(){
   alert('Importado: '+(partes.join(' · ')||'nada')+'.');
 }
 
-/* ================= 2. CLIENTES =================
-   Um cliente, um bloco, uma tabela: peça · malha · cor · quantidade.
-   Foto, detalhe e conversa ficam atrás de botão — na tela principal só entra
-   o que ele precisa bater o olho e entender. */
+
+/* ================= A OP =================
+   Código fixo OP-AAMM-NNN, criado no primeiro contato e nunca mais mudado.
+   É nele que ficha técnica, facção e corte vão pendurar depois. */
+function proximoCodigo(){
+  const d=new Date();
+  const pref='OP-'+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0')+'-';
+  const usados=S.pedidos.filter(p=>String(p.codigo||'').startsWith(pref))
+    .map(p=>Number(String(p.codigo).slice(pref.length))||0);
+  return pref+String(Math.max(0,...usados)+1).padStart(3,'0');
+}
+/* dá código a quem ainda não tem, na ordem em que foram criados */
+function migrarCodigos(){
+  const sem=S.pedidos.filter(p=>!p.codigo).sort((a,b)=>(a.criado||0)-(b.criado||0));
+  if(!sem.length) return false;
+  sem.forEach(p=>{
+    const d=new Date(p.criado||Date.now());
+    const pref='OP-'+String(d.getFullYear()).slice(2)+String(d.getMonth()+1).padStart(2,'0')+'-';
+    const usados=S.pedidos.filter(x=>String(x.codigo||'').startsWith(pref))
+      .map(x=>Number(String(x.codigo).slice(pref.length))||0);
+    p.codigo=pref+String(Math.max(0,...usados)+1).padStart(3,'0');
+  });
+  return true;
+}
+const DIA=86400000;
+function diasParado(p){ return Math.floor((Date.now()-(p.ts||p.criado||Date.now()))/DIA); }
+function grupoDe(id){ return (ETAPAS.find(e=>e.id===id)||{}).grupo||'venda'; }
+/* o que precisa de você: orçado parado, ou prazo estourando */
+function atencao(p){
+  const d=diasParado(p), g=grupoDe(p.etapa);
+  if(g==='fim') return null;
+  if(p.entregaEm){
+    const faltam=Math.ceil((new Date(p.entregaEm+'T12:00:00')-Date.now())/DIA);
+    if(faltam<0)  return {nivel:'alto', txt:'entrega venceu há '+(-faltam)+'d'};
+    if(faltam<=5) return {nivel:'alto', txt:'entrega em '+faltam+'d'};
+  }
+  if(g==='venda' && d>=5) return {nivel:'medio', txt:'parado há '+d+'d — cobrar'};
+  if(g==='fabrica' && d>=10) return {nivel:'medio', txt:'sem movimento há '+d+'d'};
+  return null;
+}
+function mudarEtapaOP(id, etapa){
+  if(event&&event.stopPropagation) event.stopPropagation();
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  if(etapa==='perdido'){
+    const m=prompt('Perdeu por quê?\n\n'+MOTIVOS_PERDA.map((x,i)=>(i+1)+'. '+x).join('\n')+
+                   '\n\nDigite o número ou escreva o motivo:');
+    if(m===null) return;
+    const n=Number(m);
+    p.motivoPerda = (n>=1&&n<=MOTIVOS_PERDA.length)? MOTIVOS_PERDA[n-1] : String(m).trim();
+  }
+  p.etapa=etapa; p.ts=Date.now(); salvar(); render();
+}
+function mudarCampoOP(id, campo, valor){
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  p[campo]=valor; p.ts=Date.now(); salvar();
+  if(campo==='entregaEm') render();
+}
+
+/* ================= 2. OPs ================= */
 var abertos={};
-function abrirCliente(id){ abertos[id]=!abertos[id]; render(); }
+function abrirOP(id){ abertos[id]=!abertos[id]; render(); }
 
-/* tudo o que o cliente pediu, de todos os pedidos dele, numa lista só */
-function itensDoCliente(cid){
-  const out=[];
-  pedidosDe(cid).forEach(p=>(p.itens||[]).forEach(i=>{
-    const ja=out.find(x=>mesmoItem(x,i));
-    if(!ja) return out.push({...i, cores:[...(i.cores||[])], tamanhos:[...(i.tamanhos||[])]});
-    ja.qtd=Math.max(Number(ja.qtd)||0, Number(i.qtd)||0);
-    ja.cores=[...new Set([...ja.cores, ...(i.cores||[])])];
-    ja.tamanhos=[...new Set([...ja.tamanhos, ...(i.tamanhos||[])])];
-    if(!ja.malha && i.malha){ ja.malha=i.malha; ja.gramatura=i.gramatura||''; }
-  }));
-  return out;
-}
-const fotosDoCliente=cid=>pedidosDe(cid).flatMap(p=>(p.fotos||[]).map(f=>({...f, pedId:p.id})));
-const detalhesDoCliente=cid=>[...new Set(pedidosDe(cid).flatMap(p=>p.detalhes||[]))];
-const extrasDoCliente=cid=>[...new Set(pedidosDe(cid).flatMap(p=>p.extras||[]))];
-function comoQuerDoCliente(cid){
-  const l=new Set();
-  pedidosDe(cid).forEach(p=>(p.comoQuer||'').split('\n').map(x=>x.trim()).filter(Boolean).forEach(x=>l.add(x)));
-  return [...l];
-}
-const qtdDoCliente=cid=>itensDoCliente(cid).reduce((s,i)=>s+(Number(i.qtd)||0),0);
-/* a etapa do cliente é a do pedido mais recente */
-const etapaDoCliente=cid=>{ const p=pedidosDe(cid)[0]; return p? p.etapa : 'novo'; };
+function itensDaOP(p){ return (p.itens||[]).filter(i=>i.corte||i.malha||Number(i.qtd)>0); }
+function pecasDaOP(p){ return itensDaOP(p).reduce((s,i)=>s+(Number(i.qtd)||0),0); }
 
-function renderClientes(){
+function renderOPs(){
   const busca=normalizar(document.getElementById('buscaCli').value||'');
   const fEtapa=document.getElementById('fEtapaCli').value;
-  let lista=S.clientes.slice();
-  if(busca) lista=lista.filter(c=>{
-    const txt=normalizar([c.nome, c.telefone, c.empresa,
-      itensDoCliente(c.id).map(i=>i.corte+' '+i.malha+' '+(i.cores||[]).join(' ')).join(' ')].join(' '));
-    return txt.includes(busca);
+  let L=S.pedidos.slice();
+  if(fEtapa==='_abertas') L=L.filter(p=>grupoDe(p.etapa)!=='fim');
+  else if(fEtapa) L=L.filter(p=>p.etapa===fEtapa);
+  if(busca) L=L.filter(p=>{
+    const c=clienteDe(p.clienteId)||{};
+    return normalizar([p.codigo, p.refCliente, c.nome, c.telefone, c.empresa,
+      itensDaOP(p).map(i=>[i.ref,i.corte,i.malha,(i.cores||[]).join(' ')].join(' ')).join(' ')
+    ].join(' ')).includes(busca);
   });
-  if(fEtapa) lista=lista.filter(c=>etapaDoCliente(c.id)===fEtapa);
-  lista.sort((a,b)=>{
-    const u=c=>Math.max(c.ts||0, ...pedidosDe(c.id).map(p=>p.criado||0), 0);
-    return u(b)-u(a);
-  });
+  /* o que está apodrecendo sobe: primeiro quem pede atenção, depois o mais parado */
+  const peso=p=>{ const a=atencao(p); return a? (a.nivel==='alto'?2:1):0; };
+  L.sort((a,b)=> peso(b)-peso(a) || diasParado(b)-diasParado(a));
 
   const box=document.getElementById('listaCli');
-  if(!lista.length){
-    box.innerHTML='<div class="card vazio">'+(S.clientes.length? 'Nenhum cliente nesse filtro.'
-      : 'Ainda não tem ninguém aqui. Vá em <b>Nova conversa</b> e cole ou importe as conversas.')+'</div>';
+  if(!L.length){
+    box.innerHTML='<div class="card vazio">'+(S.pedidos.length? 'Nenhuma OP nesse filtro.'
+      : 'Nenhuma OP ainda. Vá em <b>Nova conversa</b> e cole ou importe as conversas.')+'</div>';
+    document.getElementById('resOPs').innerHTML='';
     return;
   }
-  box.innerHTML=lista.map(c=>blocoCliente(c)).join('');
+  const abertasT=S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim');
+  document.getElementById('resOPs').innerHTML=
+    '<b>'+abertasT.length+'</b> OP'+(abertasT.length!==1?'s':'')+' em aberto · <b>'+
+    abertasT.reduce((s,p)=>s+pecasDaOP(p),0).toLocaleString('pt-BR')+'</b> peças' +
+    (L.length!==S.pedidos.length? ' · mostrando '+L.length : '');
+  box.innerHTML=L.map(p=>linhaOP(p)).join('');
 }
 
-function blocoCliente(c){
-  const itens=itensDoCliente(c.id);
-  const total=itens.reduce((s,i)=>s+(Number(i.qtd)||0),0);
-  const e=etapaDe(etapaDoCliente(c.id));
-  const fotos=fotosDoCliente(c.id);
-  const det=detalhesDoCliente(c.id), ext=extrasDoCliente(c.id), como=comoQuerDoCliente(c.id);
-  const ab=abertos[c.id];
-  const peds=pedidosDe(c.id);
-  const mud=[...new Set(peds.flatMap(p=>p.mudancas||[]))];
-  const semQtd=itens.some(i=>!(Number(i.qtd)>0));
-
-  return '<div class="card cli">'+
-    '<div class="cliTopo" onclick="abrirCliente(\''+c.id+'\')">'+
-      '<div class="cliNome">'+
-        '<b>'+esc(c.nome)+'</b>'+(c.empresa? ' <span class="mini">· '+esc(c.empresa)+'</span>':'')+
-        '<div class="mini">'+[c.telefone? esc(c.telefone):'',
-           total? total.toLocaleString('pt-BR')+' peças':'',
-           fotos.length? fotos.length+(fotos.length>1?' fotos':' foto'):''].filter(Boolean).join(' · ')+'</div>'+
-      '</div>'+
+function linhaOP(p){
+  const c=clienteDe(p.clienteId)||{nome:'(sem cliente)'};
+  const e=etapaDe(p.etapa), at=atencao(p), ab=abertos[p.id];
+  const itens=itensDaOP(p), pecas=pecasDaOP(p);
+  const {t}=orcamentoDaOP(p);
+  return '<div class="card op'+(at? ' at-'+at.nivel : '')+'">'+
+    '<div class="opTopo" onclick="abrirOP(\''+p.id+'\')">'+
+      '<span class="opCod">'+esc(p.codigo||'—')+'</span>'+
+      '<div class="opNome"><b>'+esc(c.nome)+'</b>'+
+        (p.refCliente? ' <span class="mini">· '+esc(p.refCliente)+'</span>':'')+
+        '<div class="mini">'+[
+          pecas? pecas.toLocaleString('pt-BR')+' peças':'sem quantidade',
+          t.fat? reais(t.fat):'',
+          at? '<span class="at">'+esc(at.txt)+'</span>' : (diasParado(p)+'d')
+        ].filter(Boolean).join(' · ')+'</div></div>'+
       '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>'+
       '<span class="seta">'+(ab?'▾':'▸')+'</span>'+
     '</div>'+
-
-    (itens.length? '<div class="rolar"><table class="tabPrinc">'+
-      '<tr><th>Peça</th><th>Malha</th><th>Cor</th><th class="num">Qtd</th><th>Tam</th></tr>'+
-      itens.map(i=>'<tr>'+
-        '<td><b>'+esc(i.corte||'—')+'</b></td>'+
-        '<td>'+esc(i.malha||'—')+(i.gramatura? ' <span class="mini">'+esc(i.gramatura)+'</span>':'')+'</td>'+
-        '<td>'+esc((i.cores||[]).map(tituloCaixa).join(', ')||'—')+'</td>'+
-        '<td class="num">'+(Number(i.qtd)>0? '<b>'+Number(i.qtd).toLocaleString('pt-BR')+'</b>'
-                            : '<span class="falta">a definir</span>')+'</td>'+
-        '<td class="mini">'+esc((i.tamanhos||[]).join(' ')||'—')+'</td></tr>').join('')+
-      (itens.length>1? '<tr class="somaLinha"><td colspan="3">total</td><td class="num"><b>'+
-        total.toLocaleString('pt-BR')+'</b></td><td></td></tr>':'')+
-      '</table></div>'
-     : '<div class="mini" style="padding:10px 15px;">Nada reconhecido nessa conversa — abra e preencha à mão.</div>')+
-
-    '<div class="cliBotoes">'+
-      ETAPAS.map(x=>'<button class="pill'+(x.id===etapaDoCliente(c.id)?' on':'')+'"'+
-        (x.id===etapaDoCliente(c.id)?' style="background:'+x.cor+';border-color:'+x.cor+'"':'')+
-        ' onclick="mudarEtapaCliente(\''+c.id+'\',\''+x.id+'\')">'+esc(x.nome)+'</button>').join('')+
-    '</div>'+
-
-    (ab? '<div class="cliCorpo">'+
-      (semQtd? '<div class="aviso" style="margin-bottom:10px;">Tem peça sem quantidade. Clique em <b>Editar</b> e preencha.</div>':'')+
-      blocoOrcamento(c.id)+
-      (det.length||ext.length? '<div class="chips" style="margin-bottom:9px;">'+
-        det.map(id=>'<span class="chip on">'+esc((DETALHES.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
-        ext.map(id=>'<span class="chip">'+esc((EXTRAS.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
-        '</div>':'')+
-      (como.length? '<div class="obs"><b>Como quer a peça</b><br>'+como.map(esc).join('<br>')+'</div>':'')+
-      (mud.length>1? '<div class="evol" style="margin-top:9px;"><b>Como a conversa evoluiu</b><ol>'+
-        mud.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ol></div>':'')+
-      (fotos.length? '<div class="fotos" style="margin-top:10px;"><div>'+
-        fotos.map(f=>'<div class="foto"><img src="'+f.thumb+'" alt="estampa" '+
-          'onclick="abrirFoto(\''+f.pedId+'\',\''+f.id+'\')"></div>').join('')+'</div></div>':'')+
-      '<div class="cliAcoes">'+
-        (c.telefone? '<a class="acao mini wpp" target="_blank" href="https://wa.me/55'+soDigitos(c.telefone)+'">WhatsApp</a>':'')+
-        peds.map((p,k)=>'<button class="acao mini sec" onclick="editarPedido(\''+p.id+'\')">Editar'+
-          (peds.length>1? ' ('+(k+1)+')':'')+'</button>').join('')+
-        (peds.some(p=>p.conversa)? '<button class="acao mini sec" onclick="verConversa(\''+
-          (peds.find(p=>p.conversa)||{}).id+'\')">Ver conversa</button>':'')+
-        (peds.length>1? '<button class="acao mini sec" onclick="juntarPedidosDoCliente(\''+c.id+'\')">⇅ Juntar '+peds.length+' num só</button>':'')+
-        '<button class="acao mini alerta" onclick="excluirCliente(\''+c.id+'\')">Excluir cliente</button>'+
-      '</div></div>' : '')+
+    (ab? corpoOP(p, c, itens) : '')+
   '</div>';
 }
 
-function mudarEtapaCliente(cid, etapa){
-  event && event.stopPropagation && event.stopPropagation();
-  pedidosDe(cid).forEach(p=>{ p.etapa=etapa; p.ts=Date.now(); });
-  salvar(); render();
+function corpoOP(p, c, itens){
+  const mud=p.mudancas||[], det=p.detalhes||[], ext=p.extras||[], fotos=p.fotos||[];
+  const como=(p.comoQuer||'').split('\n').filter(Boolean);
+  const temRef=itens.some(i=>i.ref);
+  return '<div class="opCorpo">'+
+    '<div class="linha">'+
+      '<div><label>Ref do cliente</label><input value="'+esc(p.refCliente||'')+
+        '" placeholder="como ele chama esse pedido" onchange="mudarCampoOP(\''+p.id+'\',\'refCliente\',this.value)"></div>'+
+      '<div><label>Entrega prometida</label><input type="date" value="'+esc(p.entregaEm||'')+
+        '" onchange="mudarCampoOP(\''+p.id+'\',\'entregaEm\',this.value)"></div>'+
+      '<div><label>Prazo que ele pediu</label><input value="'+esc(p.prazo||'')+
+        '" onchange="mudarCampoOP(\''+p.id+'\',\'prazo\',this.value)"></div>'+
+    '</div>'+
+
+    (itens.length? '<div class="rolar"><table class="tabPrinc">'+
+      '<tr>'+(temRef?'<th>Ref</th>':'')+'<th>Peça</th><th>Malha</th><th>Cor</th><th class="num">Qtd</th><th>Tam</th></tr>'+
+      itens.map(i=>'<tr>'+
+        (temRef? '<td><b>'+esc(i.ref||'—')+'</b></td>':'')+
+        '<td>'+esc(i.corte||'—')+'</td>'+
+        '<td>'+esc(i.malha||'—')+(i.gramatura? ' <span class="mini">'+esc(i.gramatura)+'</span>':'')+'</td>'+
+        '<td>'+esc((i.cores||[]).map(tituloCaixa).join(', ')||'—')+'</td>'+
+        '<td class="num">'+(Number(i.qtd)>0? '<b>'+Number(i.qtd).toLocaleString('pt-BR')+'</b>':'<span class="falta">a definir</span>')+'</td>'+
+        '<td class="mini">'+esc((i.tamanhos||[]).join(' ')||'—')+'</td></tr>').join('')+
+      (itens.length>1? '<tr class="somaLinha"><td colspan="'+(temRef?4:3)+'">total</td><td class="num"><b>'+
+        pecasDaOP(p).toLocaleString('pt-BR')+'</b></td><td></td></tr>':'')+
+      '</table></div>' : '<div class="mini" style="margin:8px 0;">Nada reconhecido — clique em Editar e preencha.</div>')+
+
+    blocoOrcamento(p)+
+
+    (mud.length>1? '<div class="evol"><b>Como a conversa evoluiu</b><ol>'+
+      mud.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ol></div>':'')+
+    (det.length||ext.length? '<div class="chips" style="margin:9px 0;">'+
+      det.map(id=>'<span class="chip on">'+esc((DETALHES.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
+      ext.map(id=>'<span class="chip">'+esc((EXTRAS.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
+      '</div>':'')+
+    (como.length? '<div class="obs"><b>Como quer a peça</b><br>'+como.map(esc).join('<br>')+'</div>':'')+
+    (fotos.length? '<div class="fotos" style="margin-top:10px;"><div>'+
+      fotos.map(f=>'<div class="foto"><img src="'+f.thumb+'" alt="estampa" '+
+        'onclick="abrirFoto(\''+p.id+'\',\''+f.id+'\')"></div>').join('')+'</div></div>':'')+
+    (p.motivoPerda? '<div class="aviso" style="margin-top:9px;">Perdida: '+esc(p.motivoPerda)+'</div>':'')+
+
+    '<div class="cliAcoes">'+
+      (c.telefone? '<a class="acao mini wpp" target="_blank" href="https://wa.me/55'+soDigitos(c.telefone)+'">WhatsApp</a>':'')+
+      '<button class="acao mini sec" onclick="editarPedido(\''+p.id+'\')">Editar</button>'+
+      (p.conversa? '<button class="acao mini sec" onclick="verConversa(\''+p.id+'\')">Ver conversa</button>':'')+
+      '<button class="acao mini sec" onclick="duplicarOP(\''+p.id+'\')">Duplicar</button>'+
+      (pedidosDe(p.clienteId).length>1? '<button class="acao mini sec" onclick="juntarPedidosDoCliente(\''+p.clienteId+'\')">⇅ Juntar as '+pedidosDe(p.clienteId).length+' OPs deste cliente</button>':'')+
+      '<button class="acao mini alerta" onclick="excluirPedido(\''+p.id+'\')">Excluir OP</button>'+
+    '</div>'+
+    '<div class="opEtapas">'+ETAPAS.map(x=>'<button class="pill'+(x.id===p.etapa?' on':'')+'"'+
+      (x.id===p.etapa?' style="background:'+x.cor+';border-color:'+x.cor+'"':'')+
+      ' onclick="mudarEtapaOP(\''+p.id+'\',\''+x.id+'\')">'+esc(x.nome)+'</button>').join('')+'</div>'+
+  '</div>';
 }
-function excluirCliente(cid){
-  const c=clienteDe(cid); if(!c) return;
-  const peds=pedidosDe(cid);
-  if(!confirm('Excluir '+c.nome+' e tudo que ele pediu?\n\nIsso apaga '+peds.length+
-              ' pedido'+(peds.length!==1?'s':'')+'. Não dá pra desfazer.')) return;
-  peds.forEach(p=>{ (p.fotos||[]).forEach(f=>idbDel(f.id)); S.removidos=[...new Set([...(S.removidos||[]), p.id])]; });
-  S.removidos=[...new Set([...(S.removidos||[]), cid])];
-  S.pedidos=S.pedidos.filter(p=>p.clienteId!==cid);
-  S.clientes=S.clientes.filter(x=>x.id!==cid);
-  salvar(); render();
+
+/* 80% dos pedidos que voltam são o anterior com outra cor */
+function duplicarOP(id){
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  const novo={...p, id:uid(), codigo:proximoCodigo(), criado:Date.now(), ts:Date.now(),
+    etapa:'novo', motivoPerda:'', entregaEm:'', mudancas:[],
+    itens:(p.itens||[]).map(i=>({...i, cores:[...(i.cores||[])], tamanhos:[...(i.tamanhos||[])]})),
+    fotos:(p.fotos||[]).map(f=>({...f}))};
+  S.pedidos.push(novo); abertos[novo.id]=true; salvar(); render();
 }
+
+
 function verConversa(id){
   const p=S.pedidos.find(x=>x.id===id); if(!p) return;
-  document.getElementById('modalCorpo').innerHTML='<h3>Conversa original</h3><pre>'+esc(p.conversa)+'</pre>';
+  document.getElementById('modalCorpo').innerHTML='<h3>Conversa original'+
+    (p.codigo? ' \u00b7 '+esc(p.codigo):'')+'</h3><pre>'+esc(p.conversa)+'</pre>';
   document.getElementById('modal').classList.add('on');
 }
 function fecharModal(){ document.getElementById('modal').classList.remove('on'); }
-function mudarEtapa(id, etapa){
-  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
-  p.etapa=etapa; p.ts=Date.now(); salvar(); render();
-}
 function excluirPedido(id){
   const p=S.pedidos.find(x=>x.id===id); if(!p) return;
-  if(!confirm('Excluir este pedido?')) return;
+  if(!confirm('Excluir a OP '+(p.codigo||'')+'?\n\nO cliente continua cadastrado.')) return;
   (p.fotos||[]).forEach(f=>idbDel(f.id));
   S.removidos=[...new Set([...(S.removidos||[]), id])];
   S.pedidos=S.pedidos.filter(x=>x.id!==id);
@@ -1879,15 +2003,23 @@ function editarPedido(id){
 /* ================= ORÇAMENTO =================
    Custo direto é a âncora: em cima dele vai o imposto (10%) e a margem.
    O que o app mostra é quanto entra, quanto sai e o que sobra. */
-function orcamentoDoCliente(cid){
-  const linhas=itensDoCliente(cid).map(i=>({it:i, c:contaItem(i)}));
+function orcamentoDaOP(p){
+  /* 500 peças divididas em 5 artes continuam sendo um pedido de 500: a faixa
+     sai do total da mesma peça+malha, senão cada ref caía numa faixa cara */
+  const itens=itensDaOP(p);
+  const soma={};
+  itens.forEach(i=>{ const k=(i.corteId||i.corte||'')+'|'+(i.malha||'');
+    soma[k]=(soma[k]||0)+(Number(i.qtd)||0); });
+  const linhas=itens.map(i=>({it:i,
+    c:contaItem(i, soma[(i.corteId||i.corte||'')+'|'+(i.malha||'')])}));
   const t={fat:0, cst:0, imp:0, lucro:0, pecas:0};
   linhas.forEach(({c})=>{ t.fat+=c.fat; t.cst+=c.cst; t.imp+=c.imp; t.lucro+=c.lucro; t.pecas+=c.q; });
   t.margem=t.fat>0? t.lucro/t.fat*100 : 0;
   return {linhas, t};
 }
-function blocoOrcamento(cid){
-  const {linhas, t}=orcamentoDoCliente(cid);
+function blocoOrcamento(p){
+  const cid=p.id;
+  const {linhas, t}=orcamentoDaOP(p);
   if(!linhas.length) return '';
   const semTab=linhas.filter(x=>!x.c.achou);
   const semQ  =linhas.filter(x=>!x.c.q);
@@ -1933,19 +2065,18 @@ function blocoOrcamento(cid){
     '</div></div>';
 }
 /* preço digitado à mão vence a tabela; fica gravado no item */
-function mudarPreco(cid, ix, valor){
-  const alvo=itensDoCliente(cid)[ix]; if(!alvo) return;
-  const v=Number(valor)||0;
-  pedidosDe(cid).forEach(p=>(p.itens||[]).forEach(i=>{
-    if(mesmoItem(i, alvo)){ i.precoManual = v>0? v : ''; p.ts=Date.now(); }
-  }));
-  salvar(); render();
+function mudarPreco(opId, ix, valor){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  const alvo=itensDaOP(p)[ix]; if(!alvo) return;
+  alvo.precoManual = Number(valor)>0? Number(valor) : '';
+  p.ts=Date.now(); salvar(); render();
 }
-function copiarOrcamento(cid){
-  const c=clienteDe(cid), {linhas,t}=orcamentoDoCliente(cid);
-  const txt=[c.nome, ''].concat(
+function copiarOrcamento(opId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  const c=clienteDe(p.clienteId)||{nome:''}, {linhas,t}=orcamentoDaOP(p);
+  const txt=[c.nome+'  ·  '+(p.codigo||''), ''].concat(
     linhas.filter(x=>x.c.achou && x.c.q).map(x=>
-      x.c.q+' × '+x.it.corte+' '+x.it.malha+
+      x.c.q+' × '+(x.it.ref? '['+x.it.ref+'] ':'')+x.it.corte+' '+x.it.malha+
       ((x.it.cores||[]).length? ' '+x.it.cores.map(tituloCaixa).join('/'):'')+
       ' — '+reais(x.c.preco)+' un = '+reais(x.c.fat)),
     ['', 'Total: '+reais(t.fat)+' ('+t.pecas.toLocaleString('pt-BR')+' peças)',
@@ -1957,14 +2088,14 @@ function copiarOrcamento(cid){
 }
 
 /* ================= 3. PEDIDOS: tudo numa tabela só ================= */
-var ordem={campo:'cliente', cresc:true};
+var ordem={campo:'op', cresc:false};
 function linhasPedidos(){
   const out=[];
-  S.clientes.forEach(c=>{
-    const et=etapaDoCliente(c.id);
-    itensDoCliente(c.id).forEach(i=>out.push({
-      cliente:c.nome, telefone:c.telefone||'', cid:c.id, etapa:et,
-      peca:i.corte||'', malha:i.malha||'',
+  S.pedidos.forEach(p=>{
+    const c=clienteDe(p.clienteId)||{nome:'(sem cliente)'};
+    itensDaOP(p).forEach(i=>out.push({
+      op:p.codigo||'', opId:p.id, cliente:c.nome, etapa:p.etapa,
+      ref:i.ref||'', peca:i.corte||'', malha:i.malha||'',
       cor:(i.cores||[]).map(tituloCaixa).join(', '),
       qtd:Number(i.qtd)||0, tam:(i.tamanhos||[]).join(' ')
     }));
@@ -1996,21 +2127,22 @@ function renderPedidos(){
   const th=(campo,rot,cls)=>'<th class="'+(cls||'')+' ord'+(ordem.campo===campo?' on':'')+'" onclick="ordenar(\''+campo+'\')">'+
     rot+(ordem.campo===campo? (ordem.cresc?' ▲':' ▼'):'')+'</th>';
   document.getElementById('tabPedidos').innerHTML = L.length?
-    '<tr>'+th('cliente','Nome')+th('cor','Cor')+th('malha','Malha')+th('qtd','Qtd','num')+
-      th('peca','Peça')+'<th>Tam</th>'+th('etapa','Etapa')+'</tr>'+
-    L.map(x=>'<tr onclick="irAoCliente(\''+x.cid+'\')">'+
+    '<tr>'+th('op','OP')+th('cliente','Nome')+th('ref','Ref')+th('cor','Cor')+th('malha','Malha')+
+      th('qtd','Qtd','num')+th('peca','Peça')+th('etapa','Etapa')+'</tr>'+
+    L.map(x=>'<tr onclick="irAoCliente(\''+x.opId+'\')">'+
+      '<td class="mini"><b>'+esc(x.op)+'</b></td>'+
       '<td><b>'+esc(x.cliente)+'</b></td>'+
+      '<td>'+esc(x.ref||'—')+'</td>'+
       '<td>'+esc(x.cor||'—')+'</td>'+
       '<td>'+esc(x.malha||'—')+'</td>'+
       '<td class="num">'+(x.qtd? '<b>'+x.qtd.toLocaleString('pt-BR')+'</b>':'<span class="falta">a definir</span>')+'</td>'+
       '<td>'+esc(x.peca||'—')+'</td>'+
-      '<td class="mini">'+esc(x.tam||'—')+'</td>'+
       '<td><span class="tag" style="background:'+etapaDe(x.etapa).cor+'">'+esc(etapaDe(x.etapa).nome)+'</span></td></tr>').join('')+
-    '<tr class="somaLinha"><td colspan="3">total</td><td class="num"><b>'+tot.toLocaleString('pt-BR')+
-      '</b></td><td colspan="3"></td></tr>'
+    '<tr class="somaLinha"><td colspan="5">total</td><td class="num"><b>'+tot.toLocaleString('pt-BR')+
+      '</b></td><td colspan="2"></td></tr>'
     : '<tr><td class="vazio">Nada nesse filtro.</td></tr>';
 }
-function irAoCliente(cid){ abertos[cid]=true; irPara('clientes'); }
+function irAoCliente(opId){ abertos[opId]=true; irPara('clientes'); }
 function preencherFiltros(){
   const L=linhasPedidos();
   const enche=(id, vals)=>{
@@ -2043,7 +2175,7 @@ function renderResumo(){
       '<div class="barraVal">'+v.toLocaleString('pt-BR')+'</div></div>').join('')+'</div>';
   };
   const porEtapa={};
-  S.clientes.forEach(c=>{ const e=etapaDoCliente(c.id); porEtapa[e]=(porEtapa[e]||0)+qtdDoCliente(c.id); });
+  S.pedidos.forEach(p=>{ porEtapa[p.etapa]=(porEtapa[p.etapa]||0)+pecasDaOP(p); });
   const totGeral=L.reduce((s,x)=>s+x.qtd,0);
   const semQtd=L.filter(x=>!x.qtd).length;
 
@@ -2083,17 +2215,20 @@ function restaurarBackup(inp){
 
 /* ================= RENDER ================= */
 function render(){
-  if(aba==='clientes') renderClientes();
+  if(aba==='clientes') renderOPs();
   if(aba==='pedidos'){ preencherFiltros(); renderPedidos(); }
   if(aba==='resumo') renderResumo();
-  const n=document.getElementById('nClientes'); if(n) n.textContent=S.clientes.length? '('+S.clientes.length+')':'';
+  const n=document.getElementById('nClientes');
+  if(n){ const ab=S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim').length; n.textContent=ab? '('+ab+')':''; }
 }
 
 carregar();
 document.addEventListener('DOMContentLoaded', ()=>{
   document.getElementById('ver').textContent='v'+VERSAO;
-  document.getElementById('fEtapaCli').innerHTML='<option value="">todas</option>'+
+  document.getElementById('fEtapaCli').innerHTML=
+    '<option value="_abertas">só as abertas</option><option value="">todas</option>'+
     ETAPAS.map(e=>'<option value="'+e.id+'">'+esc(e.nome)+'</option>').join('');
+  document.getElementById('fEtapaCli').value='_abertas';
   irPara('nova');
   iniciarFirebase();
 });
