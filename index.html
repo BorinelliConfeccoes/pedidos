@@ -240,6 +240,11 @@ a.acao.wpp:hover{background:#1a6641;}
   border-radius:6px; padding:3px 7px; white-space:nowrap; letter-spacing:.3px;}
 .opNome{flex:1 1 auto; min-width:0;}
 .opNome b{font-size:15.5px;}
+.tel{display:inline-block; margin-left:8px; font-size:12.5px; color:var(--verde); background:#eef3e6;
+  border-radius:6px; padding:1px 8px; letter-spacing:.3px; cursor:copy; white-space:nowrap;}
+.tel:hover{background:var(--dourado); color:#fff;}
+.tel.semTel{background:transparent; color:var(--sub); font-style:italic; cursor:default;}
+.tel.semTel:hover{background:transparent; color:var(--sub);}
 .at{color:var(--vermelho); font-weight:600;}
 .seta{color:var(--sub); font-size:12px; width:12px;}
 .opCorpo{padding:13px 14px; border-top:1px solid var(--linha); background:#fcfdf9;}
@@ -302,6 +307,12 @@ table.tabOrc td{padding:7px 10px;}
 .orcAjustes{display:flex; gap:9px; flex-wrap:wrap; padding:10px 13px; border-top:1px solid var(--linha); background:#fff;}
 .orcAjustes>div{flex:1 1 108px;}
 .orcAjustes input,.orcAjustes select{padding:6px 8px; font-size:13.5px;}
+.calcBox{border-top:1px solid var(--linha); background:#fbfdf7;}
+.calcTopo{display:flex; align-items:center; gap:9px; padding:10px 13px 0;}
+.calcTopo b{flex:1 1 auto; color:var(--verde);}
+.semRib{display:flex; align-items:center; gap:7px; text-transform:none; letter-spacing:0;
+  font-size:13px; color:var(--ink); padding:7px 0;}
+.semRib input{width:auto;}
 
 @media print{ @page{ size:A4; margin:14mm; } }
 #impressao{display:none;}
@@ -705,7 +716,8 @@ const DETALHES = [
   {id:'JUSTA',       nome:'Modelagem justa',    termos:['MAIS JUSTA','JUSTA','SLIM','AJUSTADA','COLADA'], perto:[['MODELAGEM','JUSTA'],['CAIMENTO','JUSTO']]},
   {id:'COMPRIDA',    nome:'Mais comprida',      termos:['MAIS COMPRIDA','MAIS LONGA NO CORPO','ALONGADA']},
   {id:'FIO_TINTO',   nome:'Fio tinto',          termos:['FIO TINTO','FIO TINGIDO']},
-  {id:'ESTONADA',    nome:'Lavagem estonada',   termos:['ESTONADA','ESTONADO','LAVAGEM ESTONADA','LAVADA']},
+  {id:'ESTONADA',    nome:'Lavagem estonada',   termos:['ESTONADA','ESTONADO','LAVAGEM ESTONADA','LAVADA'],
+   fora:true, aviso:'Lavagem estonada saiu do catálogo — a Borinelli não faz. Avisar o cliente.'},
   {id:'EST_FRENTE',  nome:'Estampa na frente',  termos:['ESTAMPA NA FRENTE','ARTE NA FRENTE','LOGO NA FRENTE'], perto:[['ESTAMPA','FRENTE'],['ARTE','FRENTE'],['LOGO','FRENTE']]},
   {id:'EST_COSTAS',  nome:'Estampa nas costas', termos:['ESTAMPA NAS COSTAS','ARTE NAS COSTAS'], perto:[['ESTAMPA','COSTAS'],['ARTE','COSTAS'],['LOGO','COSTAS']]},
   {id:'EST_PEITO',   nome:'Estampa no peito',   termos:['PEITO ESQUERDO','PEITO DIREITO','LOGO PEQUENO'], perto:[['ESTAMPA','PEITO'],['LOGO','PEITO'],['BORDADO','PEITO']]},
@@ -1205,9 +1217,13 @@ function lerConversa(txtBruto, meusNomes){
   const extrasUnicos=[...new Set(extras.map(e=>e.id))].map(id=>EXTRAS.find(e=>e.id===id));
   const avisos=[];
   acharTermos(t, MALHAS).forEach(m=>{ if(m.item.fora && avisos.indexOf(m.item.aviso)<0) avisos.push(m.item.aviso); });
+  /* acabamento que saiu do catálogo avisa do mesmo jeito que a malha */
+  acharTermos(t, DETALHES).forEach(m=>{ if(m.item.fora && avisos.indexOf(m.item.aviso)<0) avisos.push(m.item.aviso); });
 
   const detalhes=acharTermos(t, DETALHES).map(x=>x.item).concat(acharPerto(t, DETALHES, 45));
-  const detalhesUnicos=[...new Set(detalhes.map(d=>d.id))].map(id=>DETALHES.find(d=>d.id===id));
+  /* o que saiu do catálogo vira aviso, não vira acabamento do pedido */
+  const detalhesUnicos=[...new Set(detalhes.map(d=>d.id))]
+    .map(id=>DETALHES.find(d=>d.id===id)).filter(d=>d && !d.fora);
   const comoQuer=frasesDeDetalhe(sep.texto);
   const refs=acharRefs(sep.texto);
 
@@ -1394,6 +1410,40 @@ function precoDe(corteId, malhaId, qtd, ehPiloto){
   };
 }
 
+/* ================= CALCULADORA DE MALHA =================
+   O caminho que o Patrick faz na mão: quantas peças saem de 1 kg e quanto
+   custa o kg. Daí sai o material por peça, a ribana (5% do peso da malha),
+   o beneficiamento e o custo direto. Em cima do custo direto entram o
+   imposto (10%) e a margem de cada faixa — é essa a régua do catálogo.
+   Fórmula das faixas: preço = custo direto ÷ (0,90 − margem). */
+const BENEF_BASE = 5.50;                 /* costura 4 + corte 0,50 + embalagem 1 */
+const RIBANA_PCT = 0.05;                 /* 5% do peso da malha */
+const MARGENS = [0.35, 0.25, 0.20, 0.15];   /* 30-50 · 50-100 · 100-300 · 300-600 */
+
+function custoDaMalha(e){
+  const pcKg  = Number(e.pcKg)||0;              /* peças por kg (rendimento do risco) */
+  const rsKg  = Number(e.rsKg)||0;              /* R$ por kg da malha */
+  const ribKg = Number(e.ribKg)>0? Number(e.ribKg) : rsKg;   /* ribana: se não disser, usa o da malha */
+  const benef = e.benef===''||e.benef==null? BENEF_BASE : Number(e.benef)||0;
+  const pct   = e.semRibana? 0 : (Number(e.pctRibana)>0? Number(e.pctRibana)/100 : RIBANA_PCT);
+  if(!pcKg || !rsKg) return {ok:false};
+
+  const kgPeca   = 1/pcKg;                      /* quanto de malha cada peça come */
+  const malha    = kgPeca*rsKg;
+  const ribana   = kgPeca*pct*ribKg;            /* 5% do PESO da malha, no preço da ribana */
+  const material = malha+ribana;
+  const direto   = material+benef;
+  const minimo   = precoMinimo(direto);         /* 15% líquido */
+  const chao     = arredonda90(direto/0.80);    /* 10% líquido: o mínimo do mínimo */
+  const faixas   = MARGENS.map((m,i)=>{
+    const bruto=direto/(0.90-m);
+    const preco=arredonda90(bruto);
+    const imp=preco*0.10, lucro=preco-direto-imp;
+    return {faixa:FAIXAS[i], alvo:m*100, preco, imp, lucro, margem: preco>0? lucro/preco*100 : 0};
+  });
+  return {ok:true, pcKg, rsKg, ribKg, pct, benef, kgPeca, malha, ribana, material, direto, minimo, chao, faixas};
+}
+
 /* preço mínimo: custo + imposto + 15% líquido, arredondado pra cima no ,90 */
 function precoMinimo(custo){ return arredonda90(custo/0.75); }
 function arredonda90(v){
@@ -1428,7 +1478,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.2.0';
+const VERSAO='3.3.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -1934,7 +1984,7 @@ function montarConferencia(r, bruto){
 
   h+='<h3 style="margin-top:16px;">Como ele quer a peça</h3>'+
      '<div class="chips" id="chipsDet">'+
-     DETALHES.map(dd=>'<span class="chip'+((r.detalhes||[]).some(x=>x.id===dd.id)?' on':'')+
+     DETALHES.filter(dd=>!dd.fora).map(dd=>'<span class="chip'+((r.detalhes||[]).some(x=>x.id===dd.id)?' on':'')+
        '" data-id="'+dd.id+'" onclick="this.classList.toggle(\'on\')">'+esc(dd.nome)+'</span>').join('')+
      '</div>'+
      '<div style="margin-top:9px;"><label>Nas palavras dele</label>'+
@@ -2724,6 +2774,10 @@ function linhaOP(p){
       '<span class="opCod">'+esc(p.codigo||'—')+'</span>'+
       '<div class="opNome"><b>'+esc(c.nome)+'</b>'+
         (p.refCliente? ' <span class="mini">· '+esc(p.refCliente)+'</span>':'')+
+        /* o número na cara, sem precisar abrir nem clicar em nada */
+        (c.telefone? '<span class="tel" onclick="copiarTel(event,\''+esc(c.telefone)+'\')"'+
+          ' title="clique pra copiar">'+esc(c.telefone)+'</span>':
+          '<span class="tel semTel">sem número</span>')+
         '<div class="mini">'+[
           pecas? pecas.toLocaleString('pt-BR')+' peças':'sem quantidade',
           t.fat? reais(t.fat):'',
@@ -2740,6 +2794,15 @@ function linhaOP(p){
     '</div>'+
     (ab? corpoOP(p, c, itens) : '')+
   '</div>';
+}
+/* copiar o número sem abrir o WhatsApp nem sair da tela */
+function copiarTel(ev, tel){
+  if(ev && ev.stopPropagation) ev.stopPropagation();
+  const so=soDigitos(tel);
+  const põe=()=>avisoRapido('Número copiado: '+tel);
+  if(navigator.clipboard) navigator.clipboard.writeText(tel).then(põe, ()=>põe());
+  else põe();
+  return so;
 }
 function faltamDias(p){
   if(!p.entregaEm || grupoDe(p.etapa)==='fim') return null;
@@ -2985,9 +3048,72 @@ function blocoOrcamento(p){
     '<div class="mini" style="margin-top:8px;">Etiqueta, tag, embalagem, estampa e modelagem são cobrados à parte e não estão aqui.</div>'+
     '<div style="margin-top:10px; display:flex; gap:6px; flex-wrap:wrap;">'+
       '<button class="acao mini sec" onclick="copiarOrcamento(\''+cid+'\')">Copiar resumo</button>'+
-
-    '</div></div>';
+    '</div>'+
+    blocoCalculadora(p)+
+    '</div>';
 }
+/* ================= CALCULADORA DE MALHA NA OP =================
+   Pra malha que não está na tabela, ou pra conferir uma que está.
+   Guarda na própria OP, então não se perde ao fechar. */
+function mudarCalc(opId, campo, valor){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  p.calcMalha=p.calcMalha||{};
+  p.calcMalha[campo]= campo==='semRibana'? !!valor : (valor===''? '' : Number(valor));
+  p.ts=Date.now(); salvar(); render();
+}
+function abrirCalc(opId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  p.calcMalha=p.calcMalha||{};
+  p.calcMalha.aberta=!p.calcMalha.aberta;
+  p.ts=Date.now(); salvar(); render();
+}
+function blocoCalculadora(p){
+  const cid=p.id, e=p.calcMalha||{};
+  if(!e.aberta) return '<div style="padding:0 13px 12px;">'+
+    '<button class="acao mini sec" onclick="abrirCalc(\''+cid+'\')">🧮 Calcular custo de uma malha</button></div>';
+  const r=custoDaMalha(e);
+  const lin=(rot,val,cls)=>'<div'+(cls?' class="'+cls+'"':'')+'><span>'+rot+'</span><b>'+val+'</b></div>';
+  const corM=m=>m<10? 'var(--vermelho)' : (m<15? 'var(--ambar)' : '#3d6b32');
+  return '<div class="calcBox">'+
+    '<div class="calcTopo"><b>🧮 Custo da malha</b>'+
+      '<button class="acao mini sec" onclick="abrirCalc(\''+cid+'\')">fechar</button></div>'+
+    '<div class="orcAjustes" style="border-top:0;">'+
+      '<div><label>Peças por kg</label><input type="number" step="0.1" min="0" value="'+(e.pcKg||'')+
+        '" placeholder="ex. 2" onchange="mudarCalc(\''+cid+'\',\'pcKg\',this.value)"></div>'+
+      '<div><label>R$ por kg da malha</label><input type="number" step="0.01" min="0" value="'+(e.rsKg||'')+
+        '" placeholder="ex. 74" onchange="mudarCalc(\''+cid+'\',\'rsKg\',this.value)"></div>'+
+      '<div><label>R$ por kg da ribana</label><input type="number" step="0.01" min="0" value="'+(e.ribKg||'')+
+        '" placeholder="igual à malha" onchange="mudarCalc(\''+cid+'\',\'ribKg\',this.value)"></div>'+
+      '<div><label>Beneficiamento</label><input type="number" step="0.01" min="0" value="'+
+        (e.benef===undefined||e.benef===''? '5.50' : e.benef)+
+        '" onchange="mudarCalc(\''+cid+'\',\'benef\',this.value)"></div>'+
+      '<div style="flex:1 1 150px;"><label>Ribana</label>'+
+        '<label class="semRib"><input type="checkbox"'+(e.semRibana?' checked':'')+
+        ' onchange="mudarCalc(\''+cid+'\',\'semRibana\',this.checked)"> gola no mesmo tecido</label></div>'+
+    '</div>'+
+    (!r.ok? '<div class="mini" style="padding:0 13px 12px;">Preencha as peças por kg e o valor do kg.</div>'
+    : '<div class="orcSoma">'+
+        lin('Malha por peça ('+r.kgPeca.toFixed(3).replace('.',',')+' kg)', reais(r.malha))+
+        (r.ribana? lin('Ribana ('+Math.round(r.pct*100)+'% do peso)', reais(r.ribana)) : lin('Ribana','— gola no mesmo tecido'))+
+        lin('Material', reais(r.material))+
+        lin('Beneficiamento', reais(r.benef))+
+        lin('Custo direto', reais(r.direto), 'orcLinha')+
+        lin('Preço mínimo (15% líquido)', reais(r.minimo))+
+        lin('Mínimo do mínimo (10%)', reais(r.chao))+
+      '</div>'+
+      '<div class="rolar"><table class="tabOrc">'+
+        '<tr><th>Faixa</th><th class="num">Margem alvo</th><th class="num">Preço sugerido</th><th class="num">Lucro un</th><th class="num">Margem real</th></tr>'+
+        r.faixas.map(f=>'<tr><td>'+esc(f.faixa)+'</td>'+
+          '<td class="num mini">'+f.alvo.toFixed(0)+'%</td>'+
+          '<td class="num"><b>'+reais(f.preco)+'</b></td>'+
+          '<td class="num">'+reais(f.lucro)+'</td>'+
+          '<td class="num" style="color:'+corM(f.margem)+'">'+f.margem.toFixed(1)+'%</td></tr>').join('')+
+      '</table></div>'+
+      '<div class="mini" style="padding:8px 13px 12px;">Isso é a <b>sugestão pela régua</b> (35/25/20/15% em cima do custo direto). '+
+      'A tabela do Catálogo 2027 tem preços que você ajustou na mão e <b>continua valendo</b> — use isso pra conferir margem ou pra malha que ainda não está na tabela.</div>')+
+  '</div>';
+}
+
 /* preço digitado à mão vence a tabela; fica gravado no item */
 function mudarPreco(opId, ix, valor){
   const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
