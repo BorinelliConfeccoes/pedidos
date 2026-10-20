@@ -104,7 +104,8 @@ nav.lado button.on{background:var(--creme); color:var(--verde-esc); font-weight:
 nav.lado .grupo{color:#8fa37c; font-size:9.5px; letter-spacing:1.6px; text-transform:uppercase;
   padding:14px 11px 5px; font-weight:600;}
 nav.lado .ic{width:17px; text-align:center; flex:0 0 auto; opacity:.85;}
-main{flex:1 1 auto; padding:18px 20px 70px; max-width:1180px; overflow-x:hidden;}
+main{flex:1 1 auto; min-width:0; padding:18px 20px 70px; max-width:1180px; overflow-x:hidden; overflow-x:clip;}
+/* clip (e não hidden) pra o filtro das OPs conseguir grudar no topo */
 .tela{display:none;} .tela.on{display:block;}
 .cab{display:flex; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;}
 .cab h1{margin:0;}
@@ -242,6 +243,16 @@ a.acao.wpp:hover{background:#1a6641;}
 .at{color:var(--vermelho); font-weight:600;}
 .seta{color:var(--sub); font-size:12px; width:12px;}
 .opCorpo{padding:13px 14px; border-top:1px solid var(--linha); background:#fcfdf9;}
+/* resumo da OP fechada: o que é, sem precisar abrir */
+.opResumo{margin-top:5px; font-size:12.5px; color:var(--ink);}
+.opResumo ul{margin:0; padding:0; list-style:none;}
+.opResumo li{line-height:1.55; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
+.opResumo li b{display:inline-block; min-width:34px; color:var(--verde);}
+.opResumo .semQtd{color:var(--ambar);}
+.opResPend{margin-top:3px; font-size:12px; color:var(--ambar); line-height:1.45;}
+/* o filtro das OPs gruda embaixo da faixa: dá pra buscar sem subir a lista */
+#filtroOPs{position:sticky; z-index:32; top:calc(var(--topo) + var(--abas) + var(--fx,48px) + env(safe-area-inset-top));
+  box-shadow:0 6px 14px -10px rgba(30,45,20,.35);}
 .opEtapas{display:flex; flex-wrap:wrap; gap:4px; margin-top:12px; padding-top:11px; border-top:1px solid var(--linha);}
 .pill{border:1px solid var(--linha); background:#fff; color:var(--sub); border-radius:20px;
   padding:3px 10px; font-family:inherit; font-size:11.5px; cursor:pointer;}
@@ -412,6 +423,8 @@ tr:last-child td{border-bottom:0;}
   main{padding:14px 13px 92px;}
   .barraNome{flex:0 0 100px; font-size:12px;}
   .cab .dir{margin-left:0; width:100%;}
+  #filtroOPs{position:static; box-shadow:none;}
+  #barraLote{bottom:calc(70px + env(safe-area-inset-bottom));}
 }
 </style>
 </head>
@@ -523,11 +536,12 @@ tr:last-child td{border-bottom:0;}
         <div class="dir">
           <button class="acao mini sec" onclick="abrirTudo(true)">Abrir todas</button>
           <button class="acao mini sec" onclick="abrirTudo(false)">Fechar todas</button>
+          <button class="acao mini sec" id="btResumo" onclick="alternarResumo()">Resumo: ligado</button>
         </div></div>
       <div id="rapidosOPs" class="rapidos"></div>
-      <div class="card compacto">
+      <div class="card compacto" id="filtroOPs">
         <div class="linha" style="margin:0;">
-          <div style="flex:2 1 220px;"><label>Buscar</label><input id="buscaCli" placeholder="OP, cliente, ref, malha, peça, pendência…" oninput="renderOPs()"></div>
+          <div style="flex:2 1 220px;"><label>Buscar</label><input id="buscaCli" placeholder="OP, cliente, ref, malha, peça, pendência…  (Esc limpa)" oninput="buscarOPs()"></div>
           <div style="flex:1 1 150px;"><label>Etapa</label>
             <select id="fEtapaCli" onchange="renderOPs()"></select></div>
           <div style="flex:1 1 150px;"><label>Ordenar por</label>
@@ -1414,7 +1428,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.1.0';
+const VERSAO='3.2.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -1739,14 +1753,19 @@ function fecharMenu(){
   document.getElementById('sidebar').classList.remove('aberto');
   document.getElementById('fundoMenu').classList.remove('on');
 }
-function irPara(a, semHash){
+/* cada aba lembra onde a lista estava: sair e voltar não joga pro topo.
+   Clicar na aba em que já está, ou trocar o filtro, aí sim vai pro topo. */
+var posAbas={};
+function irPara(a, semHash, proTopo){
   if(!ABAS.some(x=>x.id===a)) a='painel';
+  const mesma = aba===a;
+  if(!mesma) posAbas[aba]=window.scrollY;
   aba=a;
   document.querySelectorAll('.tela').forEach(t=>t.classList.toggle('on', t.id==='tela-'+a));
   fecharMenu();
   if(!semHash){ try{ if(location.hash!=='#'+a) history.replaceState(null,'','#'+a); }catch(e){} }
-  window.scrollTo({top:0});
   render();
+  window.scrollTo({top: (mesma||proTopo)? 0 : (posAbas[a]||0)});
 }
 /* F5 volta pra mesma tela */
 function abaDaURL(){
@@ -1772,8 +1791,13 @@ function atualizarFaixa(){
     bt('Esperando você', esperando, "verOPs('esperando')", esperando?'quente':'') +
     bt('Prazo apertado', apertado, "verOPs('atrasadas')", apertado?'quente':'') +
     bt('Pendências', pend, "verOPs('')", pend?'morno':'');
+  /* altura da faixa: é embaixo dela que o filtro das OPs gruda */
+  try{ document.documentElement.style.setProperty('--fx', el.offsetHeight+'px'); }catch(e){}
 }
-function verOPs(rapido){ rapidoOP=rapido||''; irPara('clientes'); }
+function verOPs(rapido){
+  const mudou=(rapido||'')!==rapidoOP;
+  rapidoOP=rapido||''; irPara('clientes', false, mudou);
+}
 
 /* ---- busca global: um campo que acha tudo ---- */
 let buscaSel=-1, buscaUlt=[];
@@ -1822,7 +1846,11 @@ function teclaBusca(ev){
 function ligarTeclas(){
   document.addEventListener('keydown', ev=>{
     const campo=/^(INPUT|TEXTAREA|SELECT)$/.test((ev.target||{}).tagName||'');
-    if(ev.key==='Escape'){ fecharModal(); fecharMenu(); if(campo) ev.target.blur(); return; }
+    if(ev.key==='Escape'){
+      /* Esc na busca das OPs: limpa e volta pra onde a lista estava */
+      if(ev.target && ev.target.id==='buscaCli' && ev.target.value){ ev.target.value=''; buscarOPs(); return; }
+      fecharModal(); fecharMenu(); if(campo) ev.target.blur(); return;
+    }
     if(campo || ev.ctrlKey || ev.metaKey || ev.altKey) return;
     if(ev.key==='/'){ ev.preventDefault(); const el=document.getElementById('buscaGlobal'); if(el) el.focus(); return; }
     const n=Number(ev.key);
@@ -2024,7 +2052,7 @@ function salvarPedido(){
   fotosTemp=[];
   salvar();
   limparConversa();
-  irPara('clientes');
+  irPara('clientes', false, true);
   setTimeout(()=>{ abertos[ped.id]=true; render(); }, 60);
 }
 
@@ -2392,7 +2420,7 @@ function salvarLote(){
 
   /* as fotos grandes das conversas salvas vão pro aparelho */
   marcados.forEach(ix=>{ (lote[ix]&&lote[ix].fotos||[]).forEach(f=>{ if(f.grande) idbPut(f.id, f.grande); }); });
-  lote=[]; renderLote(); salvar(); irPara('clientes');
+  lote=[]; renderLote(); salvar(); irPara('clientes', false, true);
   const partes=[];
   if(novos)    partes.push(novos+' cliente'+(novos!==1?'s':'')+' novo'+(novos!==1?'s':''));
   if(juntados) partes.push(juntados+' em cliente que já existia');
@@ -2537,6 +2565,57 @@ const RAPIDOS=[
   {id:'tudo',      nome:'Tudo',           f:()=>true}
 ];
 function porRapido(id){ rapidoOP=id; renderOPs(); }
+
+/* ---- busca sem perder o lugar ----
+   Antes do primeiro caractere, anota qual OP estava no topo da tela.
+   Quando a busca fica vazia de novo, volta exatamente pra ela. */
+var antesBusca=null;
+function limiteTopo(){
+  let lim=0;
+  ['faixa','filtroOPs'].forEach(id=>{ const el=document.getElementById(id);
+    if(el && el.offsetParent!==null) lim=Math.max(lim, el.getBoundingClientRect().bottom); });
+  return lim;
+}
+function ancoraOPs(){
+  const lim=limiteTopo()+4;
+  const el=[...document.querySelectorAll('#listaCli .card.op')].find(d=>d.getBoundingClientRect().bottom>lim);
+  return el? {id:el.dataset.id, off:el.getBoundingClientRect().top, y:window.scrollY} : {y:window.scrollY};
+}
+function voltarAncora(a){
+  if(!a) return;
+  const el=a.id && [...document.querySelectorAll('#listaCli .card.op')].find(d=>d.dataset.id===a.id);
+  if(el) window.scrollTo({top: window.scrollY + el.getBoundingClientRect().top - a.off});
+  else window.scrollTo({top: a.y||0});
+}
+function buscarOPs(){
+  const v=((document.getElementById('buscaCli')||{}).value||'').trim();
+  if(v && !antesBusca) antesBusca=ancoraOPs();
+  renderOPs();
+  if(!v && antesBusca){ const a=antesBusca; antesBusca=null; voltarAncora(a); }
+}
+
+/* resumo nas OPs fechadas — liga e desliga, fica lembrado neste aparelho */
+function resumoLigado(){ try{ return localStorage.getItem('borinelli-resumo')!=='0'; }catch(e){ return true; } }
+function alternarResumo(){
+  const a=ancoraOPs();
+  try{ localStorage.setItem('borinelli-resumo', resumoLigado()? '0':'1'); }catch(e){}
+  renderOPs(); voltarAncora(a);
+}
+function resumoOP(p, itens){
+  if(!itens.length) return '';
+  const MAX=6;
+  const lin=itens.slice(0,MAX).map(i=>{
+    const q=Number(i.qtd)>0? '<b>'+Number(i.qtd).toLocaleString('pt-BR')+'</b>' : '<b class="semQtd">?</b>';
+    const partes=[i.corte||'peça a definir', i.malha, (i.cores||[]).map(tituloCaixa).join('/')].filter(Boolean);
+    return '<li>'+q+esc(partes.join(' · '))+(i.ref? ' <span class="mini">('+esc(i.ref)+')</span>':'')+'</li>';
+  });
+  if(itens.length>MAX) lin.push('<li class="mini">+ '+(itens.length-MAX)+' itens</li>');
+  const pend=pendencias(p).filter(x=>!x.ok);
+  return '<div class="opResumo"><ul>'+lin.join('')+'</ul>'+
+    (pend.length? '<div class="opResPend">⚠ '+pend.slice(0,4).map(x=>esc(x.t)).join(' · ')+
+      (pend.length>4? ' · +'+(pend.length-4):'')+'</div>' : '')+
+  '</div>';
+}
 function opsFiltradas(){
   const r=RAPIDOS.find(x=>x.id===rapidoOP)||RAPIDOS[0];
   const busca=normalizar((document.getElementById('buscaCli')||{}).value||'');
@@ -2572,6 +2651,8 @@ function cmp_atencao_fallback(a,b){ return diasParado(b)-diasParado(a); }
 
 function renderOPs(){
   const L=opsFiltradas();
+  const btR=document.getElementById('btResumo');
+  if(btR) btR.textContent='Resumo: '+(resumoLigado()? 'ligado':'desligado');
   const rap=document.getElementById('rapidosOPs');
   if(rap) rap.innerHTML=RAPIDOS.map(x=>{
     const n=S.pedidos.filter(x.f).length;
@@ -2650,7 +2731,9 @@ function linhaOP(p){
           abertasPend(p)? '<span class="pendBadge">'+abertasPend(p)+' pendência'+(abertasPend(p)>1?'s':'')+'</span>':'',
           fa!==null? (fa<0? '<span class="at">venceu há '+(-fa)+'d</span>' : 'entrega em '+fa+'d') : '',
           at? '<span class="at">'+esc(at.txt)+'</span>' : (diasParado(p)+'d')
-        ].filter(Boolean).join(' · ')+'</div></div>'+
+        ].filter(Boolean).join(' · ')+'</div>'+
+        ((!ab && resumoLigado())? resumoOP(p, itens) : '')+
+      '</div>'+
       (sit? '<span class="tag sitTag" style="background:'+sit.cor+'">'+esc(sit.curto)+'</span>':'')+
       '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>'+
       '<span class="seta">'+(ab?'▾':'▸')+'</span>'+
@@ -3319,7 +3402,7 @@ function copiarTabela(){
   document.getElementById('modal').classList.add('on');
 }
 function filtrarSit(v){ document.getElementById('fEtapaCli').value=v; renderOPs(); }
-function irAoCliente(opId){ abertos[opId]=true; irPara('clientes'); }
+function irAoCliente(opId){ abrirDaLista(opId); }   /* abre a OP e oferece voltar pra tabela no mesmo ponto */
 function preencherFiltros(){
   const L=linhasPedidos();
   const enche=(id, vals)=>{
@@ -3420,10 +3503,16 @@ function blocoPerdidas(){
 /* abrir uma OP pela busca ou pelo painel tem que mostrá-la, mesmo que o
    filtro de agora a esconda — por isso limpa os filtros antes */
 function abrirDaLista(id){
+  const b=document.getElementById('buscaCli'), e=document.getElementById('fEtapaCli');
+  /* anota onde estava, pra dar "voltar" depois */
+  const volta={aba, rapido:rapidoOP, busca:b?b.value:'', etapa:e?e.value:'', y:window.scrollY,
+    ancora: aba==='clientes'? (antesBusca||ancoraOPs()) : null, id, estavaAberta:!!abertos[id]};
+  antesBusca=null;
   abertos[id]=true; guardarAbertos();
   rapidoOP='tudo';
-  const b=document.getElementById('buscaCli'); if(b) b.value='';
-  const e=document.getElementById('fEtapaCli'); if(e) e.value='';
+  if(b) b.value='';
+  if(e) e.value='';
+  avisoVoltar(volta);
   irPara('clientes');
   setTimeout(()=>{
     const el=document.querySelector('.card.op.aberta') ||
@@ -3489,6 +3578,31 @@ function avisoRapido(texto, acao){
   window.__toast=setTimeout(esconderAviso, 8000);
 }
 function esconderAviso(){ const el=document.getElementById('toast'); if(el) el.classList.remove('on'); }
+
+/* depois de abrir uma OP pela busca do topo ou pelo painel: botão pra voltar
+   pro filtro e pro ponto da lista em que estava */
+var voltaLista=null;
+function avisoVoltar(v){
+  voltaLista=v;
+  let el=document.getElementById('toast');
+  if(!el){ el=document.createElement('div'); el.id='toast'; document.body.appendChild(el); }
+  el.innerHTML='<span>Abri a OP.</span><button onclick="voltarDaLista()">← Voltar pra onde eu estava</button>';
+  el.classList.add('on');
+  clearTimeout(window.__toast);
+  window.__toast=setTimeout(esconderAviso, 30000);
+}
+function voltarDaLista(){
+  const v=voltaLista; voltaLista=null; esconderAviso();
+  if(!v) return;
+  if(!v.estavaAberta){ delete abertos[v.id]; guardarAbertos(); }
+  rapidoOP=v.rapido||'';
+  const b=document.getElementById('buscaCli'); if(b) b.value=v.busca||'';
+  const e=document.getElementById('fEtapaCli'); if(e) e.value=v.etapa||'';
+  if(v.aba!=='clientes'){ posAbas[v.aba]=v.y; irPara(v.aba); return; }
+  irPara('clientes');
+  if(v.busca){ antesBusca=v.ancora; window.scrollTo({top:0}); }
+  else voltarAncora(v.ancora);
+}
 
 /* ================= 4. RESUMO ================= */
 function renderResumo(){
