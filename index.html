@@ -1344,13 +1344,32 @@ function faixaDe(q){
   return {ix:3, aviso:'acima de 600 peças — confirme o preço'};
 }
 
+/* ================= PEÇA PILOTO =================
+   Regra confirmada pelo Patrick em 20/10/2026:
+   piloto = preço da MESMA peça (modelo + malha) na faixa de 30 a 50  +  50%,
+   arredondado pra cima no próximo 4,90 ou 9,90.
+   Substitui as regras antigas de +30% e de +R$ 50.
+   Estampa, etiqueta e tag seguem à parte, e a estampa da piloto é cobrada
+   50% a mais. Nunca abrir a pilotagem como item separado pro cliente. */
+const PILOTO_FATOR = 1.5;
+function precoPiloto(reg){ return arredonda90(reg.precos[0] * PILOTO_FATOR); }
+
 /* o que o item custa e por quanto sai */
-function precoDe(corteId, malhaId, qtd){
+function precoDe(corteId, malhaId, qtd, ehPiloto){
   const q=Number(qtd)||0;
   const f=faixaDe(q);
   let reg=TABELA[corteId+'|'+malhaId];
   if(!reg && malhaId==='SUEDINE') reg=TABELA[corteId+'|SUEDINE_STRONG'];   /* "suedine" solto: assume Strong */
-  if(!reg) return {achou:false, faixa:FAIXAS[f.ix], aviso:f.aviso};
+  if(!reg) return {achou:false, faixa: ehPiloto? 'peça piloto' : FAIXAS[f.ix], aviso:f.aviso, piloto:!!ehPiloto};
+  if(ehPiloto) return {
+    achou:true, piloto:true,
+    custo:reg.custo,
+    preco:precoPiloto(reg),
+    faixa:'peça piloto',
+    aviso:['peça de 30 a 50 (R$ '+reg.precos[0].toFixed(2).replace('.',',')+') + 50%',
+           reg.obs].filter(Boolean).join(' · '),
+    semCusto:!reg.custo
+  };
   return {
     achou:true,
     custo:reg.custo,
@@ -1373,18 +1392,20 @@ function arredonda90(v){
 }
 
 /* a conta de uma linha do orçamento */
-function contaItem(it, qtdDaFaixa){
+function contaItem(it, qtdDaFaixa, ehPiloto){
   const q=Number(it.qtd)||0;
   /* a faixa pode vir do total do pedido (várias refs da mesma peça somam) */
-  const p=precoDe(it.corteId||'', malhaIdDe(it.malha), Number(qtdDaFaixa)||q);
+  const p=precoDe(it.corteId||'', malhaIdDe(it.malha), Number(qtdDaFaixa)||q, ehPiloto);
   const preco = Number(it.precoManual)>0 ? Number(it.precoManual) : (p.preco||0);
   const custo = p.custo||0;
   const fat=q*preco, cst=q*custo, imp=fat*0.10;
   const lucro=fat-cst-imp;
   return {
     q, preco, custo, faixa:p.faixa, aviso:p.aviso, achou:p.achou, semCusto:p.semCusto,
+    piloto:!!p.piloto,
     manual: Number(it.precoManual)>0,
-    minimo: custo? precoMinimo(custo) : 0,
+    /* na piloto o piso é a própria regra (peça de 30 + R$ 50), não a régua de margem */
+    minimo: p.piloto? (p.preco||0) : (custo? precoMinimo(custo) : 0),
     fat, cst, imp, lucro,
     margem: fat>0? lucro/fat*100 : 0
   };
@@ -1393,7 +1414,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.0.0';
+const VERSAO='3.1.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -2775,11 +2796,12 @@ function orcamentoDaOP(p){
   /* 500 peças divididas em 5 artes continuam sendo um pedido de 500: a faixa
      sai do total da mesma peça+malha, senão cada ref caía numa faixa cara */
   const itens=itensDaOP(p);
+  const ehPiloto = p.etapa==='piloto';
   const soma={};
   itens.forEach(i=>{ const k=(i.corteId||i.corte||'')+'|'+(i.malha||'');
     soma[k]=(soma[k]||0)+(Number(i.qtd)||0); });
   const linhas=itens.map(i=>({it:i,
-    c:contaItem(i, soma[(i.corteId||i.corte||'')+'|'+(i.malha||'')])}));
+    c:contaItem(i, soma[(i.corteId||i.corte||'')+'|'+(i.malha||'')], ehPiloto)}));
   const t={fat:0, cst:0, imp:0, lucro:0, pecas:0};
   linhas.forEach(({c})=>{ t.fat+=c.fat; t.cst+=c.cst; t.imp+=c.imp; t.lucro+=c.lucro; t.pecas+=c.q; });
   t.margem=t.fat>0? t.lucro/t.fat*100 : 0;
@@ -2817,9 +2839,15 @@ function blocoOrcamento(p){
   const a=ajustesDaOP(p, t);
   const corMargem=m=>m<10? '#a63d2f' : (m<15? '#a87d2f' : '#3d6b32');
 
+  const ehPiloto = p.etapa==='piloto';
   return '<div class="orc">'+
     '<div class="orcTopo"><b>Orçamento</b>'+
-      '<span class="mini">preços do Catálogo 2027 · faixa pela quantidade de cada peça</span></div>'+
+      '<span class="mini">'+(ehPiloto
+        ? 'peça piloto · preço da peça na faixa de 30 a 50 mais 50%'
+        : 'preços do Catálogo 2027 · faixa pela quantidade de cada peça')+'</span></div>'+
+    (ehPiloto? '<div class="dica" style="margin:10px 13px 0;">A pilotagem já está dentro do preço da peça — '+
+      'nunca abra esse valor separado pro cliente. Estampa, etiqueta e tag seguem à parte, '+
+      'e a estampa da piloto é cobrada 50% a mais.</div>':'')+
     '<div class="rolar"><table class="tabOrc">'+
       '<tr><th>Peça</th><th class="num">Qtd</th><th class="num">Custo un</th>'+
       '<th class="num">Mínimo</th><th class="num">Preço un</th><th class="num">Total</th><th class="num">Lucro</th></tr>'+
@@ -3098,7 +3126,11 @@ function folhaCliente(p){
       '<li>Pedido mínimo de 30 peças por malha e cor, com grade de tamanhos livre.</li>'+
       '<li>Produção em média 20 dias após a aprovação'+(p.prazo? ' · prazo pedido: '+esc(p.prazo):'')+
         (p.entregaEm? ' · entrega prometida: '+new Date(p.entregaEm+'T12:00:00').toLocaleDateString('pt-BR'):'')+'.</li>'+
-      '<li>Peça piloto feita sob medida antes do lote, cobrada à parte.</li>'+
+      (p.etapa==='piloto'
+        ? '<li>A peça piloto é feita sob medida para você e fica pronta em 7 a 15 dias. '+
+          'Por ser exclusiva, é cobrada mesmo que você não siga para a produção do lote.</li>'+
+          '<li>A piloto é feita nas cores da cartela. Cor fora da cartela é cotada à parte.</li>'
+        : '<li>Peça piloto feita sob medida antes do lote, cobrada à parte.</li>')+
       '<li>'+(a.cond? esc(a.cond)
         : 'Pagamento em PIX ou cartão: '+(a.sinalPct||50)+'% para iniciar a produção e o saldo antes de ir para a transportadora.')+'</li>'+
       '<li>Frete por transportadora, por conta do cliente'+(a.frete? ', já estimado acima':'')+'.</li>'+
