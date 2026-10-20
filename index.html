@@ -1302,7 +1302,78 @@ function frasesDeDetalhe(textoCliente){
   return out.slice(0,8);
 }
 
-if(typeof module!=='undefined') module.exports={normalizar,lerConversa,separarFalas,acharQtds,acharTermos};
+/* ================= LEITOR DE ANOTAÇÃO =================
+   O Patrick cola na anotação o que fechou com o cliente, uma peça por linha:
+     "Preta em Cotton Premium 200 g/m², símbolo no peito esquerdo: R$ 77,90"
+   Aqui cada linha vira malha + cor + preço, pra entrar direto no item da OP.
+   Diferente da conversa, aqui NÃO tem negociação: é a palavra final dele. */
+
+/* preço: R$ 77,90 · 77,90 reais · a 51,90 — mas nunca gramatura nem fio */
+function acharPreco(t){
+  const re=/(?:R\$\s*|\bA\s+|\bPOR\s+|\bSAI\s+|:\s*)(\d{1,3}(?:\.\d{3})*,\d{2}|\d{1,4},\d{2}|\d{1,4}\s*REAIS)/gi;
+  let m, ultimo=null;
+  while((m=re.exec(t))!==null){
+    const bruto=String(m[1]).replace(/\s*REAIS/,'').replace(/\./g,'').replace(',','.');
+    const v=Number(bruto);
+    if(v>0 && v<100000) ultimo={valor:v, pos:m.index};
+  }
+  return ultimo;
+}
+/* gramatura escrita na linha: 200 g/m², 160g, 240 g */
+function acharGramatura(t){
+  const m=t.match(/(\d{2,3})\s*G(?:\/M2|\/M²|RAMAS)?\b/);
+  return m? m[1]+' g' : '';
+}
+
+function lerAnotacao(txt){
+  const bruto=String(txt||'');
+  /* uma peça por linha; se veio tudo numa linha só, corta antes de cada preço */
+  let partes=bruto.split(/\n+/).map(x=>x.trim()).filter(Boolean);
+  if(partes.length===1){
+    partes=bruto.split(/(?<=\d,\d{2})\s+(?=[A-ZÀ-Ÿ])/).map(x=>x.trim()).filter(Boolean);
+  }
+  const linhas=[];
+  partes.forEach(parte=>{
+    const t=normalizar(parte);
+    const mAchado=acharTermos(t, MALHAS)[0]||null;
+    const malha=mAchado? mAchado.item : null;
+    const corte=(acharTermos(t, CORTES)[0]||{}).item || null;
+    /* a cor da PEÇA vem antes da malha ("preta em Cotton Premium").
+       O que vem depois costuma ser a cor da estampa/logo — não é a peça. */
+    const todasCores=acharCores(t);
+    const corteEstampa=t.search(/\bS[IÍ]MBOLO|\bLOGO|\bESTAMPA|\bSILK|\bDTF|\bBORDAD/);
+    const limite = mAchado? mAchado.pos : (corteEstampa>=0? corteEstampa : t.length);
+    let usaveis=todasCores.filter(c=>c.pos<limite);
+    if(!usaveis.length && corteEstampa>0) usaveis=todasCores.filter(c=>c.pos<corteEstampa);
+    if(!usaveis.length) usaveis=todasCores.slice(0,1);
+    const cores=[...new Set(usaveis.map(c=>c.cor))];
+    let qtds=acharQtds(t);
+    /* "30 oversized", "100 tradicionais": número colado no nome da peça */
+    if(!qtds.length){
+      const c0=acharTermos(t, CORTES)[0];
+      const n=c0? qtdAntesDoCorte(t, c0.pos) : 0;
+      if(n) qtds=[{qtd:n, pos:0}];
+    }
+    const preco=acharPreco(parte);     /* no texto cru: normalizar come o "$" */
+    const gram=acharGramatura(t);
+    if(!malha && !corte && !preco && !cores.length) return;
+    linhas.push({
+      trecho:parte.trim(),
+      malha: malha? malha.nome : '',
+      malhaFora: !!(malha && malha.fora),
+      avisoMalha: malha && malha.fora? malha.aviso : '',
+      gramatura: gram || (malha? malha.g||'' : ''),
+      corte: corte? corte.nome : '',
+      corteId: corte? corte.id : '',
+      cores,
+      qtd: qtds.length? qtds[0].qtd : '',
+      preco: preco? preco.valor : ''
+    });
+  });
+  return linhas;
+}
+
+if(typeof module!=='undefined') module.exports={normalizar,lerConversa,separarFalas,acharQtds,acharTermos,lerAnotacao,acharPreco};
 
 /* ================= CUSTO E PREÇO =================
    Tabela oficial do Catálogo 2027 + o custo direto de cada peça.
@@ -1478,7 +1549,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.3.0';
+const VERSAO='3.4.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -1581,6 +1652,20 @@ const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;'
 const fmtData=ts=>new Date(ts).toLocaleDateString('pt-BR');
 const soDigitos=s=>String(s||'').replace(/\D/g,'');
 function etapaDe(id){ return ETAPAS.find(e=>e.id===id)||ETAPAS[0]; }
+
+/* ---- busca por telefone ----
+   O mesmo número aparece de mil jeitos: (18) 99674-6945, +55 18 99674-6945,
+   5518996746945, 18996746945. Comparar só os dígitos, pelos últimos 8,
+   faz todos baterem — inclusive colando o número direto do WhatsApp. */
+function digitosDaBusca(q){
+  const d=soDigitos(q);
+  return d.length>=4? d : '';
+}
+function casaTelefone(telefones, qDig){
+  if(!qDig) return false;
+  const alvo = qDig.length>=8? qDig.slice(-8) : qDig;
+  return (telefones||[]).some(t=>{ const d=soDigitos(t); return d.length>=4 && d.indexOf(alvo)>=0; });
+}
 function tituloCaixa(s){ return String(s||'').toLowerCase().replace(/(^|\s)([a-zà-ÿ])/g,(m,a,b)=>a+b.toUpperCase()); }
 
 function clienteDe(id){ return S.clientes.find(c=>c.id===id)||null; }
@@ -1855,7 +1940,7 @@ function alvosBusca(){
   return S.pedidos.map(p=>{
     const c=clienteDe(p.clienteId)||{};
     return {id:p.id, cod:p.codigo||'', nome:c.nome||'(sem nome)', tel:c.telefone||'',
-      etapa:etapaDe(p.etapa).nome,
+      etapa:etapaDe(p.etapa).nome, tels:[c.telefone],
       chave:normalizar([p.codigo, p.refCliente, c.nome, c.empresa, c.telefone, soDigitos(c.telefone),
         itensDaOP(p).map(i=>[i.ref,i.corte,i.malha,(i.cores||[]).join(' ')].join(' ')).join(' ')].join(' '))};
   });
@@ -1864,7 +1949,8 @@ function buscarGlobal(){
   const cx=document.getElementById('buscaRes'); if(!cx) return;
   const q=normalizar((document.getElementById('buscaGlobal')||{}).value||'');
   if(q.length<2){ cx.classList.remove('on'); buscaUlt=[]; buscaSel=-1; return; }
-  buscaUlt=alvosBusca().filter(x=>x.chave.includes(q)).slice(0,12);
+  const qd=digitosDaBusca((document.getElementById('buscaGlobal')||{}).value||'');
+  buscaUlt=alvosBusca().filter(x=>x.chave.includes(q) || casaTelefone(x.tels, qd)).slice(0,12);
   buscaSel=-1;
   cx.innerHTML = buscaUlt.length
     ? buscaUlt.map((x,i)=>'<div class="bRes" data-i="'+i+'" onclick="abrirDaBusca('+i+')">'+
@@ -2674,8 +2760,10 @@ function opsFiltradas(){
   if(fEtapa==='_abertas') L=L.filter(p=>grupoDe(p.etapa)!=='fim');
   else if(fEtapa.indexOf('sit:')===0) L=L.filter(p=>p.situacao===fEtapa.slice(4));
   else if(fEtapa) L=L.filter(p=>p.etapa===fEtapa);
+  const qDig=digitosDaBusca((document.getElementById('buscaCli')||{}).value||'');
   if(busca) L=L.filter(p=>{
     const c=clienteDe(p.clienteId)||{};
+    if(casaTelefone([c.telefone], qDig)) return true;
     return normalizar([p.codigo, p.refCliente, c.nome, c.telefone, c.empresa, p.obs, p.comoQuer,
       (p.pend||[]).map(x=>x.t).join(' '),
       itensDaOP(p).map(i=>[i.ref,i.corte,i.malha,(i.cores||[]).join(' ')].join(' ')).join(' ')
@@ -3204,7 +3292,70 @@ function addAnotacao(opId){
   const t=prompt('Anotar o quê?'); if(!t||!t.trim()) return;
   const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
   p.notas=p.notas||[]; p.notas.unshift({t:t.trim(), ts:Date.now()});
-  p.ts=Date.now(); salvar(); render();
+  p.ts=Date.now(); salvar();
+  aplicarAnotacao(opId, t.trim());
+  render();
+}
+
+/* ================= A ANOTAÇÃO VIRA PEDIDO =================
+   O que o Patrick cola em "anotações" costuma ser o que ele fechou:
+   malha, cor, gramatura e preço de cada peça. Em vez de ele digitar tudo
+   de novo nos itens, o sistema lê e preenche — mostrando antes o que
+   entendeu, porque anotação errada não pode virar orçamento errado. */
+function resumoLinhaAnot(l){
+  return [l.qtd? l.qtd+'x':'', l.corte||'', l.malha||'', l.gramatura||'',
+          (l.cores||[]).map(tituloCaixa).join('/'),
+          l.preco? '— '+reais(l.preco):''].filter(Boolean).join(' ');
+}
+function aplicarAnotacao(opId, texto){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return false;
+  let L=[];
+  try{ L=lerAnotacao(texto)||[]; }catch(e){ return false; }
+  /* só vale a pena se trouxer malha ou preço — cor sozinha não mexe no pedido */
+  L=L.filter(l=>l.malha || l.preco);
+  if(!L.length) return false;
+
+  const itens=p.itens||[];
+  const livres=itens.filter(i=>!i.malha);     /* "sem malha" é o que está esperando */
+  const alvos=[];
+  L.forEach((l,ix)=>{
+    let alvo=null;
+    if(l.corteId) alvo=itens.find(i=>i.corteId===l.corteId && !i.malha && !alvos.includes(i));
+    if(!alvo) alvo=livres.find(i=>!alvos.includes(i));
+    if(!alvo && itens.length===L.length) alvo=itens[ix];
+    alvos.push(alvo||null);
+  });
+
+  const linhas=L.map((l,ix)=>{
+    const a=alvos[ix];
+    return '• '+resumoLinhaAnot(l)+'\n    '+(a
+      ? 'vai preencher: '+(a.corte||'item '+(itens.indexOf(a)+1))+(a.malha? ' (hoje '+a.malha+')':' (hoje sem malha)')
+      : 'vira item novo na OP');
+  }).join('\n');
+  const avisos=L.filter(l=>l.malhaFora).map(l=>l.avisoMalha);
+
+  if(!confirm('Li na anotação '+L.length+' peça'+(L.length>1?'s':'')+':\n\n'+linhas+
+      (avisos.length? '\n\n⚠ '+avisos.join('\n⚠ '):'')+
+      '\n\nAplicar no pedido? (Cancelar deixa só como anotação)')) return false;
+
+  L.forEach((l,ix)=>{
+    let a=alvos[ix];
+    if(!a){ a=itemVazio(); itens.push(a); }
+    if(l.malha && !l.malhaFora){ a.malha=l.malha; if(l.gramatura) a.gramatura=l.gramatura; }
+    if(l.corte && !a.corte){ a.corte=l.corte; a.corteId=l.corteId; }
+    if((l.cores||[]).length) a.cores=[...new Set([...(a.cores||[]), ...l.cores])];
+    if(l.qtd && !Number(a.qtd)) a.qtd=l.qtd;
+    if(l.preco) a.precoManual=l.preco;
+  });
+  p.itens=itens; p.ts=Date.now(); salvar();
+  avisoRapido(L.length+' peça'+(L.length>1?'s':'')+' preenchida'+(L.length>1?'s':'')+' pela anotação.');
+  return true;
+}
+/* reaproveitar uma anotação já gravada */
+function relerAnotacao(opId, ix){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p||!p.notas||!p.notas[ix]) return;
+  if(!aplicarAnotacao(opId, p.notas[ix].t)) avisoRapido('Não achei malha nem preço nessa anotação.');
+  render();
 }
 function delAnotacao(opId, ix){
   const p=S.pedidos.find(x=>x.id===opId); if(!p||!p.notas) return;
@@ -3216,6 +3367,8 @@ function blocoAnotacoes(p){
   return '<div class="pendBox"><h4>Anotações'+(L.length? ' <span class="pendN">'+L.length+'</span>':'')+'</h4>'+
     (L.length? '<ul class="pendLista">'+L.map((x,ix)=>
       '<li><label><span><b class="mini">'+fmtData(x.ts)+'</b> · '+esc(x.t)+'</span></label>'+
+      '<button class="pendX" title="ler de novo e preencher o pedido" '+
+        'onclick="relerAnotacao(\''+p.id+'\','+ix+')">⤵</button>'+
       '<button class="pendX" title="tirar" onclick="delAnotacao(\''+p.id+'\','+ix+')">✕</button></li>').join('')+'</ul>'
       : '<div class="mini">Nada anotado.</div>')+
     '<button class="acao mini sec" onclick="addAnotacao(\''+p.id+'\')">+ anotar</button></div>';
