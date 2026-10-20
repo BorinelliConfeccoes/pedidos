@@ -156,7 +156,9 @@ button.acao:hover{background:var(--verde-esc);}
 .acao.perigo{background:var(--vermelho); color:#fff; border:0;}
 .acao.perigo:hover{background:#8d3327;}
 .acao.mini{padding:7px 12px; min-height:34px; font-size:13px; border-radius:8px;}
-a.acao.wpp{background:#1f7a4d; margin-bottom:9px;}
+/* o margin-bottom aqui era de quando o WhatsApp era um botão solto. Numa
+   fileira ele empurrava o link 9 px pra cima e desalinhava a linha inteira. */
+a.acao.wpp{background:#1f7a4d;}
 a.acao.wpp:hover{background:#1a6641;}
 .mini{font-size:11.5px; color:var(--sub);}
 
@@ -273,7 +275,7 @@ a.acao.wpp:hover{background:#1a6641;}
   padding:3px 10px; font-family:inherit; font-size:11.5px; cursor:pointer;}
 .pill:hover{background:#eef3e6;}
 .pill.on{color:#fff; font-weight:600;}
-.cliAcoes{display:flex; gap:6px; flex-wrap:wrap; margin-top:12px;}
+.cliAcoes{display:flex; gap:6px; flex-wrap:wrap; align-items:stretch; margin-top:12px;}
 .opMarca{width:17px; height:17px; flex:0 0 auto; margin:0;}
 .estrela{background:none; border:0; cursor:pointer; font-size:14px; padding:0 2px; color:var(--linha); line-height:1;}
 .estrela.on{color:var(--dourado-esc);}
@@ -440,6 +442,16 @@ table.tabPrinc tr.semTab td:first-child b{color:var(--vermelho);}
 .painelVolta{border:1px solid var(--linha); background:#fff; border-radius:8px;
   width:32px; height:32px; font-size:17px; line-height:1; cursor:pointer; color:var(--verde); flex:0 0 auto;}
 .painelVolta:hover{background:var(--verde); color:#fff;}
+
+/* ---- toda fileira de botão fica alinhada ----
+   Botão com margem própria, link <a> que não estica, botão com uma linha de
+   texto ao lado de outro com duas: tudo isso desalinhava a fileira. A regra é
+   uma só — numa fileira, todo botão estica até a mesma altura e assenta na
+   mesma base. */
+.cliAcoes, .faltAcoes, .artesAcoes, .opEstado, .barraLote,
+.cab .dir, #talhaOut .card > div, .maisCaixa{align-items:stretch;}
+.cliAcoes > .acao, .faltAcoes > .acao, .artesAcoes > .acao,
+.cab .dir > .acao{margin:0;}
 
 /* ---- os botões da OP: tamanho de botão de trabalho ----
    Eram "mini" porque eram nove em fila. Agora são quatro, e o dedo no celular
@@ -772,6 +784,7 @@ details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bott
       <button data-a="dados"    onclick="irPara('dados')"><i class="ic">⛁</i> Backup e limpeza</button>
       <button onclick="exportarCSV()"><i class="ic">⤓</i> Exportar Excel</button>
       <button onclick="baixarBackup()"><i class="ic">⤓</i> Baixar backup</button>
+      <button id="btInstalar" style="display:none" onclick="instalar()"><i class="ic">⤓</i> Instalar no computador</button>
       <div class="grupo">Conta</div>
       <button onclick="trocarPin()"><i class="ic">🔒</i> Trocar senha</button>
       <button onclick="trancar()"><i class="ic">⏻</i> Sair</button>
@@ -1315,8 +1328,20 @@ function acharCores(t){
   return out.sort((a,b)=>a.pos-b.pos);
 }
 
+/* Duas armadilhas que faziam o sistema inventar tamanho, achadas relendo as
+   OPs do Patrick:
+     "Suedine Strong 240 g"            → o g de gramas virava tamanho G
+     "A 72 · B 51 · G 22 · M 2 · N 2"  → rótulo de medida virava tamanho M e G
+   Em "Branca G 30.1 Penteada" o G é tamanho de verdade: ali ele vem depois de
+   uma palavra, não depois de um número, e o texto não é uma lista de medidas. */
+function ehListaDeMedidas(t){
+  const pares=(t.match(/(^|[^A-Z0-9])[A-Z]\s+\d{1,3}(?![\d.,])/g)||[]).length;
+  return pares>=3;
+}
 function acharTamanhos(t, infantil){
   const achados=[];
+  if(ehListaDeMedidas(t)) t=t.replace(/(^|[^A-Z0-9])([A-Z])\s+\d{1,3}(?![\d.,])/g, '$1 ');
+  t=t.replace(/\d+\s*G\b/g, ' ');            /* 240 g é gramatura, não tamanho */
   if(infantil){
     TAMS_INFANTIL.forEach(x=>{ if(new RegExp('(^|[^\\d])'+x+'($|[^\\d])').test(t)) achados.push(x); });
     if(/\b(2 AO 16|DO 2 AO 16|GRADE INFANTIL)\b/.test(t)) return TAMS_INFANTIL.slice();
@@ -1730,11 +1755,35 @@ function lerAnotacao(txt){
       const n=c0? qtdAntesDoCorte(t, c0.pos) : 0;
       if(n) qtds=[{qtd:n, pos:0}];
     }
+    /* "1 Piloto", "2 pilotos": é quantidade, e diz que a linha é de piloto.
+       Vinha da conversa real do Patrick — "Colorida 1 Piloto Branca G 30.1
+       Penteada" — e o sistema lia malha e cor e jogava fora o resto. */
+    const mPil=t.match(/(^|[^\dA-Z])(\d{1,3})\s*PILOTOS?\b/);
+    const ehPiloto=/\bPILOTOS?\b/.test(t);
+    if(mPil && !qtds.length) qtds=[{qtd:Number(mPil[2]), pos:mPil.index, forte:true}];
+
     const preco=acharPreco(parte);     /* no texto cru: normalizar come o "$" */
     const gram=acharGramatura(t);
-    if(!malha && !corte && !preco && !cores.length) return;
+    const tams=acharTamanhos(t, !!(corte && corte.genero==='infantil'));
+
+    /* o que vem ANTES da quantidade costuma ser o nome que ele deu pra arte
+       ("Nossa Senhora Consoladora Colorida 1 Piloto …") — é por esse nome que
+       ele conversa com a cliente, então vira a referência do item */
+    let ref='';
+    const corteRef=mPil? mPil.index : (qtds.length? qtds[0].pos : -1);
+    if(corteRef>2){
+      ref=parte.slice(0, corteRef).replace(/[\s,;:·-]+$/,'').trim();
+      /* nome de arte começa com maiúscula; "vai ser feito 2 pilotos" é frase */
+      if(ref.length>60 || ref.split(/\s+/).length>8 || !/^[A-ZÀ-Ÿ]/.test(ref)) ref='';
+    }
+
+    /* Antes a linha só valia se tivesse malha, corte, preço ou cor. "vai ser
+       feito 2 pilotos tamanho G" não tem nenhum dos quatro e era descartada —
+       e era exatamente o que ele tinha acabado de combinar. */
+    if(!malha && !corte && !preco && !cores.length && !tams.length && !qtds.length) return;
     linhas.push({
       trecho:parte.trim(),
+      ref,
       malha: malha? malha.nome : '',
       malhaFora: !!(malha && malha.fora),
       avisoMalha: malha && malha.fora? malha.aviso : '',
@@ -1742,6 +1791,8 @@ function lerAnotacao(txt){
       corte: corte? corte.nome : '',
       corteId: corte? corte.id : '',
       cores,
+      tamanhos: tams,
+      piloto: ehPiloto,
       qtd: qtds.length? qtds[0].qtd : '',
       preco: preco? preco.valor : ''
     });
@@ -1964,7 +2015,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.8.0';
+const VERSAO='3.9.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -2564,6 +2615,46 @@ function ligarTeclas(){
       const cx=document.getElementById('buscaRes'); if(cx) cx.classList.remove('on');
     }
   });
+}
+
+/* ================= INSTALAR NO COMPUTADOR =================
+   O manifest já tornava o sistema instalável, mas o convite do Chrome é um
+   ícone discreto na barra de endereço que ele nunca viu. Aqui o navegador
+   avisa que dá pra instalar, a gente guarda o convite e põe um botão de
+   verdade — no menu lateral e na aba Dados. */
+var convite=null;
+function ligarInstalar(){
+  window.addEventListener('beforeinstallprompt', ev=>{
+    ev.preventDefault(); convite=ev; pintarInstalar();
+  });
+  window.addEventListener('appinstalled', ()=>{
+    convite=null; pintarInstalar();
+    avisoRapido('Instalado. Agora ele abre pela barra do computador, sem navegador em volta.');
+  });
+  pintarInstalar();
+}
+function jaInstalado(){
+  try{ return window.matchMedia('(display-mode: standalone)').matches || navigator.standalone===true; }
+  catch(e){ return false; }
+}
+function pintarInstalar(){
+  const b=document.getElementById('btInstalar');
+  if(b) b.style.display=(convite && !jaInstalado())? '' : 'none';
+  if(aba==='dados') renderDados();
+}
+function instalar(){
+  if(jaInstalado()) return avisoRapido('Já está instalado neste computador.');
+  if(!convite) return alert(
+    'Este navegador não me ofereceu a instalação agora.\n\n'+
+    'No Chrome do computador dá pra instalar assim:\n'+
+    '  • clique no ícone de instalar, no fim da barra de endereço (um monitor com uma seta)\n'+
+    '  • ou no menu ⋮ → Transmitir, salvar e compartilhar → Instalar página como app\n\n'+
+    'No celular: menu do navegador → Adicionar à tela de início.');
+  convite.prompt();
+  convite.userChoice.then(r=>{
+    if(r && r.outcome==='accepted') avisoRapido('Instalando…');
+    convite=null; pintarInstalar();
+  }).catch(()=>{});
 }
 
 /* ---- tranca sozinho depois de um tempo parado ---- */
@@ -4184,16 +4275,147 @@ function addAnotacao(opId){
    de novo nos itens, o sistema lê e preenche — mostrando antes o que
    entendeu, porque anotação errada não pode virar orçamento errado. */
 function resumoLinhaAnot(l){
-  return [l.qtd? l.qtd+'x':'', l.corte||'', l.malha||'', l.gramatura||'',
+  return [l.ref? '['+l.ref+']':'', l.qtd? l.qtd+'x':'', l.piloto&&l.qtd? 'piloto':'',
+          l.corte||'', l.malha||'', l.gramatura||'',
           (l.cores||[]).map(tituloCaixa).join('/'),
+          (l.tamanhos||[]).length? 'tam '+l.tamanhos.join(' '):'',
           l.preco? '— '+reais(l.preco):''].filter(Boolean).join(' ');
 }
+/* ================= RELER TUDO =================
+   O leitor melhorou — passou a entender tamanho, "1 Piloto" como quantidade e
+   o nome que ele dá pra arte. Mas as OPs antigas foram lidas pelo leitor
+   velho e ficaram com os buracos. Em vez de ele abrir 146 OPs na mão, o
+   sistema relê o que está guardado (a conversa colada e as anotações) e mostra
+   só o que achou e NÃO está no pedido. Nada é aplicado sem ele mandar. */
+function relerTudo(){
+  const achados=[];
+  S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim').forEach(p=>{
+    /* a conversa crua nem sempre ficou guardada; o resumo do que foi combinado
+       ficou — em obs, em "como quer a peça" e nas pendências. É texto dele do
+       mesmo jeito, e é onde estão a cor, o tamanho e a quantidade. */
+    /* De onde o texto veio MUDA o que fazer com ele.
+         dito       = a conversa colada e as anotações dele. É decisão.
+         mencionado = o resumo (obs, pendência). Ali eu escrevi "Passado:
+                      Strong R$ 84,90 e Light R$ 79,90" — são duas opções
+                      OFERECIDAS, não a malha escolhida. Preencher a OP com
+                      isso seria inventar um pedido que o cliente não fez.
+       Por isso: 'dito' ganha botão de preencher; 'mencionado' só aponta a OP
+       pra ele olhar. */
+    const fontes=[];
+    if(p.conversa)  fontes.push({t:p.conversa, f:'dito'});
+    (p.notas||[]).forEach(n=>fontes.push({t:n.t, f:'dito'}));
+    if(p.obs)       fontes.push({t:p.obs, f:'mencionado'});
+    if(p.comoQuer)  fontes.push({t:p.comoQuer, f:'mencionado'});
+    (p.pend||[]).forEach(x=>{ if(!x.ok && x.t) fontes.push({t:x.t, f:'mencionado'}); });
+    (p.mudancas||[]).forEach(m=>fontes.push({t:m, f:'mencionado'}));
+    if(!fontes.length) return;
+    let L=[];
+    fontes.forEach(src=>{ try{ (lerAnotacao(src.t)||[]).forEach(l=>{ l.fonte=src.f; L.push(l); }); }catch(e){} });
+    if(!L.length) return;
+
+    const itens=itensDaOP(p);
+    const ganhos=[];
+    const junta=(campo)=>{
+      const v=new Map();
+      L.forEach(l=>{ const vs=campo==='malha'? (l.malha? [l.malha]:[]) :
+                            campo==='ref'  ? (l.ref? [l.ref]:[]) : (l[campo]||[]);
+        vs.forEach(x=>{ if(!v.has(x) || l.fonte==='dito') v.set(x, l.fonte); }); });
+      const val=[...v.keys()];
+      const dito=val.some(x=>v.get(x)==='dito');
+      return {val, fonte: dito? 'dito':'mencionado'};
+    };
+    const tams=junta('tamanhos'), cores=junta('cores'), refs=junta('ref'), malhas=junta('malha');
+    const pilotos=L.filter(l=>l.piloto && Number(l.qtd)>0);
+
+    if(tams.val.length  && !itens.some(i=>(i.tamanhos||[]).length))
+      ganhos.push({o:'tamanhos', txt:'tamanho '+tams.val.join(' '), val:tams.val, fonte:tams.fonte});
+    if(cores.val.length && !itens.some(i=>(i.cores||[]).length))
+      ganhos.push({o:'cores', txt:'cor '+cores.val.map(tituloCaixa).join(', '), val:cores.val, fonte:cores.fonte});
+    if(refs.val.length  && !itens.some(i=>i.ref))
+      ganhos.push({o:'ref', txt:'arte "'+refs.val[0]+'"'+(refs.val.length>1? ' +'+(refs.val.length-1):''), val:refs.val, fonte:refs.fonte});
+    if(malhas.val.length && !itens.some(i=>i.malha))
+      ganhos.push({o:'malha',
+        txt: malhas.val.length>1
+          ? 'o resumo cita '+malhas.val.join(' e ')+' — pode ser opção oferecida, não escolha'
+          : 'malha '+malhas.val[0],
+        val:malhas.val,
+        /* duas malhas no mesmo texto é quase sempre "ofereci as duas" */
+        fonte: malhas.val.length>1? 'mencionado' : malhas.fonte});
+    /* lote parado na etapa Piloto: a conversa fala em 1 ou 2 peças e a OP tem centenas */
+    const pc=pecasDaOP(p);
+    if(p.etapa==='piloto' && pilotos.length && pc>10)
+      ganhos.push({o:'conflito', txt:'a conversa fala em '+pilotos.map(l=>l.qtd).join(' + ')+
+        ' piloto(s), mas a OP está com '+pc.toLocaleString('pt-BR')+' peças', val:null, fonte:'conflito'});
+    if(ganhos.length) achados.push({p, ganhos});
+  });
+  return achados;
+}
+function telaReler(){
+  const A=relerTudo();
+  const cx=document.getElementById('modalCorpo');
+  if(!A.length){
+    cx.innerHTML='<h3>Reler as conversas</h3><div class="dica">Reli tudo que está guardado '+
+      'e não achei nada que o pedido já não tenha. Nenhuma OP ficou pra trás.</div>';
+    document.getElementById('modal').classList.add('on'); return;
+  }
+  const conta={};
+  A.forEach(a=>a.ganhos.forEach(g=>{ conta[g.o]=(conta[g.o]||0)+1; }));
+  cx.innerHTML='<h3>Reli as conversas — achei '+A.length+' OP'+(A.length>1?'s':'')+' com buraco</h3>'+
+    '<div class="mini" style="margin-bottom:10px;">'+
+      Object.entries(conta).map(([k,v])=>'<b>'+v+'</b> sem '+k).join(' · ')+
+      '. Isso estava escrito na conversa e não entrou no pedido — o leitor antigo '+
+      'não enxergava tamanho nem "1 Piloto" como quantidade.</div>'+
+    '<div class="rolar" style="max-height:52vh; overflow:auto;"><table class="tabPrinc">'+
+    '<tr><th>OP</th><th>Cliente</th><th>O que a conversa diz e o pedido não tem</th><th></th></tr>'+
+    A.map((a,ix)=>{
+      const c=clienteDe(a.p.clienteId)||{};
+      const conflito=a.ganhos.some(g=>g.o==='conflito');
+      return '<tr><td><span class="opCod">'+esc(a.p.codigo||'')+'</span></td>'+
+        '<td><b>'+esc(c.nome||'')+'</b></td>'+
+        '<td>'+a.ganhos.map(g=>'<div'+(g.o==='conflito'? ' class="opAlerta alto"':'')+'>'+esc(g.txt)+'</div>').join('')+'</td>'+
+        '<td>'+(conflito
+          ? '<button class="acao mini sec" onclick="fecharModal();abrirDaLista(\''+a.p.id+'\')">ver a OP</button>'
+          : '<button class="acao mini" onclick="aplicarReler('+ix+')">preencher</button>')+'</td></tr>';
+    }).join('')+'</table></div>'+
+    '<div style="display:flex; gap:7px; flex-wrap:wrap; margin-top:12px;">'+
+      '<button class="acao" onclick="aplicarReler(-1)">Preencher todas as que dá</button>'+
+      '<button class="acao sec" onclick="fecharModal()">Agora não</button>'+
+    '</div>'+
+    '<div class="mini" style="margin-top:8px;">Preencher só acrescenta o que está em branco. '+
+      'Nada que você digitou é sobrescrito, e as que têm conflito eu não mexo — '+
+      'essas você abre e decide.</div>';
+  window.__reler=A;
+  document.getElementById('modal').classList.add('on');
+}
+function aplicarReler(ix){
+  const A=window.__reler||[]; if(!A.length) return;
+  const alvo = ix<0? A : [A[ix]];
+  let n=0;
+  alvo.forEach(a=>{
+    if(a.ganhos.some(g=>g.o==='conflito')) return;   /* conflito é decisão dele */
+    const itens=itensDaOP(a.p); if(!itens.length) return;
+    a.ganhos.forEach(g=>{
+      if(g.o==='tamanhos') itens.forEach(i=>{ if(!(i.tamanhos||[]).length) i.tamanhos=[...g.val]; });
+      if(g.o==='cores')    itens.forEach(i=>{ if(!(i.cores||[]).length) i.cores=[...g.val]; });
+      if(g.o==='malha' && g.val.length===1) itens.forEach(i=>{ if(!i.malha) i.malha=g.val[0]; });
+      if(g.o==='ref')      itens.forEach((i,k)=>{ if(!i.ref && g.val[k]) i.ref=g.val[k]; });
+    });
+    a.p.ts=Date.now(); n++;
+  });
+  salvar(); fecharModal(); render();
+  avisoRapido(n? n+' OP'+(n>1?'s':'')+' preenchida'+(n>1?'s':'')+' com o que estava na conversa.'
+              : 'Nada aplicado — as que sobraram têm conflito e precisam de você.');
+}
+
 function aplicarAnotacao(opId, texto){
   const p=S.pedidos.find(x=>x.id===opId); if(!p) return false;
   let L=[];
   try{ L=lerAnotacao(texto)||[]; }catch(e){ return false; }
-  /* só vale a pena se trouxer malha ou preço — cor sozinha não mexe no pedido */
-  L=L.filter(l=>l.malha || l.preco);
+  /* Antes só valia malha ou preço. Mas "vai ser feito 2 pilotos tamanho G" é
+     exatamente o que ele acabou de combinar — tamanho e quantidade mudam o
+     pedido tanto quanto a malha. O que não vale sozinho é cor, que costuma
+     ser a cor da estampa e não da peça. */
+  L=L.filter(l=>l.malha || l.preco || (l.tamanhos||[]).length || l.qtd);
   if(!L.length) return false;
 
   const itens=p.itens||[];
@@ -4225,6 +4447,8 @@ function aplicarAnotacao(opId, texto){
     if(l.malha && !l.malhaFora){ a.malha=l.malha; if(l.gramatura) a.gramatura=l.gramatura; }
     if(l.corte && !a.corte){ a.corte=l.corte; a.corteId=l.corteId; }
     if((l.cores||[]).length) a.cores=[...new Set([...(a.cores||[]), ...l.cores])];
+    if((l.tamanhos||[]).length) a.tamanhos=[...new Set([...(a.tamanhos||[]), ...l.tamanhos])];
+    if(l.ref && !a.ref) a.ref=l.ref;
     if(l.qtd && !Number(a.qtd)) a.qtd=l.qtd;
     if(l.preco) a.precoManual=l.preco;
   });
@@ -5345,6 +5569,27 @@ function renderDados(){
         '<button class="acao sec" onclick="voltarAntesUp()">↶ Voltar pra antes da atualização</button>'+
       '</div></div>'; })()+
 
+    (()=>{ const A=relerTudo(); return '<div class="card'+(A.length?' urgente':'')+'">'+
+      '<h3>Reler as conversas</h3>'+
+      (A.length
+        ? '<div class="aviso">Reli o que está guardado e achei <b>'+A.length+' OP'+(A.length>1?'s':'')+
+          '</b> onde a conversa diz algo que o pedido não tem — tamanho, cor ou a quantidade de pilotos. '+
+          'O leitor antigo não enxergava isso.</div>'
+        : '<div class="mini">Passa o leitor novo por cima de tudo que está guardado e mostra o que '+
+          'ficou pra trás. Hoje não achei nada.</div>')+
+      '<button class="acao'+(A.length?'':' sec')+'" onclick="telaReler()">Reler tudo e me mostrar</button>'+
+    '</div>'; })()+
+
+    '<div class="card"><h3>Atalho no computador</h3>'+
+      (jaInstalado()
+        ? '<div class="dica">Você já está usando o sistema instalado — sem barra de navegador em volta.</div>'
+        : '<div class="mini">Instalado, ele vira um ícone na barra do computador e abre como programa, '+
+          'em janela própria. Os dados são os mesmos; muda só a janela. '+
+          'Clicando com o botão direito no ícone, dá pra pular direto pra Nova conversa, '+
+          'Faltantes ou Talhação.</div>'+
+          '<button class="acao" onclick="instalar()">⤓ Instalar no computador</button>')+
+    '</div>'+
+
     '<div class="card"><h3>Onde ficam seus dados</h3>'+
       '<div class="mini">O arquivo <b>index.html</b> é só o programa. O que você digita não fica dentro dele — '+
         'fica em dois lugares, e trocar o programa não encosta em nenhum dos dois:</div>'+
@@ -6090,6 +6335,7 @@ document.addEventListener('DOMContentLoaded', ()=>{
     SITUACOES.map(x=>'<option value="sit:'+x.id+'">▸ '+esc(x.nome)+'</option>').join('')+
     ETAPAS.map(e=>'<option value="'+e.id+'">'+esc(e.nome)+'</option>').join('');
   ligarTeclas();
+  ligarInstalar();
   irPara(abaDaURL() || (S.pedidos.length? 'painel' : 'nova'));
   if(pinOk()){ iniciarFirebase(); pegarDaURL(); ligarRelogioTranca(); setTimeout(conferirVersao, 2500); }
   else { mostrarTranca(); }

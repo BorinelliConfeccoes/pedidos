@@ -27,6 +27,7 @@
       "purpose": "maskable"
     }
   ],
+  "description": "Pedidos, orçamentos e produção da Borinelli Confecções",
   "share_target": {
     "action": "./",
     "method": "GET",
@@ -35,5 +36,40 @@
       "text": "t",
       "url": "link"
     }
-  }
+  },
+  "shortcuts": [
+    {
+      "name": "Nova conversa",
+      "short_name": "Nova",
+      "url": "./#nova",
+      "icons": [
+        {
+          "src": "icone-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Faltantes para talhar",
+      "short_name": "Faltantes",
+      "url": "./#faltantes",
+      "icons": [
+        {
+          "src": "icone-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    },
+    {
+      "name": "Talhação",
+      "short_name": "Talhação",
+      "url": "./#talhacao",
+      "icons": [
+        {
+          "src": "icone-192.png",
+          "sizes": "192x192"
+        }
+      ]
+    }
+  ]
 }
