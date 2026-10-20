@@ -234,8 +234,12 @@ a.acao.wpp:hover{background:#1a6641;}
 .card.op.at-medio{border-left-color:#c79a3a;}
 .card.op.fixa{box-shadow:0 1px 3px rgba(40,60,30,.05), 0 0 0 1.5px var(--dourado);}
 .card.op.marcada{background:#f4f8ec;}
-.opTopo{display:flex; align-items:center; gap:11px; padding:12px 14px; cursor:pointer;}
+/* a lista é pra correr o olho em 130 linhas, não pra ler cada uma:
+   linha mais baixa, menos respiro, mais OPs por tela */
+.opTopo{display:flex; align-items:center; gap:9px; padding:8px 12px; cursor:pointer;}
 .opTopo:hover{background:#fafcf6;}
+#listaCli .card.op{margin-bottom:6px;}
+#listaCli .card.op.aberta{box-shadow:0 0 0 2px var(--dourado); background:#fffdf7;}
 .opCod{font-size:12px; font-weight:600; color:var(--verde); background:#eef3e6;
   border-radius:6px; padding:3px 7px; white-space:nowrap; letter-spacing:.3px;}
 .opNome{flex:1 1 auto; min-width:0;}
@@ -249,12 +253,8 @@ a.acao.wpp:hover{background:#1a6641;}
 .seta{color:var(--sub); font-size:12px; width:12px;}
 .opCorpo{padding:13px 14px; border-top:1px solid var(--linha); background:#fcfdf9;}
 /* resumo da OP fechada: o que é, sem precisar abrir */
-.opResumo{margin-top:5px; font-size:12.5px; color:var(--ink);}
-.opResumo ul{margin:0; padding:0; list-style:none;}
-.opResumo li{line-height:1.55; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-.opResumo li b{display:inline-block; min-width:34px; color:var(--verde);}
-.opResumo .semQtd{color:var(--ambar);}
-.opResPend{margin-top:3px; font-size:12px; color:var(--ambar); line-height:1.45;}
+.opResumo{margin-top:2px; font-size:12.5px; color:var(--sub);
+  white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
 /* o filtro das OPs gruda embaixo da faixa: dá pra buscar sem subir a lista */
 #filtroOPs{position:sticky; z-index:32; top:calc(var(--topo) + var(--abas) + var(--fx,48px) + env(safe-area-inset-top));
   box-shadow:0 6px 14px -10px rgba(30,45,20,.35);}
@@ -429,13 +429,34 @@ table.tabPrinc tr.semTab td:first-child b{color:var(--vermelho);}
 .painelVolta{border:1px solid var(--linha); background:#fff; border-radius:8px;
   width:32px; height:32px; font-size:17px; line-height:1; cursor:pointer; color:var(--verde); flex:0 0 auto;}
 .painelVolta:hover{background:var(--verde); color:#fff;}
-.painelAbas{display:flex; gap:3px; padding:7px 12px 0; border-bottom:1px solid var(--linha);
-  background:#fff; position:sticky; top:54px; z-index:2;}
-.painelAbas button{border:0; background:none; padding:8px 13px 9px; font-size:13.5px;
-  color:var(--sub); cursor:pointer; border-bottom:2px solid transparent; font-family:inherit;}
-.painelAbas button.on{color:var(--verde); font-weight:600; border-bottom-color:var(--dourado);}
-.painelAbas button i{font-style:normal; background:var(--vermelho); color:#fff;
-  border-radius:20px; padding:0 6px; font-size:10.5px; margin-left:3px;}
+/* ---- caixa de anotar: a entrada do sistema, sempre aberta e no alto ---- */
+.anotarBox{border:1px solid var(--dourado); border-radius:11px; padding:10px;
+  background:#fffdf7; margin-bottom:12px;}
+.anotarBox textarea{width:100%; margin:0; resize:vertical; min-height:52px; font-size:14px;}
+.anotarPe{display:flex; align-items:center; gap:10px; margin-top:7px; flex-wrap:wrap;}
+.anotarPe .mini{flex:1 1 180px;}
+.notasLista{list-style:none; margin:10px 0 0; padding:0; border-top:1px solid var(--linha);}
+.notasLista li{display:flex; align-items:baseline; gap:7px; padding:6px 0;
+  border-bottom:1px solid var(--linha); font-size:13.5px;}
+.notasLista li:last-child{border-bottom:0;}
+.notasLista li b{flex:0 0 auto;}
+.notasLista .pendX{margin-left:auto;}
+.maisNotas{cursor:pointer; color:var(--verde); text-decoration:underline;}
+
+/* ---- seções do painel: título sempre visível, conteúdo fechado quando raro ---- */
+.secao{border:1px solid var(--linha); border-radius:11px; padding:11px 12px; margin-bottom:11px; background:#fff;}
+.secao h4{margin:0 0 7px; font-size:11px; text-transform:uppercase; letter-spacing:.7px;
+  color:var(--sub); display:flex; align-items:baseline; gap:9px;}
+.secao h4 .secN{margin-left:auto; text-transform:none; letter-spacing:0; font-size:13px; color:var(--ink); font-weight:600;}
+.secao h4 .secVal{margin-left:auto; text-transform:none; letter-spacing:0; font-size:16px; color:var(--ink); font-weight:600;}
+.secao h4 .secMargem{text-transform:none; letter-spacing:0; font-size:12.5px; font-weight:600;}
+details.gaveta summary{list-style:none; cursor:pointer;}
+details.gaveta summary::-webkit-details-marker{display:none;}
+details.gaveta summary h4{margin:0;}
+details.gaveta summary h4::after{content:'▸'; color:var(--sub); font-size:12px; margin-left:4px;}
+details.gaveta[open] summary h4{margin-bottom:9px; padding-bottom:7px; border-bottom:1px solid var(--linha);}
+details.gaveta[open] summary h4::after{content:'▾';}
+details.gaveta > .pendBox, details.gaveta > .orc{border:0; padding:0; margin:0; background:none;}
 
 .opEstado{display:flex; gap:11px; flex-wrap:wrap; padding:11px 0 2px; border-top:1px solid var(--linha); margin-top:11px;}
 .opEstado label{flex:1 1 180px; font-size:10.5px;}
@@ -452,7 +473,6 @@ table.tabPrinc tr.semTab td:first-child b{color:var(--vermelho);}
   #opsPalco.comPainel #painelOP{position:sticky; top:8px; max-height:calc(100vh - 24px); overflow:auto;
     border:1px solid var(--linha); border-radius:13px; background:#fff;
     box-shadow:0 10px 30px rgba(32,45,24,.10);}
-  #opsPalco.comPainel .card.op .opResumo{display:none;}   /* com o painel aberto, a lista fica lista */
 }
 @media(max-width:1024px){
   /* no celular o painel cobre a tela: split view não cabe, e meia tela não serve */
@@ -529,12 +549,19 @@ details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bott
 /* ---------- celular ---------- */
 /* a linha da OP não cabe numa tira só: nome em cima, etiquetas embaixo */
 @media(max-width:760px){
-  .opTopo{flex-wrap:wrap; row-gap:7px; column-gap:9px; padding:11px 12px;}
-  .opMarca{order:1} .estrela{order:2} .opCod{order:3}
-  .seta{order:4; margin-left:auto;}
-  .opNome{order:5; flex:1 1 100%;}
-  .opTopo .tag{order:6;}
-  .opNome .mini{line-height:1.6;}
+  /* no celular a linha tinha cinco andares e ia a 172 px — três pedidos por
+     tela. Agora são dois andares: quem é / o que é. A marcação em lote e a
+     estrela viram um canto estreito, e a etapa sobe pra primeira linha. */
+  .opTopo{flex-wrap:wrap; row-gap:3px; column-gap:7px; padding:8px 11px;}
+  .opMarca{order:1; margin:0;} .estrela{order:2; width:22px;}
+  .opNome{order:3; flex:1 1 auto; min-width:0;}
+  .opTopo .tag{order:4; font-size:10.5px; padding:2px 7px;}
+  .seta{order:5;}
+  .opNome b{font-size:14.5px;}
+  .opCod{order:6; flex:0 0 auto; font-size:10.5px; padding:1px 5px;}
+  .opNome .tel{margin-left:6px; font-size:11.5px; padding:0 6px;}
+  .opDados{gap:7px; font-size:12px;}
+  .opResumo{font-size:11.5px;}
   .cab .dir button{flex:1 1 auto;}
   .rapidos{flex-wrap:nowrap; overflow-x:auto; scrollbar-width:none; padding-bottom:2px;}
   .rapidos::-webkit-scrollbar{display:none;}
@@ -1747,7 +1774,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.6.0';
+const VERSAO='3.6.1';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -2981,13 +3008,6 @@ function opNoPainel(){
   const id=Object.keys(abertos).find(k=>abertos[k]);
   return id? S.pedidos.find(p=>p.id===id)||null : null;
 }
-var abaOP='pedido';
-const ABAS_OP=[
-  {id:'pedido',   nome:'Pedido'},
-  {id:'dinheiro', nome:'Orçamento'},
-  {id:'conversa', nome:'Conversa'}
-];
-function irAbaOP(x){ abaOP=x; pintarPainel(); }
 function pintarPainel(){
   const palco=document.getElementById('opsPalco');
   const cx=document.getElementById('painelOPcorpo');
@@ -3009,12 +3029,7 @@ function cabecaPainel(p, c){
         'title="clique pra copiar">'+esc(c.telefone)+'</span>':'')+
     '</div>'+
     '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>'+
-  '</div>'+
-  '<div class="painelAbas">'+ABAS_OP.map(x=>{
-    const n=x.id==='pedido'? abertasPend(p) : 0;
-    return '<button'+(x.id===abaOP?' class="on"':'')+' onclick="irAbaOP(\''+x.id+'\')">'+esc(x.nome)+
-      (n? ' <i>'+n+'</i>':'')+'</button>';
-  }).join('')+'</div>';
+  '</div>';
 }
 function guardarAbertos(){
   try{ sessionStorage.setItem('borinelli-abertos', JSON.stringify(Object.keys(abertos).filter(k=>abertos[k]))); }catch(e){}
@@ -3090,20 +3105,19 @@ function alternarResumo(){
   try{ localStorage.setItem('borinelli-resumo', resumoLigado()? '0':'1'); }catch(e){}
   renderOPs(); voltarAncora(a);
 }
+/* Uma linha só, cortada no fim. Antes era uma lista com um item por linha mais
+   um aviso de pendências embaixo: a linha da OP ia a 139 px no computador e a
+   242 px no celular — três pedidos por tela. O detalhe inteiro está no painel,
+   a um clique; aqui basta reconhecer o pedido de relance. */
 function resumoOP(p, itens){
   if(!itens.length) return '';
-  const MAX=6;
-  const lin=itens.slice(0,MAX).map(i=>{
-    const q=Number(i.qtd)>0? '<b>'+Number(i.qtd).toLocaleString('pt-BR')+'</b>' : '<b class="semQtd">?</b>';
-    const partes=[i.corte||'peça a definir', i.malha, (i.cores||[]).map(tituloCaixa).join('/')].filter(Boolean);
-    return '<li>'+q+esc(partes.join(' · '))+(i.ref? ' <span class="mini">('+esc(i.ref)+')</span>':'')+'</li>';
-  });
-  if(itens.length>MAX) lin.push('<li class="mini">+ '+(itens.length-MAX)+' itens</li>');
-  const pend=pendencias(p).filter(x=>!x.ok);
-  return '<div class="opResumo"><ul>'+lin.join('')+'</ul>'+
-    (pend.length? '<div class="opResPend">⚠ '+pend.slice(0,4).map(x=>esc(x.t)).join(' · ')+
-      (pend.length>4? ' · +'+(pend.length-4):'')+'</div>' : '')+
-  '</div>';
+  const MAX=2;
+  const txt=itens.slice(0,MAX).map(i=>{
+    const q=Number(i.qtd)>0? Number(i.qtd).toLocaleString('pt-BR')+'× ' : '';
+    return q+[i.corte||'peça a definir', i.malha, (i.cores||[]).map(tituloCaixa).join('/')]
+      .filter(Boolean).join(' · ');
+  }).join('  |  ')+(itens.length>MAX? '  +'+(itens.length-MAX):'');
+  return '<div class="opResumo" title="'+esc(txt)+'">'+esc(txt)+'</div>';
 }
 function opsFiltradas(){
   const r=RAPIDOS.find(x=>x.id===rapidoOP)||RAPIDOS[0];
@@ -3278,7 +3292,8 @@ function linhaOP(p, semEtapa){
       (semEtapa? '' : '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>')+
       '<span class="seta">'+(ab?'▾':'▸')+'</span>'+
     '</div>'+
-    (ab? corpoOP(p, c, itens) : '')+
+    /* o corpo NÃO vem aqui: ele mora no painel. Desenhar nos dois lugares
+       deixava a lista inchada de novo e criava id repetido na página. */
   '</div>';
 }
 /* De tudo que pode estar errado nesta OP, o que ele tem que ver primeiro.
@@ -3313,30 +3328,70 @@ function faltamDias(p){
   return Math.ceil((d-Date.now())/DIA);
 }
 
-/* O corpo é dividido em três abas porque ele nunca precisa das três ao mesmo
-   tempo: ou está conferindo o que o cliente pediu, ou está mexendo no preço,
-   ou está lendo o que foi combinado. Tudo junto dava quase 2.000 px. */
+/* ---- o painel da OP, numa tela só ----
+   Tentei dividir em abas e escondi justamente o que ele mais usa: a anotação,
+   que é por onde ele alimenta o sistema. Aba é navegação, e navegação esconde.
+   Então: uma rolagem só, na ordem em que ele trabalha —
+     1. anotar (a entrada)   2. o que foi pedido   3. quanto dá
+     4. o que falta          5. as artes
+   O que ele olha de vez em quando (datas, a conta aberta, histórico) fica
+   fechado numa linha com título, visível, a um clique — não atrás de uma aba. */
 function corpoOP(p, c, itens){
-  const dentro = abaOP==='dinheiro'? abaDinheiro(p)
-               : abaOP==='conversa'? abaConversa(p)
-               : abaPedido(p, itens);
-  return '<div class="opCorpo">'+dentro+rodapeOP(p, c)+'</div>';
+  return '<div class="opCorpo">'+
+    caixaAnotar(p)+
+    blocoPedido(p, itens)+
+    resumoDinheiro(p)+
+    blocoPendencias(p)+
+    blocoArtes(p)+
+    gavetaExtras(p)+
+    rodapeOP(p, c)+
+  '</div>';
 }
 
-function abaPedido(p, itens){
-  const det=p.detalhes||[], ext=p.extras||[], fotos=p.fotos||[];
-  const como=(p.comoQuer||'').split('\n').filter(Boolean);
-  const temRef=itens.some(i=>i.ref);
-  return '<div class="linha">'+
-      '<div><label>Ref do cliente</label><input value="'+esc(p.refCliente||'')+
-        '" placeholder="como ele chama esse pedido" onchange="mudarCampoOP(\''+p.id+'\',\'refCliente\',this.value)"></div>'+
-      '<div><label>Entrega prometida</label><input type="date" value="'+esc(p.entregaEm||'')+
-        '" onchange="mudarCampoOP(\''+p.id+'\',\'entregaEm\',this.value)"></div>'+
-      '<div><label>Prazo que ele pediu</label><input value="'+esc(p.prazo||'')+
-        '" onchange="mudarCampoOP(\''+p.id+'\',\'prazo\',this.value)"></div>'+
+/* A entrada fica no alto e sempre aberta. Era um prompt() do navegador —
+   caixinha de uma linha, péssima pra colar o que o cliente mandou. */
+function caixaAnotar(p){
+  const n=(p.notas||[]).length;
+  return '<div class="anotarBox">'+
+    '<textarea id="anot-'+p.id+'" rows="2" placeholder="Cole aqui o que o cliente mandou, ou escreva o que ficou combinado…"></textarea>'+
+    '<div class="anotarPe">'+
+      '<button class="acao mini" onclick="anotarDaCaixa(\''+p.id+'\')">Anotar</button>'+
+      '<span class="mini">Se tiver malha, cor, quantidade ou preço, eu leio e preencho o pedido.</span>'+
     '</div>'+
+    (n? '<ul class="notasLista">'+(p.notas||[]).slice(0,3).map((x,ix)=>
+        '<li><b class="mini">'+fmtData(x.ts)+'</b> '+esc(x.t)+
+        '<button class="pendX" title="ler de novo e preencher o pedido" onclick="relerAnotacao(\''+p.id+'\','+ix+')">⤵</button>'+
+        '<button class="pendX" title="tirar" onclick="delAnotacao(\''+p.id+'\','+ix+')">✕</button></li>').join('')+
+      (n>3? '<li class="mini maisNotas" onclick="verTodasNotas(\''+p.id+'\')">ver as outras '+(n-3)+' anotações</li>':'')+
+      '</ul>':'')+
+  '</div>';
+}
+function anotarDaCaixa(opId){
+  const el=document.getElementById('anot-'+opId); if(!el) return;
+  const t=(el.value||'').trim(); if(!t) return;
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  p.notas=p.notas||[]; p.notas.unshift({t, ts:Date.now()});
+  p.ts=Date.now(); salvar();
+  el.value='';
+  aplicarAnotacao(opId, t);
+  render();
+}
+function verTodasNotas(opId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  document.getElementById('modalCorpo').innerHTML='<h3>Anotações · '+esc(p.codigo||'')+'</h3>'+
+    '<ul class="pendLista">'+(p.notas||[]).map(x=>'<li><label><span><b class="mini">'+
+      fmtData(x.ts)+'</b> · '+esc(x.t)+'</span></label></li>').join('')+'</ul>';
+  document.getElementById('modal').classList.add('on');
+}
 
-    (itens.length? '<div class="rolar"><table class="tabPrinc">'+
+function blocoPedido(p, itens){
+  const temRef=itens.some(i=>i.ref);
+  if(!itens.length) return '<div class="secao"><h4>O pedido</h4>'+
+    '<div class="mini">Nada reconhecido ainda. Anote aí em cima o que ele pediu, '+
+    'ou clique em Editar e preencha na mão.</div></div>';
+  return '<div class="secao"><h4>O pedido<span class="secN">'+
+      pecasDaOP(p).toLocaleString('pt-BR')+' peças</span></h4>'+
+    '<div class="rolar"><table class="tabPrinc">'+
       '<tr>'+(temRef?'<th>Ref</th>':'')+'<th>Peça</th><th>Malha</th><th>Cor</th><th class="num">Qtd</th><th>Tam</th></tr>'+
       itens.map(i=>'<tr>'+
         (temRef? '<td><b>'+esc(i.ref||'—')+'</b></td>':'')+
@@ -3345,35 +3400,55 @@ function abaPedido(p, itens){
         '<td>'+esc((i.cores||[]).map(tituloCaixa).join(', ')||'—')+'</td>'+
         '<td class="num">'+(Number(i.qtd)>0? '<b>'+Number(i.qtd).toLocaleString('pt-BR')+'</b>':'<span class="falta">a definir</span>')+'</td>'+
         '<td class="mini">'+esc((i.tamanhos||[]).join(' ')||'—')+'</td></tr>').join('')+
-      (itens.length>1? '<tr class="somaLinha"><td colspan="'+(temRef?4:3)+'">total</td><td class="num"><b>'+
-        pecasDaOP(p).toLocaleString('pt-BR')+'</b></td><td></td></tr>':'')+
-      '</table></div>' : '<div class="mini" style="margin:8px 0;">Nada reconhecido — clique em Editar e preencha.</div>')+
-
-    blocoPendencias(p)+
-    blocoArtes(p)+
-
-    (det.length||ext.length? '<div class="chips" style="margin:9px 0;">'+
-      det.map(id=>'<span class="chip on">'+esc((DETALHES.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
-      ext.map(id=>'<span class="chip">'+esc((EXTRAS.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
-      '</div>':'')+
-    (como.length? '<div class="obs"><b>Como quer a peça</b><br>'+como.map(esc).join('<br>')+'</div>':'')+
-    (fotos.length? '<div class="fotos" style="margin-top:10px;"><div>'+
-      fotos.map(f=>'<div class="foto"><img src="'+f.thumb+'" alt="estampa" '+
-        'onclick="abrirFoto(\''+p.id+'\',\''+f.id+'\')"></div>').join('')+'</div></div>':'')+
-    (p.motivoPerda? '<div class="aviso" style="margin-top:9px;">Perdida: '+esc(p.motivoPerda)+'</div>':'');
+      '</table></div>'+
+    (p.motivoPerda? '<div class="aviso" style="margin-top:9px;">Perdida: '+esc(p.motivoPerda)+'</div>':'')+
+  '</div>';
 }
 
-function abaDinheiro(p){ return blocoOrcamento(p); }
+/* O número que importa na cara; a conta inteira a um clique. */
+function resumoDinheiro(p){
+  const {t}=orcamentoDaOP(p);
+  const a=ajustesDaOP(p, t);
+  if(!t.fat) return '<details class="secao gaveta"><summary><h4>Orçamento<span class="secN">a fechar</span></h4></summary>'+
+    blocoOrcamento(p)+'</details>';
+  const cor=a.margem<10? 'var(--vermelho)' : (a.margem<15? 'var(--ambar)':'#3d6b32');
+  return '<details class="secao gaveta"><summary>'+
+    '<h4>Orçamento<span class="secVal">'+reais(a.total)+'</span>'+
+    '<span class="secMargem" style="color:'+cor+'">lucro '+reais(a.lucro)+' · '+a.margem.toFixed(0)+'%</span></h4>'+
+    '</summary>'+blocoOrcamento(p)+'</details>';
+}
 
-function abaConversa(p){
-  const mud=p.mudancas||[];
-  return blocoAnotacoes(p)+
-    (mud.length>1? '<div class="evol"><b>Como a conversa evoluiu</b><ol>'+
-      mud.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ol></div>':'')+
-    historicoOP(p)+
-    (p.conversa? '<button class="acao mini sec" style="margin-top:9px" onclick="verConversa(\''+p.id+'\')">'+
-      'Ver a conversa original</button>'
-      : '<div class="mini" style="margin-top:9px;">Esta OP não veio de uma conversa colada.</div>');
+/* o que ele abre de vez em quando — some do caminho, mas continua visível */
+function gavetaExtras(p){
+  const det=p.detalhes||[], ext=p.extras||[], fotos=p.fotos||[], mud=p.mudancas||[];
+  const como=(p.comoQuer||'').split('\n').filter(Boolean);
+  const temDetalhe=det.length||ext.length||como.length||fotos.length;
+  return '<details class="secao gaveta"><summary><h4>Datas e referência</h4></summary>'+
+      '<div class="linha">'+
+        '<div><label>Ref do cliente</label><input value="'+esc(p.refCliente||'')+
+          '" placeholder="como ele chama esse pedido" onchange="mudarCampoOP(\''+p.id+'\',\'refCliente\',this.value)"></div>'+
+        '<div><label>Entrega prometida</label><input type="date" value="'+esc(p.entregaEm||'')+
+          '" onchange="mudarCampoOP(\''+p.id+'\',\'entregaEm\',this.value)"></div>'+
+        '<div><label>Prazo que ele pediu</label><input value="'+esc(p.prazo||'')+
+          '" onchange="mudarCampoOP(\''+p.id+'\',\'prazo\',this.value)"></div>'+
+      '</div></details>'+
+    (temDetalhe? '<details class="secao gaveta"><summary><h4>Como ele quer a peça</h4></summary>'+
+      (det.length||ext.length? '<div class="chips" style="margin:9px 0;">'+
+        det.map(id=>'<span class="chip on">'+esc((DETALHES.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
+        ext.map(id=>'<span class="chip">'+esc((EXTRAS.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
+        '</div>':'')+
+      (como.length? '<div class="obs">'+como.map(esc).join('<br>')+'</div>':'')+
+      (fotos.length? '<div class="fotos" style="margin-top:10px;"><div>'+
+        fotos.map(f=>'<div class="foto"><img src="'+f.thumb+'" alt="estampa" '+
+          'onclick="abrirFoto(\''+p.id+'\',\''+f.id+'\')"></div>').join('')+'</div></div>':'')+
+      '</details>':'')+
+    '<details class="secao gaveta"><summary><h4>Histórico</h4></summary>'+
+      (mud.length>1? '<div class="evol"><b>Como a conversa evoluiu</b><ol>'+
+        mud.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ol></div>':'')+
+      historicoOP(p)+
+      (p.conversa? '<button class="acao mini sec" style="margin-top:9px" onclick="verConversa(\''+p.id+'\')">'+
+        'Ver a conversa original</button>':'')+
+    '</details>';
 }
 
 /* Antes eram nove botões em fila e catorze pastilhas de estado. Agora: a ação
@@ -4033,18 +4108,6 @@ function blocoArtes(p){
     (artes.length? '<div class="mini" style="margin-top:7px;">O arquivo fica guardado neste aparelho; '+
       'a ficha da arte (técnica, local, tamanho) aparece nos dois.</div>':'')+
   '</div>';
-}
-
-function blocoAnotacoes(p){
-  const L=p.notas||[];
-  return '<div class="pendBox"><h4>Anotações'+(L.length? ' <span class="pendN">'+L.length+'</span>':'')+'</h4>'+
-    (L.length? '<ul class="pendLista">'+L.map((x,ix)=>
-      '<li><label><span><b class="mini">'+fmtData(x.ts)+'</b> · '+esc(x.t)+'</span></label>'+
-      '<button class="pendX" title="ler de novo e preencher o pedido" '+
-        'onclick="relerAnotacao(\''+p.id+'\','+ix+')">⤵</button>'+
-      '<button class="pendX" title="tirar" onclick="delAnotacao(\''+p.id+'\','+ix+')">✕</button></li>').join('')+'</ul>'
-      : '<div class="mini">Nada anotado.</div>')+
-    '<button class="acao mini sec" onclick="addAnotacao(\''+p.id+'\')">+ anotar</button></div>';
 }
 
 /* ================= CONSUMO DE MALHA =================
