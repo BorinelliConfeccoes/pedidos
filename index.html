@@ -382,6 +382,40 @@ td{padding:7px; border-bottom:1px solid #eef2e8; vertical-align:top;}
 tr:last-child td{border-bottom:0;}
 .rolar{overflow-x:auto; -webkit-overflow-scrolling:touch;}
 
+/* ---------- custos e preços ---------- */
+table.tabPrinc tr.semTab td{background:#fdf6f4; color:var(--sub);}
+table.tabPrinc tr.semTab td:first-child b{color:var(--vermelho);}
+#custosOut table.tabPrinc{font-size:13px; width:100%;}
+#custosOut table.tabPrinc td:first-child{min-width:140px;}
+#custosOut .acao.mini{padding:3px 9px; font-size:11.5px;}
+.tag.fora{background:#fbe9e6; color:var(--vermelho); border-color:#e7cdc8;}
+details.linhaCat summary{cursor:pointer; list-style:none; display:flex; align-items:baseline;
+  gap:10px; flex-wrap:wrap; padding:2px 0 8px;}
+details.linhaCat summary::-webkit-details-marker{display:none;}
+details.linhaCat summary b{font-size:15px; color:var(--verde);}
+details.linhaCat summary::after{content:'▸'; margin-left:auto; color:var(--sub); font-size:13px;}
+details.linhaCat[open] summary::after{content:'▾';}
+details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bottom:6px;}
+
+/* No celular a tabela larga vira uma ficha por linha: o botão de preencher
+   não pode ficar escondido na rolagem lateral — é o que ele vem fazer aqui. */
+@media(max-width:760px){
+  #custosOut .rolar{overflow-x:visible;}
+  #custosOut table.tabPrinc, #custosOut table.tabPrinc tbody{display:block; border:0; margin:0;}
+  #custosOut table.tabPrinc tr{display:block; border:1px solid var(--linha); border-radius:10px;
+    padding:9px 11px; margin-bottom:8px; background:#fff;}
+  #custosOut table.tabPrinc tr:first-child{display:none;}            /* o cabeçalho não serve mais */
+  #custosOut table.tabPrinc td{display:flex; justify-content:space-between; align-items:baseline;
+    gap:12px; padding:2px 0; border:0; text-align:left;}
+  #custosOut table.tabPrinc td::before{content:attr(data-rot); font-size:10.5px; letter-spacing:.5px;
+    text-transform:uppercase; color:var(--sub); flex:0 0 auto;}
+  #custosOut table.tabPrinc td[data-rot=""]{justify-content:flex-end; padding-top:7px;}
+  #custosOut table.tabPrinc td[data-rot=""]::before{content:none;}
+  #custosOut table.tabPrinc td:first-child{min-width:0; font-size:14px;}
+  #custosOut table.tabPrinc tr.semTab{background:#fdf6f4;}
+  #custosOut table.tabPrinc tr.semTab td{background:transparent;}
+}
+
 /* ---------- resumo ---------- */
 .numerao{font-size:40px; font-weight:600; color:var(--verde); line-height:1;}
 .barraLinha{display:flex; align-items:center; gap:9px; margin-bottom:6px;}
@@ -490,6 +524,7 @@ tr:last-child td{border-bottom:0;}
       <button data-a="clientes" onclick="irPara('clientes')"><i class="ic">▤</i> OPs <span id="nClientes" class="mini"></span></button>
       <button data-a="pedidos"  onclick="irPara('pedidos')"><i class="ic">☰</i> Tabela geral</button>
       <button data-a="resumo"   onclick="irPara('resumo')"><i class="ic">◴</i> Resumo</button>
+      <button data-a="custos"   onclick="irPara('custos')"><i class="ic">◈</i> Custos e preços <span id="nCustos" class="mini"></span></button>
       <div class="grupo">Dados</div>
       <button data-a="dados"    onclick="irPara('dados')"><i class="ic">⛁</i> Backup e limpeza</button>
       <button onclick="exportarCSV()"><i class="ic">⤓</i> Exportar Excel</button>
@@ -597,6 +632,14 @@ tr:last-child td{border-bottom:0;}
     <section class="tela" id="tela-resumo">
       <div class="cab"><h1>Resumo</h1></div>
       <div id="resumoOut"></div>
+    </section>
+
+    <!-- ======== CUSTOS ======== -->
+    <section class="tela" id="tela-custos">
+      <div class="cab"><h1>Custos e preços</h1>
+        <div class="mini">O catálogo inteiro num lugar só. Combinação que aparece num pedido
+          e não tem preço entra sozinha na fila de cima.</div></div>
+      <div id="custosOut"></div>
     </section>
 
     <!-- ======== DADOS ======== -->
@@ -1455,12 +1498,51 @@ function faixaDe(q){
 const PILOTO_FATOR = 1.5;
 function precoPiloto(reg){ return arredonda90(reg.precos[0] * PILOTO_FATOR); }
 
+/* ---- preços que o Patrick acrescentou na tela de Custos ----
+   Ficam por cima da tabela do catálogo: combinação nova entra aqui sem
+   precisar mexer no código, e se ele corrigir uma que já existe, a dele vale. */
+const EXTRA = {};
+function usarPrecosExtra(obj){
+  Object.keys(EXTRA).forEach(k=>delete EXTRA[k]);
+  Object.keys(obj||{}).forEach(k=>{
+    const r=obj[k];
+    if(r && Array.isArray(r.precos) && r.precos.length===4) EXTRA[k]=r;
+  });
+  return Object.keys(EXTRA).length;
+}
+function regDe(corteId, malhaId){
+  return EXTRA[corteId+'|'+malhaId] || TABELA[corteId+'|'+malhaId] || null;
+}
+function origemDe(corteId, malhaId){
+  const k=corteId+'|'+malhaId;
+  if(EXTRA[k]) return TABELA[k]? 'corrigido por você' : 'seu';
+  return TABELA[k]? 'catálogo' : '';
+}
+/* Mesma resolução que o precoDe faz na hora de orçar — inclusive o atalho da
+   "suedine" solta. A tela de Custos usa isto pra não cobrar custo de uma
+   combinação que, na prática, o sistema já sabe orçar. */
+function temPreco(corteId, malhaId){
+  if(regDe(corteId, malhaId)) return true;
+  if(malhaId==='SUEDINE' && regDe(corteId,'SUEDINE_STRONG')) return true;
+  return false;
+}
+/* tudo que tem preço hoje: o catálogo fechado mais o que ele acrescentou */
+function catalogoTodo(){
+  const chaves=[...new Set([...Object.keys(TABELA), ...Object.keys(EXTRA)])];
+  return chaves.map(k=>{
+    const [c,m]=k.split('|');
+    const reg=regDe(c,m);
+    return {chave:k, corteId:c, malhaId:m, custo:reg.custo||0, precos:reg.precos,
+            obs:reg.obs||'', origem:origemDe(c,m)};
+  });
+}
+
 /* o que o item custa e por quanto sai */
 function precoDe(corteId, malhaId, qtd, ehPiloto){
   const q=Number(qtd)||0;
   const f=faixaDe(q);
-  let reg=TABELA[corteId+'|'+malhaId];
-  if(!reg && malhaId==='SUEDINE') reg=TABELA[corteId+'|SUEDINE_STRONG'];   /* "suedine" solto: assume Strong */
+  let reg=regDe(corteId, malhaId);
+  if(!reg && malhaId==='SUEDINE') reg=regDe(corteId,'SUEDINE_STRONG');   /* "suedine" solto: assume Strong */
   if(!reg) return {achou:false, faixa: ehPiloto? 'peça piloto' : FAIXAS[f.ix], aviso:f.aviso, piloto:!!ehPiloto};
   if(ehPiloto) return {
     achou:true, piloto:true,
@@ -1549,7 +1631,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.4.0';
+const VERSAO='3.5.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -1568,6 +1650,7 @@ let fbDB=null, fbOnline=false, aplicandoRemoto=false, jaRecebeu=false;
 const meuId='p-'+Math.random().toString(36).slice(2,9);
 
 function salvar(){
+  esqueceCombos();   /* mudou pedido ou preço: a varredura da tela de Custos refaz */
   try{ localStorage.setItem(CHAVE_LOCAL, JSON.stringify(S)); }
   catch(e){
     /* o navegador tem limite. Quando enche, o pedido NÃO foi gravado — tem que gritar. */
@@ -1583,6 +1666,8 @@ function salvar(){
 function carregar(){
   try{ const v=localStorage.getItem(CHAVE_LOCAL); if(v) S=Object.assign(S, JSON.parse(v)); }catch(e){}
   S.clientes=S.clientes||[]; S.pedidos=S.pedidos||[]; S.removidos=S.removidos||[]; S.meusNomes=S.meusNomes||[]; S.config=S.config||{};
+  S.precos=S.precos||{};
+  usarPrecosExtra(S.precos);
   migrarCodigos();
   migrarPendencias();
 }
@@ -1600,6 +1685,10 @@ function mesclar(remoto, forcar){
   S.pedidos =por(S.pedidos,  remoto.pedidos ).filter(x=>!mortos.has(x.id));
   S.removidos=[...mortos];
   S.meusNomes=[...new Set([...(S.meusNomes||[]), ...(remoto.meusNomes||[])])];
+  /* tabela de custos também sincroniza entre os aparelhos */
+  if(remoto.precos) S.precos=Object.assign(S.precos||{}, remoto.precos);
+  usarPrecosExtra(S.precos);
+  esqueceCombos();
   const meuPin=(S.config||{}).pin;
   if(remoto.config) S.config=Object.assign(S.config||{}, remoto.config);
   if(meuPin && pinGuardadoDepois) S.config.pin=meuPin;   /* a que eu acabei de criar manda */
@@ -1863,6 +1952,7 @@ const ABAS=[
   {id:'clientes', nome:'OPs',           ic:'▤'},
   {id:'pedidos',  nome:'Tabela geral',  ic:'☰'},
   {id:'resumo',   nome:'Resumo',        ic:'◴'},
+  {id:'custos',   nome:'Custos',        ic:'◈'},
   {id:'dados',    nome:'Dados',         ic:'⛁'}
 ];
 let aba='nova';
@@ -1879,6 +1969,11 @@ function pintarAbas(){
     s.style.display=n? '':'none'; s.textContent=n||''; s.classList.toggle('urg', !!urg); };
   põe('clientes', ab.length, false);
   põe('painel', pede, true);
+  /* "me peça para colocar os custos": o selo é o pedido. */
+  const falta=faltandoCusto().length + precoSemCusto().filter(x=>x.pecas>0).length;
+  põe('custos', falta, true);
+  const nc=document.getElementById('nCustos');
+  if(nc) nc.textContent=falta? '('+falta+' a fechar)':'';
 }
 function abrirMenu(){
   document.getElementById('sidebar').classList.add('aberto');
@@ -3702,6 +3797,26 @@ function preencherFiltros(){
    Funil com valor por etapa, igual CRM: dá pra ver onde o dinheiro está parado. */
 /* o valor da OP é o que o cliente paga: já com desconto e frete */
 function valorDaOP(p){ const o=orcamentoDaOP(p); return ajustesDaOP(p, o.t).total; }
+/* o pedido de custo aparece onde ele olha primeiro, não só na aba de Custos */
+function blocoSemCusto(){
+  const falta=faltandoCusto();
+  const scUsado=precoSemCusto().filter(x=>x.pecas>0);
+  if(!falta.length && !scUsado.length) return '';
+  const linha=(x,rot)=>'<div class="urgLinha" onclick="abrirCusto(\''+x.chave+'\')">'+
+    '<b>'+esc(nomeCorte(x.corteId))+'</b>'+
+    '<span class="mini">'+esc(nomeMalha(x.malhaId))+'</span>'+
+    '<span class="mini at">'+rot+'</span>'+
+    '<span class="urgVal">'+(x.pecas||'—')+' pç</span></div>';
+  return '<div class="card urgente"><h3>Me diga os custos — '+(falta.length+scUsado.length)+'</h3>'+
+    '<div class="mini" style="margin-bottom:9px;">'+
+      (falta.length? falta.length+' combinação'+(falta.length>1?'ões':'')+' sem preço nenhum. ':'')+
+      (scUsado.length? scUsado.length+' que você vende sem custo fechado. ':'')+
+      'Sem isso eu não sei se o preço paga a conta.</div>'+
+    falta.slice(0,4).map(x=>linha(x,'sem preço')).join('')+
+    scUsado.slice(0,4).map(x=>linha(x,'sem custo')).join('')+
+    '<button class="acao mini sec" style="margin-top:9px" onclick="irPara(\'custos\')">Abrir a tela de Custos</button></div>';
+}
+
 function renderPainel(){
   const abertas=S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim');
   const porEtapa={};
@@ -3726,6 +3841,8 @@ function renderPainel(){
           '<span class="mini">'+(abertasPend(p)? abertasPend(p)+' pendência'+(abertasPend(p)>1?'s':'') : diasParado(p)+' dias parado')+'</span>'+
           '<span class="urgVal">'+(valorDaOP(p)? reais(valorDaOP(p)):'—')+'</span></div>';
       }).join('')+'</div>':'')+
+
+    blocoSemCusto()+
 
     (vencendo.length? '<div class="card urgente"><h3>Prazo apertado — '+vencendo.length+'</h3>'+
       vencendo.map(p=>{ const c=clienteDe(p.clienteId)||{}; const a=atencao(p);
@@ -4167,6 +4284,260 @@ function renderDados(){
     '</div>';
 }
 
+/* ================= PAINEL DE CUSTOS =================
+   Todo o catálogo num lugar só. Combinação que aparece num pedido e não tem
+   preço fechado entra sozinha na fila de "faltando custo" — é o caso da Pima
+   em corte que não é o tradicional, que o sistema não sabia orçar. */
+const LINHAS_COM = [
+  {nome:'Linha Giro Rápido', malhas:['PENTEADA','OE','PV'],
+   cortes:['TRAD','REGATA','MANGA_LONGA','PLUS','PLUS_FEM','FEM','REG_FEM','CROPPED','INF','REG_INF']},
+  {nome:'Linha Hype', malhas:['SUEDINE_STRONG','SUEDINE_LIGHT','SUEDINE_PAP','PENTEADA'],
+   cortes:['OVER','OVER_FEM','OVER_INF','OVER_BOX']},
+  {nome:'Linha Black Label', malhas:['PIMA','COTTON'], cortes:['TRAD','FEM','CROPPED','REGATA','OVER','OVER_BOX']},
+  {nome:'Outdoor e Verão', malhas:['','TACTEL'], cortes:['CORTA_VENTO','SHORT']}
+];
+function largura(){ try{ return window.innerWidth||1280; }catch(e){ return 1280; } }
+function nomeCorte(id){ return (CORTES.find(c=>c.id===id)||{}).nome || id; }
+function nomeMalha(id){ return id? ((MALHAS.find(m=>m.id===id)||{}).nome || id) : '—'; }
+function chaveLinha(c,m){ return c+'|'+m; }
+
+/* toda combinação que aparece em algum pedido, com o que ele já cobrou nela */
+var _combosCache=null;
+function esqueceCombos(){ _combosCache=null; }
+function combosUsados(){
+  if(_combosCache) return _combosCache;
+  const m={};
+  S.pedidos.forEach(p=>{
+    itensDaOP(p).forEach(i=>{
+      const c=i.corteId||'', mal=malhaIdDe(i.malha)||'';
+      if(!c || !i.malha) return;
+      const k=chaveLinha(c,mal);
+      m[k]=m[k]||{chave:k, corteId:c, malhaId:mal, ops:[], clientes:[], pecas:0, cobrados:[]};
+      if(!m[k].ops.includes(p.codigo)) m[k].ops.push(p.codigo);
+      const cli=((clienteDe(p.clienteId)||{}).nome||'').trim();
+      if(cli && !m[k].clientes.includes(cli)) m[k].clientes.push(cli);
+      const q=Number(i.qtd)||0;
+      m[k].pecas+=q;
+      const pm=Number(i.precoManual)||0;
+      if(pm>0) m[k].cobrados.push({valor:pm, qtd:q, piloto:!!i.piloto, op:p.codigo, cliente:cli});
+    });
+  });
+  _combosCache=Object.values(m);
+  return _combosCache;
+}
+function comboUsado(chave){ return combosUsados().find(x=>x.chave===chave)||null; }
+function faltandoCusto(){
+  return combosUsados().filter(x=>!temPreco(x.corteId, x.malhaId))
+    .sort((a,b)=>b.pecas-a.pecas);
+}
+/* tem preço no catálogo, mas o custo nunca foi fechado: vende e eu não sei
+   se paga a conta. A Suedine PAP é o caso de hoje. */
+function precoSemCusto(){
+  return catalogoTodo().filter(x=>!x.custo).map(x=>{
+    const u=comboUsado(x.chave);
+    return Object.assign({}, x, {pecas:u? u.pecas:0, ops:u? u.ops:[], clientes:u? u.clientes:[]});
+  }).sort((a,b)=>b.pecas-a.pecas);
+}
+
+/* o que ele já cobrou nessa combinação vira o palpite inicial dos preços:
+   a venda já aconteceu, então o preço é fato — o que falta é o custo. */
+function palpiteDosCobrados(chave){
+  const u=comboUsado(chave); if(!u || !u.cobrados.length) return null;
+  const venda=u.cobrados.filter(x=>!x.piloto); if(!venda.length) return null;
+  const precos=[0,0,0,0];
+  venda.forEach(x=>{ const ix=faixaDe(x.qtd).ix; if(!precos[ix] || x.valor>precos[ix]) precos[ix]=x.valor; });
+  /* faixa vazia herda a vizinha, mantendo a escada (maior quantidade, menor preço) */
+  for(let i=1;i<4;i++) if(!precos[i]) precos[i]=precos[i-1];
+  for(let i=2;i>=0;i--) if(!precos[i]) precos[i]=precos[i+1];
+  return {precos, visto:venda};
+}
+
+var editandoCusto=null;
+function abrirCusto(chave){
+  const [c,m]=String(chave||'|').split('|');
+  const reg=regDe(c,m);
+  const e=(S.precos||{})[chave]||{};
+  const pal=reg? null : palpiteDosCobrados(chave);
+  editandoCusto=chave;
+  const v=(x,d)=>x===undefined||x===''? (d===undefined?'':d) : x;
+  document.getElementById('modalCorpo').innerHTML=
+    '<h3>'+esc(nomeCorte(c))+' · '+esc(nomeMalha(m))+'</h3>'+
+    (!reg? '<div class="aviso">Essa combinação ainda não tem preço. Enquanto estiver assim, o orçamento dela sai como <b>a combinar</b>.</div>'
+      : reg.custo? '<div class="mini">Hoje: custo '+reais(reg.custo)+' · '+reg.precos.map(reais).join(' / ')+'</div>'
+      : '<div class="aviso">O preço de venda está aqui ('+reg.precos.map(reais).join(' / ')+
+        '), mas o <b>custo nunca foi fechado</b>. Me diga quantas peças saem do kg e quanto você paga o kg — '+
+        'daí eu te digo se esse preço sobra ou não.</div>')+
+    (pal? '<div class="dica">Você já cobrou '+pal.visto.map(x=>reais(x.valor)+' em '+x.qtd+' pç'+
+            (x.cliente? ' ('+esc(x.cliente)+')':'')).join(' · ')+
+          '. Já deixei nos preços abaixo — confira e me diga o custo.</div>' : '')+
+    '<h3 style="margin-top:14px">1. O custo, pela malha</h3>'+
+    '<div class="linha">'+
+      '<div><label>Peças por kg</label><input id="cuPc" type="number" step="0.1" min="0" value="'+v(e.pcKg)+'" oninput="previaCusto()"></div>'+
+      '<div><label>R$ por kg da malha</label><input id="cuKg" type="number" step="0.01" min="0" value="'+v(e.rsKg)+'" oninput="previaCusto()"></div>'+
+      '<div><label>R$ por kg da ribana</label><input id="cuRib" type="number" step="0.01" min="0" value="'+v(e.ribKg)+'" placeholder="igual à malha" oninput="previaCusto()"></div>'+
+      '<div><label>Beneficiamento</label><input id="cuBen" type="number" step="0.01" min="0" value="'+v(e.benef,'5.50')+'" oninput="previaCusto()"></div>'+
+    '</div>'+
+    '<label class="semRib"><input id="cuSemRib" type="checkbox"'+(e.semRibana?' checked':'')+
+      ' onchange="previaCusto()"> gola no mesmo tecido (sem ribana)</label>'+
+    '<div id="cuPrevia" class="dica" style="margin-top:9px;"></div>'+
+    '<h3 style="margin-top:14px">2. Os preços de venda</h3>'+
+    '<div class="mini" style="margin-bottom:7px;">Deixe em branco pra usar a sugestão da régua (35/25/20/15%).</div>'+
+    '<div class="linha">'+FAIXAS.map((fx,i)=>
+      '<div><label>'+esc(fx)+'</label><input id="cuP'+i+'" type="number" step="0.01" min="0" value="'+
+      v((e.precos||[])[i], reg? reg.precos[i] : (pal? pal.precos[i] : ''))+'"></div>').join('')+'</div>'+
+    '<div style="display:flex; gap:7px; flex-wrap:wrap; margin-top:12px;">'+
+      '<button class="acao" onclick="salvarCusto()">Salvar</button>'+
+      (( (S.precos||{})[chave])? '<button class="acao alerta" onclick="apagarCusto()">Tirar o meu e voltar ao catálogo</button>':'')+
+      '<button class="acao sec" onclick="fecharModal()">Cancelar</button>'+
+    '</div>';
+  document.getElementById('modal').classList.add('on');
+  previaCusto();
+}
+function lerFormCusto(){
+  const n=id=>{ const el=document.getElementById(id); return el? el.value : ''; };
+  return {pcKg:n('cuPc'), rsKg:n('cuKg'), ribKg:n('cuRib'), benef:n('cuBen'),
+          semRibana:(document.getElementById('cuSemRib')||{}).checked};
+}
+function previaCusto(){
+  const box=document.getElementById('cuPrevia'); if(!box) return;
+  const r=custoDaMalha(lerFormCusto());
+  if(!r.ok){ box.textContent='Preencha peças por kg e o valor do kg pra eu calcular o custo.'; return; }
+  box.innerHTML='Custo direto <b>'+reais(r.direto)+'</b> · mínimo 15% '+reais(r.minimo)+
+    ' · mínimo do mínimo '+reais(r.chao)+
+    '<div class="mini" style="margin-top:5px;">Sugestão da régua: '+r.faixas.map(f=>reais(f.preco)).join(' / ')+
+    ' <button class="acao mini sec" style="margin-left:6px" onclick="usarSugestao()">usar esses</button></div>';
+}
+function usarSugestao(){
+  const r=custoDaMalha(lerFormCusto()); if(!r.ok) return;
+  r.faixas.forEach((f,i)=>{ const el=document.getElementById('cuP'+i); if(el) el.value=f.preco.toFixed(2); });
+}
+function salvarCusto(){
+  if(!editandoCusto) return;
+  const e=lerFormCusto();
+  const r=custoDaMalha(e);
+  const precos=[0,1,2,3].map(i=>Number((document.getElementById('cuP'+i)||{}).value)||0);
+  if(precos.some(x=>!(x>0))){
+    if(!r.ok) return alert('Faltou preço. Preencha as 4 faixas, ou o rendimento da malha pra eu calcular.');
+    r.faixas.forEach((f,i)=>{ if(!(precos[i]>0)) precos[i]=f.preco; });
+  }
+  for(let i=1;i<4;i++) if(precos[i]>precos[i-1]) return alert('A faixa maior não pode custar mais que a menor.\n\nConfira: '+precos.map(reais).join(' / '));
+  S.precos=S.precos||{};
+  S.precos[editandoCusto]={
+    custo: r.ok? Number(r.direto.toFixed(2)) : (Number(e.custo)||0),
+    precos, pcKg:Number(e.pcKg)||'', rsKg:Number(e.rsKg)||'', ribKg:Number(e.ribKg)||'',
+    benef:e.benef===''?'':Number(e.benef), semRibana:!!e.semRibana, ts:Date.now()
+  };
+  usarPrecosExtra(S.precos);
+  const [c,m]=editandoCusto.split('|');
+  editandoCusto=null; fecharModal(); salvar(); render();
+  avisoRapido(nomeCorte(c)+' · '+nomeMalha(m)+' salva: '+precos.map(reais).join(' / '));
+}
+function apagarCusto(){
+  if(!editandoCusto) return;
+  if(!confirm('Tirar o seu preço dessa combinação?\n\nSe o catálogo tiver um, ele volta a valer.')) return;
+  delete S.precos[editandoCusto];
+  usarPrecosExtra(S.precos);
+  editandoCusto=null; fecharModal(); salvar(); render();
+}
+
+function renderCustos(){
+  const el=document.getElementById('custosOut'); if(!el) return;
+  const falta=faltandoCusto();
+  const meus=Object.keys(S.precos||{});
+  const corM=m=>m<10? 'var(--vermelho)' : (m<15? 'var(--ambar)' : '#3d6b32');
+  const margemNo=(custo,preco)=> preco>0? ((preco-custo-preco*0.10)/preco*100) : 0;
+
+  const linhaTab=(c,m)=>{
+    const reg=regDe(c,m), ch=chaveLinha(c,m), org=origemDe(c,m);
+    const usados=comboUsado(ch);
+    const mal=MALHAS.find(x=>x.id===m);
+    const nm='<b>'+esc(nomeCorte(c))+'</b>'+
+      (mal&&mal.fora? ' <span class="tag fora">fora de linha</span>':'')+
+      (org==='seu'? ' <span class="tag">seu</span>' : org==='corrigido por você'? ' <span class="tag">corrigido</span>':'');
+    if(!reg) return '<tr class="semTab"><td data-rot="Peça">'+nm+'</td><td data-rot="Malha">'+esc(nomeMalha(m))+'</td>'+
+      '<td colspan="5" class="mini" data-rot="Preço">sem preço'+(usados? ' — usada em '+usados.ops.length+' OP':'')+'</td>'+
+      '<td data-rot=""><button class="acao mini" onclick="abrirCusto(\''+ch+'\')">preencher</button></td></tr>';
+    return '<tr><td data-rot="Peça">'+nm+'</td><td data-rot="Malha">'+esc(nomeMalha(m))+'</td>'+
+      '<td class="num mini" data-rot="Custo">'+(reg.custo? reais(reg.custo):'—')+'</td>'+
+      reg.precos.map((pz,i)=>'<td class="num" data-rot="'+esc(FAIXAS[i])+'">'+reais(pz)+'</td>').join('')+
+      '<td class="num mini" data-rot="Margem" style="color:'+corM(margemNo(reg.custo,reg.precos[3]))+'">'+
+        (reg.custo? margemNo(reg.custo,reg.precos[3]).toFixed(0)+'%':'—')+'</td>'+
+      '<td data-rot=""><button class="acao mini sec" onclick="abrirCusto(\''+ch+'\')">'+
+        (org==='catálogo'? 'editar':'editar o seu')+'</button></td></tr>';
+  };
+
+  el.innerHTML=
+    (falta.length? '<div class="card" style="border-color:#e7cdc8;">'+
+      '<h3 style="color:var(--vermelho)">Combinação nova, sem preço — '+falta.length+'</h3>'+
+      '<div class="mini" style="margin-bottom:9px;">Essas aparecem em pedidos seus e não estão no catálogo. '+
+        'Enquanto estiverem assim, o orçamento sai como <b>a combinar</b> e o valor fica por baixo.</div>'+
+      '<div class="rolar"><table class="tabPrinc">'+
+      '<tr><th>Peça</th><th>Malha</th><th class="num">Peças</th><th>Onde aparece</th><th></th></tr>'+
+      falta.map(x=>'<tr><td data-rot="Peça"><b>'+esc(nomeCorte(x.corteId))+'</b></td>'+
+        '<td data-rot="Malha">'+esc(nomeMalha(x.malhaId))+'</td>'+
+        '<td class="num" data-rot="Peças">'+(x.pecas||'—')+'</td>'+
+        '<td class="mini" data-rot="Onde">'+esc(x.ops.slice(0,3).join(', '))+(x.ops.length>3? ' +'+(x.ops.length-3):'')+
+          (x.clientes.length? '<br>'+esc(x.clientes.slice(0,2).join(', ')):'')+'</td>'+
+        '<td data-rot=""><button class="acao mini" onclick="abrirCusto(\''+x.chave+'\')">colocar o custo</button></td></tr>').join('')+
+      '</table></div></div>'
+      : '<div class="card"><h3>Faltando preço</h3><div class="mini">Nenhuma. Toda combinação que está nos seus pedidos tem preço.</div></div>')+
+
+    (()=>{ const sc=precoSemCusto(); if(!sc.length) return '';
+      const usadas=sc.filter(x=>x.pecas>0);
+      return '<div class="card" style="border-color:#e8d2a0;">'+
+      '<h3 style="color:#8a6a1e">Vende, mas o custo nunca fechou — '+sc.length+'</h3>'+
+      '<div class="mini" style="margin-bottom:9px;">Tem preço de venda e não tem custo. Dá orçamento, '+
+        'mas eu não consigo dizer se sobra ou se está trabalhando de graça'+
+        (usadas.length? ' — e '+usadas.length+' dessas está em pedido aberto':'')+'.</div>'+
+      '<div class="rolar"><table class="tabPrinc">'+
+      '<tr><th>Peça</th><th>Malha</th>'+FAIXAS.map(f=>'<th class="num">'+esc(f)+'</th>').join('')+
+      '<th class="num">Peças</th><th></th></tr>'+
+      sc.map(x=>'<tr><td data-rot="Peça"><b>'+esc(nomeCorte(x.corteId))+'</b></td>'+
+        '<td data-rot="Malha">'+esc(nomeMalha(x.malhaId))+'</td>'+
+        x.precos.map((pz,i)=>'<td class="num mini" data-rot="'+esc(FAIXAS[i])+'">'+reais(pz)+'</td>').join('')+
+        '<td class="num" data-rot="Peças">'+(x.pecas||'—')+'</td>'+
+        '<td data-rot=""><button class="acao mini" onclick="abrirCusto(\''+x.chave+'\')">fechar o custo</button></td></tr>').join('')+
+      '</table></div></div>'; })()+
+
+    (meus.length? '<div class="card"><h3>Preços seus — '+meus.length+'</h3>'+
+      '<div class="mini" style="margin-bottom:9px;">Acrescentados ou corrigidos por você. Valem por cima do catálogo e sincronizam nos dois aparelhos.</div>'+
+      '<div class="rolar"><table class="tabPrinc">'+
+      '<tr><th>Peça</th><th>Malha</th><th class="num">Custo</th>'+FAIXAS.map(f=>'<th class="num">'+esc(f)+'</th>').join('')+
+      '<th class="num">Margem</th><th></th></tr>'+
+      meus.map(k=>{ const [c,m]=k.split('|'); return linhaTab(c,m); }).join('')+
+      '</table></div></div>':'')+
+
+    /* no computador as linhas já vêm abertas; no celular ficam fechadas, senão
+       são 50 fichas de rolagem antes de chegar no que importa. */
+    LINHAS_COM.map(L=>{
+      const linhas=[]; let semC=0, apertada=100;
+      L.cortes.forEach(c=>L.malhas.forEach(m=>{
+        if(!regDe(c,m) && !comboUsado(chaveLinha(c,m))) return;
+        const reg=regDe(c,m);
+        if(reg){ if(!reg.custo) semC++; else apertada=Math.min(apertada, margemNo(reg.custo,reg.precos[3])); }
+        linhas.push(linhaTab(c,m));
+      }));
+      if(!linhas.length) return '';
+      const resumo=linhas.length+' combinaç'+(linhas.length>1?'ões':'ão')+
+        (apertada<100? ' · margem mais apertada '+apertada.toFixed(0)+'%':'')+
+        (semC? ' · '+semC+' sem custo':'');
+      return '<details class="card linhaCat"'+(largura()>760?' open':'')+'>'+
+        '<summary><b>'+esc(L.nome)+'</b><span class="mini">'+esc(resumo)+'</span></summary>'+
+        '<div class="rolar"><table class="tabPrinc">'+
+        '<tr><th>Peça</th><th>Malha</th><th class="num">Custo</th>'+FAIXAS.map(f=>'<th class="num">'+esc(f)+'</th>').join('')+
+        '<th class="num">Margem</th><th></th></tr>'+linhas.join('')+'</table></div></details>';
+    }).join('')+
+
+    '<div class="card"><h3>Acrescentar uma combinação</h3>'+
+      '<div class="linha">'+
+        '<div><label>Peça</label><select id="novoCorte">'+CORTES.map(c=>'<option value="'+c.id+'">'+esc(c.nome)+'</option>').join('')+'</select></div>'+
+        '<div><label>Malha</label><select id="novoMalha">'+MALHAS.filter(m=>!m.fora).map(m=>'<option value="'+m.id+'">'+esc(m.nome)+'</option>').join('')+'</select></div>'+
+        '<div style="flex:0 0 auto; align-self:flex-end;"><button class="acao" onclick="abrirCusto(document.getElementById(\'novoCorte\').value+\'|\'+document.getElementById(\'novoMalha\').value)">Abrir</button></div>'+
+      '</div>'+
+      '<div class="mini">A margem mostrada é a da última faixa (300 a 600), que é a mais apertada.</div>'+
+    '</div>';
+}
+
 /* ================= RENDER ================= */
 function render(){
   if(!pinOk()) return;
@@ -4174,6 +4545,7 @@ function render(){
   if(aba==='pedidos'){ preencherFiltros(); renderPedidos(); }
   if(aba==='resumo') renderResumo();
   if(aba==='dados') renderDados();
+  if(aba==='custos') renderCustos();
   if(aba==='painel') document.getElementById('painelOut').innerHTML=renderPainel();
   const n=document.getElementById('nClientes');
   if(n){ const ab=S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim').length; n.textContent=ab? '('+ab+')':''; }
