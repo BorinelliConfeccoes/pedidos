@@ -429,6 +429,29 @@ table.tabPrinc tr.semTab td:first-child b{color:var(--vermelho);}
 .painelVolta{border:1px solid var(--linha); background:#fff; border-radius:8px;
   width:32px; height:32px; font-size:17px; line-height:1; cursor:pointer; color:var(--verde); flex:0 0 auto;}
 .painelVolta:hover{background:var(--verde); color:#fff;}
+
+/* ---- os botões da OP: tamanho de botão de trabalho ----
+   Eram "mini" porque eram nove em fila. Agora são quatro, e o dedo no celular
+   precisa de 44 px de altura pra não errar. Útil antes de bonito. */
+.opCorpo .cliAcoes{display:flex; gap:8px; flex-wrap:wrap; align-items:stretch;
+  margin-top:14px; padding-top:13px; border-top:1px solid var(--linha);}
+.opCorpo .cliAcoes > .acao, .opCorpo .cliAcoes > a.acao, .opCorpo .maisOP summary{
+  font-size:14.5px; padding:11px 17px; min-height:44px; border-radius:10px;
+  display:inline-flex; align-items:center; justify-content:center; gap:6px; font-weight:600;}
+.opCorpo .cliAcoes > .acao:not(.sec):not(.alerta){box-shadow:0 2px 0 var(--verde-esc);}
+.opCorpo .cliAcoes .maisCaixa .acao{font-size:14px; padding:10px 13px; min-height:42px;}
+@media(max-width:760px){
+  .opCorpo .cliAcoes > .acao, .opCorpo .cliAcoes > a.acao, .opCorpo .maisOP summary{
+    flex:1 1 calc(50% - 4px); padding:12px 10px;}
+  .opCorpo .cliAcoes{gap:8px;}
+}
+/* a etapa é um seletor com cara de etiqueta: lê igual, mas muda num clique */
+.etapaSel{width:auto; flex:0 0 auto; margin:0; border:0; color:#fff; font-weight:600;
+  font-size:11.5px; letter-spacing:.3px; border-radius:20px; padding:4px 26px 4px 11px;
+  cursor:pointer; appearance:none; -webkit-appearance:none; font-family:inherit;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23fff'/%3E%3C/svg%3E");
+  background-repeat:no-repeat; background-position:right 9px center;}
+.etapaSel:focus{outline:2px solid var(--dourado); outline-offset:1px;}
 /* ---- caixa de anotar: a entrada do sistema, sempre aberta e no alto ---- */
 .anotarBox{border:1px solid var(--dourado); border-radius:11px; padding:10px;
   background:#fffdf7; margin-bottom:12px;}
@@ -448,6 +471,23 @@ table.tabPrinc tr.semTab td:first-child b{color:var(--vermelho);}
 .secao h4{margin:0 0 7px; font-size:11px; text-transform:uppercase; letter-spacing:.7px;
   color:var(--sub); display:flex; align-items:baseline; gap:9px;}
 .secao h4 .secN{margin-left:auto; text-transform:none; letter-spacing:0; font-size:13px; color:var(--ink); font-weight:600;}
+/* o mesmo rótulo, usado também no cabeçalho dos grupos da pilotagem */
+#pilotoOut .card h3{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap;}
+#pilotoOut .card h3 .secN{font-size:13px; color:var(--ink); font-weight:600;}
+#pilotoOut table.tabPrinc{font-size:13px; width:100%;}
+@media(max-width:760px){
+  #pilotoOut .rolar{overflow-x:visible;}
+  #pilotoOut table.tabPrinc, #pilotoOut table.tabPrinc tbody{display:block; border:0; margin:0;}
+  #pilotoOut table.tabPrinc tr{display:block; border:1px solid var(--linha); border-radius:10px;
+    padding:9px 11px; margin-bottom:8px; background:#fff;}
+  #pilotoOut table.tabPrinc tr:first-child{display:none;}
+  #pilotoOut table.tabPrinc td{display:flex; justify-content:space-between; align-items:baseline;
+    gap:12px; padding:2px 0; border:0; text-align:left;}
+  #pilotoOut table.tabPrinc td::before{content:attr(data-rot); font-size:10.5px; letter-spacing:.5px;
+    text-transform:uppercase; color:var(--sub); flex:0 0 auto;}
+  #pilotoOut table.tabPrinc td[data-rot=""]{justify-content:flex-end; padding-top:7px;}
+  #pilotoOut table.tabPrinc td[data-rot=""]::before{content:none;}
+}
 .secao h4 .secVal{margin-left:auto; text-transform:none; letter-spacing:0; font-size:16px; color:var(--ink); font-weight:600;}
 .secao h4 .secMargem{text-transform:none; letter-spacing:0; font-size:12.5px; font-weight:600;}
 details.gaveta summary{list-style:none; cursor:pointer;}
@@ -457,6 +497,38 @@ details.gaveta summary h4::after{content:'▸'; color:var(--sub); font-size:12px
 details.gaveta[open] summary h4{margin-bottom:9px; padding-bottom:7px; border-bottom:1px solid var(--linha);}
 details.gaveta[open] summary h4::after{content:'▾';}
 details.gaveta > .pendBox, details.gaveta > .orc{border:0; padding:0; margin:0; background:none;}
+/* ---- plano de ação ---- */
+.planoBox{border-color:var(--dourado); background:#fffdf7;}
+ol.plano{list-style:none; counter-reset:pl; margin:0; padding:0;}
+ol.plano li{counter-increment:pl; display:flex; align-items:baseline; gap:9px;
+  padding:8px 0; border-bottom:1px solid var(--linha); font-size:14px;}
+ol.plano li:last-child{border-bottom:0;}
+ol.plano li::before{content:counter(pl); flex:0 0 22px; height:22px; line-height:22px;
+  text-align:center; border-radius:50%; background:var(--linha); color:var(--verde);
+  font-size:11.5px; font-weight:600;}
+ol.plano li.p1::before{background:var(--vermelho); color:#fff;}
+ol.plano li.p2::before{background:#e8d2a0; color:#7a5a16;}
+ol.plano .planoTxt{flex:0 1 auto; font-weight:500;}
+ol.plano li.p1 .planoTxt{font-weight:600;}
+ol.plano .planoPq{flex:1 1 120px; font-size:12px; color:var(--sub);}
+ol.plano .pendX{margin-left:auto; flex:0 0 auto;}
+ol.plano li.suas{color:var(--sub);}
+ol.plano li.suas::before{content:'↓'; background:transparent; color:var(--sub); font-size:14px;}
+.planoCli{border:1px solid var(--linha); border-radius:10px; padding:9px 11px;
+  margin-bottom:8px; cursor:pointer; background:#fff;}
+.planoCli:hover{border-color:var(--dourado); background:#fffdf7;}
+.planoCliTopo{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap; margin-bottom:4px;}
+.planoCliTopo b{font-size:15px;}
+.planoVal{margin-left:auto; font-weight:600; color:var(--verde);}
+ol.plenxuto li{padding:3px 0; border:0; font-size:13px;}
+ol.plenxuto li::before{flex:0 0 18px; height:18px; line-height:18px; font-size:10.5px;}
+ol.plenxuto .maisP{padding-left:27px;}
+ol.plenxuto .maisP::before{content:none;}
+.prodBox[open]{border-color:var(--dourado);}
+.secN.agora{color:var(--dourado-esc); font-size:11px; text-transform:uppercase; letter-spacing:.6px;}
+.prodBox .linha{margin-bottom:4px;}
+.prodBox .linha > div{flex:1 1 170px;}
+.prodBox .linha .mini{margin-top:3px; line-height:1.35;}
 
 .opEstado{display:flex; gap:11px; flex-wrap:wrap; padding:11px 0 2px; border-top:1px solid var(--linha); margin-top:11px;}
 .opEstado label{flex:1 1 180px; font-size:10.5px;}
@@ -468,17 +540,15 @@ details.gaveta > .pendBox, details.gaveta > .orc{border:0; padding:0; margin:0; 
   box-shadow:0 10px 26px rgba(32,45,24,.16);}
 .maisCaixa .acao{width:100%; text-align:left;}
 
-@media(min-width:1025px){
-  #opsPalco.comPainel{display:grid; grid-template-columns:minmax(0,1fr) minmax(380px,44%); gap:14px; align-items:start;}
-  #opsPalco.comPainel #painelOP{position:sticky; top:8px; max-height:calc(100vh - 24px); overflow:auto;
-    border:1px solid var(--linha); border-radius:13px; background:#fff;
-    box-shadow:0 10px 30px rgba(32,45,24,.10);}
-}
+/* Dividir a tela ao meio deixou a OP espremida numa coluna de 44%: tabela de
+   itens rolando lateral, orçamento apertado, campo de anotar estreito. Com uma
+   OP aberta ele está olhando AQUELA OP, não comparando a lista. Então o painel
+   toma a largura toda, em qualquer tamanho de tela, e a lista volta no "voltar". */
+#opsPalco.comPainel #listaCli{display:none;}
+#opsPalco.comPainel #painelOP{display:block; border:1px solid var(--linha); border-radius:13px;
+  background:#fff; overflow:visible;}
 @media(max-width:1024px){
-  /* no celular o painel cobre a tela: split view não cabe, e meia tela não serve */
-  #opsPalco.comPainel #painelOP{position:fixed; inset:0; z-index:60; background:var(--creme);
-    overflow:auto; -webkit-overflow-scrolling:touch; padding-bottom:70px;}
-  body.painelAberto #rodape{display:none;}
+  #opsPalco.comPainel #painelOP{border:0; border-radius:0; margin:0 -14px; background:var(--creme);}
 }
 
 /* ---------- artes e estamparia ---------- */
@@ -647,6 +717,7 @@ details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bott
       <button data-a="clientes" onclick="irPara('clientes')"><i class="ic">▤</i> OPs <span id="nClientes" class="mini"></span></button>
       <button data-a="pedidos"  onclick="irPara('pedidos')"><i class="ic">☰</i> Tabela geral</button>
       <button data-a="resumo"   onclick="irPara('resumo')"><i class="ic">◴</i> Resumo</button>
+      <button data-a="piloto"   onclick="irPara('piloto')"><i class="ic">✂</i> Pilotagem <span id="nPiloto" class="mini"></span></button>
       <button data-a="custos"   onclick="irPara('custos')"><i class="ic">◈</i> Custos e preços <span id="nCustos" class="mini"></span></button>
       <div class="grupo">Dados</div>
       <button data-a="dados"    onclick="irPara('dados')"><i class="ic">⛁</i> Backup e limpeza</button>
@@ -757,6 +828,13 @@ details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bott
     <section class="tela" id="tela-resumo">
       <div class="cab"><h1>Resumo</h1></div>
       <div id="resumoOut"></div>
+    </section>
+
+    <!-- ======== PILOTAGEM ======== -->
+    <section class="tela" id="tela-piloto">
+      <div class="cab"><h1>Pilotagem</h1>
+        <div class="mini">Tudo que está na etapa Piloto, agrupado por malha — que é como se corta.</div></div>
+      <div id="pilotoOut"></div>
     </section>
 
     <!-- ======== CUSTOS ======== -->
@@ -939,6 +1017,47 @@ const ETAPAS = [
   {id:'entregue',   nome:'Entregue',    cor:'#4a4a4a', grupo:'fim'},
   {id:'perdido',    nome:'Perdido',     cor:'#a63d2f', grupo:'fim'}
 ];
+/* ---- O QUE SE ANOTA EM CADA ETAPA DA FÁBRICA ----
+   Cada etapa tem perguntas próprias, e são elas que decidem se a OP fecha no
+   preço: o rendimento e o aproveitamento do encaixe dizem quantos quilos
+   comprar, e quilo errado come a margem inteira. Fica tudo em p.producao. */
+const CAMPOS_PRODUCAO = [
+  {etapa:'malha', nome:'Malha', campos:[
+    {id:'fornecedor', rot:'Fornecedor',        tipo:'texto'},
+    {id:'lote',       rot:'Lote / partida',    tipo:'texto'},
+    {id:'kgComprado', rot:'Kg comprados',      tipo:'num', passo:'0.1'},
+    {id:'rsKg',       rot:'R$ por kg pago',    tipo:'num', passo:'0.01'},
+    {id:'chegouEm',   rot:'Chegou em',         tipo:'data'}
+  ]},
+  {etapa:'corte', nome:'Corte', campos:[
+    {id:'pcKg',    rot:'Peças por kg',             tipo:'num', passo:'0.1',
+     dica:'quantas peças saem de 1 kg dessa malha'},
+    {id:'aprov',   rot:'Aproveitamento do encaixe (%)', tipo:'num', passo:'1',
+     dica:'quanto do enfesto virou peça; o resto é retalho'},
+    {id:'cortadas',rot:'Peças cortadas',           tipo:'num', passo:'1'},
+    {id:'cortouEm',rot:'Cortado em',               tipo:'data'},
+    {id:'cortador',rot:'Quem cortou',              tipo:'texto'}
+  ]},
+  {etapa:'costura', nome:'Costura', campos:[
+    {id:'celula',    rot:'Costureira / célula', tipo:'texto'},
+    {id:'costuradas',rot:'Peças costuradas',    tipo:'num', passo:'1'},
+    {id:'comecouEm', rot:'Começou em',          tipo:'data'},
+    {id:'terminouEm',rot:'Terminou em',         tipo:'data'}
+  ]},
+  {etapa:'acabamento', nome:'Acabamento', campos:[
+    {id:'prontas',   rot:'Peças prontas',       tipo:'num', passo:'1'},
+    {id:'segunda',   rot:'Peças de 2ª',         tipo:'num', passo:'1',
+     dica:'o que não passou na revisão'},
+    {id:'embalagem', rot:'Etiqueta, tag e embalagem', tipo:'texto'}
+  ]},
+  {etapa:'entregue', nome:'Entrega', campos:[
+    {id:'transportadora', rot:'Transportadora', tipo:'texto'},
+    {id:'rastreio',       rot:'Código de rastreio', tipo:'texto'},
+    {id:'enviadoEm',      rot:'Enviado em',     tipo:'data'},
+    {id:'nf',             rot:'Nota fiscal',    tipo:'texto'}
+  ]}
+];
+
 /* motivos de perda: três meses disso valem mais que relatório nenhum */
 const MOTIVOS_PERDA = ['Preço','Prazo','Sumiu','Fechou com outro','Desistiu do projeto','Outro'];
 
@@ -1774,7 +1893,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.6.1';
+const VERSAO='3.7.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -2184,6 +2303,7 @@ const ABAS=[
   {id:'nova',     nome:'Nova conversa', ic:'＋'},
   {id:'clientes', nome:'OPs',           ic:'▤'},
   {id:'pedidos',  nome:'Tabela geral',  ic:'☰'},
+  {id:'piloto',   nome:'Pilotagem',     ic:'✂'},
   {id:'resumo',   nome:'Resumo',        ic:'◴'},
   {id:'custos',   nome:'Custos',        ic:'◈'},
   {id:'dados',    nome:'Dados',         ic:'⛁'}
@@ -2207,6 +2327,12 @@ function pintarAbas(){
   põe('custos', falta, true);
   const nc=document.getElementById('nCustos');
   if(nc) nc.textContent=falta? '('+falta+' a fechar)':'';
+  /* o selo da pilotagem conta o que trava o corte, não o total — total é informação,
+     o que falta combinar é trabalho dele */
+  const pil=faltaPraPilotar().length;
+  põe('piloto', pil, true);
+  const np=document.getElementById('nPiloto');
+  if(np) np.textContent=pil? '('+pil+' a combinar)':'';
 }
 function abrirMenu(){
   document.getElementById('sidebar').classList.add('aberto');
@@ -2954,20 +3080,63 @@ function historicoOP(p){
     h.map(x=>'<li><b>'+esc(etapaDe(x.e).nome)+'</b> · '+fmtData(x.ts)+'</li>').join('')+'</ul></div>';
 }
 function proximaEtapa(p){
-  const i=ETAPAS.findIndex(e=>e.id===p.etapa);
   const seq=ETAPAS.filter(e=>e.id!=='perdido');
   const j=seq.findIndex(e=>e.id===p.etapa);
   return (j>=0 && j<seq.length-1)? seq[j+1] : null;
+}
+/* Faltava o caminho de volta. Avançar era um clique e desandar era caçar um
+   seletor no pé do painel — ele clicou em "→ Piloto" e ficou preso lá. */
+function etapaAnterior(p){
+  const seq=ETAPAS.filter(e=>e.id!=='perdido');
+  const j=seq.findIndex(e=>e.id===p.etapa);
+  return j>0? seq[j-1] : null;
 }
 function avancarOP(id){
   if(event&&event.stopPropagation) event.stopPropagation();
   const p=S.pedidos.find(x=>x.id===id); if(!p) return;
   const n=proximaEtapa(p); if(!n) return;
+  const de=p.etapa;
   mudarEtapaOP(id, n.id);
+  ofereceVoltarEtapa(id, de, n.nome);
 }
-function mudarEtapaOP(id, etapa){
+function voltarOP(id){
   if(event&&event.stopPropagation) event.stopPropagation();
   const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  const a=etapaAnterior(p); if(!a) return;
+  const de=p.etapa;
+  mudarEtapaOP(id, a.id, true);
+  ofereceVoltarEtapa(id, de, a.nome);
+}
+/* o desfazer fica na cara por 12 segundos, que é quando ele percebe o erro */
+var undoEtapa=null;
+function ofereceVoltarEtapa(id, de, nomeNovo){
+  undoEtapa={id, de};
+  const el=document.getElementById('toast') || (()=>{ const x=document.createElement('div');
+    x.id='toast'; document.body.appendChild(x); return x; })();
+  el.innerHTML='<span>Foi pra <b>'+esc(nomeNovo)+'</b>.</span>'+
+    '<button onclick="desfazerEtapa()">↶ Voltar pra '+esc(etapaDe(de).nome)+'</button>';
+  el.classList.add('on');
+  clearTimeout(window.__toast);
+  window.__toast=setTimeout(esconderAviso, 12000);
+}
+function desfazerEtapa(){
+  const u=undoEtapa; undoEtapa=null; esconderAviso();
+  if(!u) return;
+  const p=S.pedidos.find(x=>x.id===u.id); if(!p) return;
+  /* desfazer de verdade: tira a linha que acabou de entrar na linha do tempo,
+     em vez de carimbar mais uma e deixar o histórico contando bobagem */
+  if((p.hist||[]).length && p.hist[p.hist.length-1].e===p.etapa) p.hist.pop();
+  p.etapa=u.de; p.ts=Date.now(); salvar(); render();
+  avisoRapido('Voltou pra '+etapaDe(u.de).nome+'.');
+}
+function mudarEtapaOP(id, etapa, voltando){
+  if(event&&event.stopPropagation) event.stopPropagation();
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  /* voltar de uma etapa de fábrica pra uma de venda é raro e costuma ser
+     engano de dedo — confirma uma vez, e segue. */
+  if(voltando && grupoDe(p.etapa)==='fabrica' && grupoDe(etapa)!=='fabrica'
+     && !confirm('Essa OP já está em '+etapaDe(p.etapa).nome+', na fábrica.\n\n'+
+                 'Voltar pra '+etapaDe(etapa).nome+'?')) return;
   if(etapa==='perdido'){
     const m=prompt('Perdeu por quê?\n\n'+MOTIVOS_PERDA.map((x,i)=>(i+1)+'. '+x).join('\n')+
                    '\n\nDigite o número ou escreva o motivo:');
@@ -3014,7 +3183,7 @@ function pintarPainel(){
   if(!palco || !cx) return;
   const p=opNoPainel();
   palco.classList.toggle('comPainel', !!p);
-  document.body.classList.toggle('painelAberto', !!p && largura()<=1024);
+  document.body.classList.toggle('painelAberto', !!p);
   if(!p){ cx.innerHTML=''; return; }
   const c=clienteDe(p.clienteId)||{nome:'(sem cliente)'};
   cx.innerHTML=cabecaPainel(p, c)+corpoOP(p, c, itensDaOP(p));
@@ -3028,7 +3197,12 @@ function cabecaPainel(p, c){
       (c.telefone? '<span class="tel" onclick="copiarTel(event,\''+esc(c.telefone)+'\')" '+
         'title="clique pra copiar">'+esc(c.telefone)+'</span>':'')+
     '</div>'+
-    '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>'+
+    /* a etapa no cabeçalho não é só enfeite: é o próprio controle.
+       Onde ele lê em que pé está é onde ele vai querer mudar. */
+    '<select class="etapaSel" style="background-color:'+e.cor+'" title="mudar a etapa" '+
+      'onchange="mudarEtapaOP(\''+p.id+'\',this.value,true)">'+
+      ETAPAS.map(x=>'<option value="'+x.id+'"'+(x.id===p.etapa?' selected':'')+'>'+esc(x.nome)+'</option>').join('')+
+    '</select>'+
   '</div>';
 }
 function guardarAbertos(){
@@ -3341,8 +3515,10 @@ function corpoOP(p, c, itens){
     caixaAnotar(p)+
     blocoPedido(p, itens)+
     resumoDinheiro(p)+
+    blocoPlano(p)+
     blocoPendencias(p)+
     blocoArtes(p)+
+    blocoProducao(p)+
     gavetaExtras(p)+
     rodapeOP(p, c)+
   '</div>';
@@ -3418,6 +3594,87 @@ function resumoDinheiro(p){
     '</summary>'+blocoOrcamento(p)+'</details>';
 }
 
+/* ================= PRODUÇÃO =================
+   Da aprovação em diante, a OP deixa de ser conversa e vira chão de fábrica.
+   O que decide se ela fecha no preço é o rendimento: peças por kg e quanto do
+   enfesto virou peça. Com os dois, o sistema diz quantos quilos comprar — e,
+   se ele já comprou, se sobrou ou faltou. Quilo errado come a margem toda. */
+function prod(p){ return p.producao||{}; }
+function mudarProducao(opId, campo, valor){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  p.producao=p.producao||{};
+  p.producao[campo]=valor;
+  p.ts=Date.now(); salvar();
+  if(['pcKg','aprov','kgComprado','cortadas','prontas','segunda'].indexOf(campo)>=0) render();
+}
+/* o rendimento vem da produção; se ele ainda não anotou lá, aproveita o que
+   já digitou na calculadora de custo, pra não pedir o mesmo número duas vezes */
+function rendimentoDaOP(p){
+  const d=prod(p), c=p.calcMalha||{};
+  const pcKg=Number(d.pcKg)>0? Number(d.pcKg) : (Number(c.pcKg)>0? Number(c.pcKg) : 0);
+  const aprov=Number(d.aprov)>0? Number(d.aprov) : 0;
+  const efetivo = pcKg? (aprov? pcKg*aprov/100 : pcKg) : 0;
+  const pecas=pecasDaOP(p);
+  const kgPreciso = efetivo? pecas/efetivo : 0;
+  const kgComprado=Number(d.kgComprado)||0;
+  return {pcKg, aprov, efetivo, pecas, kgPreciso, kgComprado,
+          sobra: (kgComprado && kgPreciso)? kgComprado-kgPreciso : 0,
+          deOndeVeio: (!Number(d.pcKg) && Number(c.pcKg)>0)? 'calculadora' : ''};
+}
+function contaDoRendimento(p){
+  const r=rendimentoDaOP(p);
+  if(!r.pcKg) return '<div class="mini">Me diga <b>quantas peças saem de 1 kg</b> e eu calculo '+
+    'quantos quilos comprar pra essa OP.</div>';
+  const n=v=>v.toFixed(1).replace('.',',');
+  return '<div class="dica">'+
+    '<b>'+n(r.efetivo)+'</b> peças por kg'+
+    (r.aprov? ' <span class="mini">('+n(r.pcKg)+' no encaixe × '+r.aprov+'% de aproveitamento)</span>'
+            : ' <span class="mini">(sem o aproveitamento, assumo 100% — anote pra ficar certo)</span>')+
+    (r.pecas? '<br>Pra <b>'+r.pecas.toLocaleString('pt-BR')+'</b> peças: <b>'+n(r.kgPreciso)+' kg</b>' : '')+
+    (r.kgComprado? '<br>Comprou '+n(r.kgComprado)+' kg · '+
+      (r.sobra>=0? '<b style="color:#3d6b32">sobra '+n(r.sobra)+' kg</b>'
+                 : '<b style="color:var(--vermelho)">falta '+n(-r.sobra)+' kg</b>') : '')+
+    (r.deOndeVeio? '<div class="mini" style="margin-top:4px;">As peças por kg vieram da calculadora de custo desta OP.</div>':'')+
+  '</div>';
+}
+function campoProd(p, c){
+  const v=prod(p)[c.id];
+  const comum=' onchange="mudarProducao(\''+p.id+'\',\''+c.id+'\',this.value)"';
+  const ent = c.tipo==='data'? '<input type="date" value="'+esc(v||'')+'"'+comum+'>'
+    : c.tipo==='num'? '<input type="number" step="'+(c.passo||'1')+'" min="0" value="'+esc(v==null?'':v)+'"'+comum+'>'
+    : '<input value="'+esc(v||'')+'"'+comum+'>';
+  return '<div><label>'+esc(c.rot)+'</label>'+ent+
+    (c.dica? '<div class="mini">'+esc(c.dica)+'</div>':'')+'</div>';
+}
+function blocoProducao(p){
+  if(grupoDe(p.etapa)==='venda') return '';          /* ainda é conversa, não fábrica */
+  const atual=p.etapa;
+  return CAMPOS_PRODUCAO.map(g=>{
+    const agora = g.etapa===atual;
+    const preenchidos=g.campos.filter(c=>{ const v=prod(p)[c.id]; return v!==undefined && v!==''; }).length;
+    return '<details class="secao gaveta prodBox"'+(agora?' open':'')+'>'+
+      '<summary><h4>'+esc(g.nome)+
+        (agora? '<span class="secN agora">é a etapa de agora</span>'
+              : (preenchidos? '<span class="secN">'+preenchidos+' de '+g.campos.length+'</span>':''))+
+      '</h4></summary>'+
+      '<div class="linha">'+g.campos.map(c=>campoProd(p,c)).join('')+'</div>'+
+      (g.etapa==='corte'? contaDoRendimento(p) : '')+
+      (g.etapa==='acabamento'? contaDaRevisao(p) : '')+
+    '</details>';
+  }).join('');
+}
+function contaDaRevisao(p){
+  const d=prod(p);
+  const prontas=Number(d.prontas)||0, seg=Number(d.segunda)||0, pedidas=pecasDaOP(p);
+  if(!prontas && !seg) return '';
+  const falta=pedidas-prontas;
+  return '<div class="'+(falta>0?'aviso':'dica')+'">'+
+    prontas.toLocaleString('pt-BR')+' prontas de '+pedidas.toLocaleString('pt-BR')+' pedidas'+
+    (falta>0? ' — <b>faltam '+falta.toLocaleString('pt-BR')+'</b>' : ' — fechou')+
+    (seg? ' · '+seg+' de 2ª ('+(pedidas? (seg/pedidas*100).toFixed(1).replace('.',','):'0')+'%)' : '')+
+  '</div>';
+}
+
 /* o que ele abre de vez em quando — some do caminho, mas continua visível */
 function gavetaExtras(p){
   const det=p.detalhes||[], ext=p.extras||[], fotos=p.fotos||[], mud=p.mudancas||[];
@@ -3454,8 +3711,9 @@ function gavetaExtras(p){
 /* Antes eram nove botões em fila e catorze pastilhas de estado. Agora: a ação
    que ele faz toda hora na frente, o resto atrás do "mais". */
 function rodapeOP(p, c){
-  const n=proximaEtapa(p);
+  const n=proximaEtapa(p), a=etapaAnterior(p);
   return '<div class="cliAcoes">'+
+      (a? '<button class="acao mini sec" title="voltar uma etapa" onclick="voltarOP(\''+p.id+'\')">← '+esc(a.nome)+'</button>':'')+
       (n? '<button class="acao mini" onclick="avancarOP(\''+p.id+'\')">→ '+esc(n.nome)+'</button>':'')+
       (c.telefone? '<a class="acao mini wpp" target="_blank" href="https://wa.me/55'+soDigitos(c.telefone)+'">WhatsApp</a>':'')+
       '<button class="acao mini sec" onclick="editarPedido(\''+p.id+'\')">Editar</button>'+
@@ -4478,6 +4736,36 @@ function blocoSemCusto(){
     '<button class="acao mini sec" style="margin-top:9px" onclick="irPara(\'custos\')">Abrir a tela de Custos</button></div>';
 }
 
+/* O plano por CLIENTE, no Painel: é com a pessoa que ele fala, e uma pessoa
+   pode ter três OPs. Vem na ordem de quem está travado e vale mais. */
+function blocoPlanoDoDia(){
+  const ids=[...new Set(S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim').map(p=>p.clienteId))];
+  const planos=ids.map(planoDoCliente).filter(x=>x.passos)
+    .sort((a,b)=> (b.trava-a.trava) || (b.valor-a.valor));
+  if(!planos.length) return '';
+  const MOSTRA=6;
+  return '<div class="card"><h3>Plano de hoje<span class="secN" style="margin-left:auto">'+
+      planos.length+' cliente'+(planos.length>1?'s':'')+' com algo pendente</span></h3>'+
+    '<div class="mini" style="margin-bottom:10px;">Quem está travado primeiro, depois quem vale mais. '+
+      'Cada passo sai de um dado que está na OP — nada é chute.</div>'+
+    planos.slice(0,MOSTRA).map(x=>{
+      const p0=x.planos[0]; if(!p0) return '';
+      return '<div class="planoCli" onclick="abrirDaLista(\''+p0.op.id+'\')">'+
+        '<div class="planoCliTopo"><b>'+esc(x.cliente.nome||'(sem nome)')+'</b>'+
+          (x.ops.length>1? '<span class="mini">'+x.ops.length+' OPs</span>':
+            '<span class="opCod">'+esc(p0.op.codigo||'')+'</span>')+
+          (x.trava? '<span class="opAlerta alto">'+x.trava+' travando</span>':'')+
+          '<span class="planoVal">'+(x.valor? reais(x.valor):'a orçar')+'</span></div>'+
+        '<ol class="plano plenxuto">'+p0.passos.slice(0,2).map(s=>
+          '<li class="p'+s.peso+'"><span class="planoTxt">'+esc(s.txt)+'</span></li>').join('')+
+          (x.passos>2? '<li class="mini maisP">+ '+(x.passos-2)+' passos</li>':'')+
+        '</ol></div>';
+    }).join('')+
+    (planos.length>MOSTRA? '<div class="mini">e mais '+(planos.length-MOSTRA)+
+      ' clientes — veja um a um na aba OPs.</div>':'')+
+  '</div>';
+}
+
 function renderPainel(){
   const abertas=S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim');
   const porEtapa={};
@@ -4503,6 +4791,7 @@ function renderPainel(){
           '<span class="urgVal">'+(valorDaOP(p)? reais(valorDaOP(p)):'—')+'</span></div>';
       }).join('')+'</div>':'')+
 
+    blocoPlanoDoDia()+
     blocoSemCusto()+
 
     (vencendo.length? '<div class="card urgente"><h3>Prazo apertado — '+vencendo.length+'</h3>'+
@@ -4979,6 +5268,333 @@ function renderDados(){
     '</div>';
 }
 
+/* ================= PLANO DE AÇÃO =================
+   O sistema já sabe tudo que falta numa OP — só nunca juntou numa frase.
+   Aqui ele junta: lê o estado da OP, descobre o que impede de fechar, e
+   devolve os passos na ordem em que ele tem que fazer. Primeiro o que trava
+   (sem isso não anda), depois o que falta combinar, depois o empurrão.
+   Nada é inventado: cada passo sai de um dado que está na OP. */
+function planoDaOP(p){
+  const c=clienteDe(p.clienteId)||{};
+  const itens=itensDaOP(p), pecas=pecasDaOP(p);
+  const {linhas,t}=orcamentoDaOP(p);
+  const g=grupoDe(p.etapa), d=diasParado(p), fa=faltamDias(p);
+  const passos=[];
+  const põe=(peso, txt, como)=>passos.push({peso, txt, como:como||''});
+
+  /* --- 1. o que trava: sem isso não dá pra orçar nem cortar --- */
+  if(!c.telefone) põe(1,'Pegar o telefone do cliente','sem número não dá pra cobrar resposta');
+  if(!itens.length) põe(1,'Descobrir o que ele quer','a OP não tem nenhuma peça — cole a conversa em Anotar');
+  itens.forEach(i=>{
+    const falta=[];
+    if(!i.malha) falta.push('a malha');
+    if(!i.corte) falta.push('a modelagem');
+    if(!(Number(i.qtd)>0)) falta.push('a quantidade');
+    if(falta.length) põe(1,'Perguntar '+falta.join(' e ')+
+      (i.corte||i.malha? ' de "'+[i.corte,i.malha].filter(Boolean).join(' · ')+'"':''),
+      'sem isso o preço não fecha');
+  });
+  const semPreco=linhas.filter(x=>x.c.q>0 && (!x.c.achou || !x.c.preco));
+  if(semPreco.length) põe(1, semPreco.length+' peça(s) sem preço na tabela',
+    'combinação nova — feche o custo em Custos e preços');
+
+  /* --- 2. o que falta combinar ---
+     As pendências que ELE escreveu não entram na lista: elas já têm o bloco
+     "O que falta" logo abaixo, com caixinha de marcar. Repetir as mesmas
+     quatro linhas em dois lugares é o tipo de coisa que faz a tela parecer
+     confusa. Aqui só entra o que o SISTEMA descobriu sozinho. */
+  if(pecas && pecas<30) põe(2,'Avisar do mínimo de 30 peças',
+    'são '+pecas+' peças; o mínimo é 30 por malha e cor');
+  if(t.fat && t.margem>0 && t.margem<15)
+    põe(2,'Rever o preço antes de mandar','a margem está em '+t.margem.toFixed(0)+'%, abaixo dos 15%');
+  if(t.fat && t.margem<=0) põe(1,'Esse orçamento está no prejuízo','rever desconto e preço antes de enviar');
+  if(itens.some(i=>!(i.tamanhos||[]).length) && g!=='venda')
+    põe(2,'Fechar a grade de tamanhos','a fábrica não corta sem grade');
+  if(itens.some(i=>!(i.cores||[]).length))
+    põe(2,'Confirmar as cores','aparece "a combinar" no orçamento');
+  if((p.artes||[]).some(a=>!a.tecnica))
+    põe(2,'Definir a técnica das artes','sem saber se é DTF, silk ou bordado não dá pra cotar');
+  if((p.extras||[]).length && !(p.artes||[]).length)
+    põe(2,'Pedir o arquivo da arte','ele falou em estampa e não tem arquivo anexado');
+
+  /* --- 3. o empurrão: o próximo passo comercial ou de fábrica --- */
+  if(g==='venda'){
+    if(p.etapa==='novo' && itens.length) põe(3,'Montar e mandar o orçamento','a OP já tem o que ele pediu');
+    if(p.etapa==='orcado') põe(3,'Confirmar se ele recebeu o orçamento',
+      d? 'mandado há '+d+' dias, sem resposta' : 'mandado hoje');
+    if(p.etapa==='negociando') põe(3,'Fechar o que falta e pedir o aceite','');
+    if(p.etapa==='piloto') põe(3,'Cobrar o retorno da peça piloto',
+      d>=7? 'a piloto está parada há '+d+' dias' : '');
+    if(p.situacao==='semresp') põe(2,'A bola está com você','ele respondeu e você ainda não');
+    if(d>=5 && p.situacao!=='semresp') põe(3,'Dar um toque no cliente','parado há '+d+' dias');
+  } else if(g==='fabrica'){
+    const r=rendimentoDaOP(p);
+    if(!r.pcKg) põe(2,'Anotar quantas peças saem de 1 kg','sem isso não sei quantos quilos comprar');
+    else if(!r.aprov) põe(3,'Anotar o aproveitamento do encaixe','pra fechar o quilo certo');
+    if(r.kgPreciso && !r.kgComprado) põe(2,'Comprar '+r.kgPreciso.toFixed(1).replace('.',',')+' kg de malha','');
+    if(r.kgComprado && r.sobra<0) põe(1,'Falta malha: '+(-r.sobra).toFixed(1).replace('.',',')+' kg','');
+    const pr=Number(prod(p).prontas)||0;
+    if(p.etapa==='acabamento' && pr && pr<pecas)
+      põe(2,'Faltam '+(pecas-pr)+' peças pra fechar o pedido','');
+    if(!p.entregaEm) põe(3,'Marcar a data de entrega','a OP está na fábrica sem data prometida');
+  }
+  if(fa!==null && fa<0) põe(1,'A entrega venceu há '+(-fa)+' dias','avisar o cliente hoje');
+  else if(fa!==null && fa<=5) põe(2,'Entrega em '+fa+' dias','conferir se a fábrica dá conta');
+  if(p.etapa==='entregue' && !(p.producao||{}).nf) põe(3,'Emitir a nota fiscal','');
+
+  passos.sort((a,b)=>a.peso-b.peso);
+  const minhas=pendencias(p).filter(x=>!x.ok).length;
+  return {op:p, cliente:c, passos, minhas,
+          trava:passos.filter(x=>x.peso===1).length};
+}
+/* o plano do CLIENTE junta as OPs dele: é com a pessoa que ele fala, não com a OP */
+function planoDoCliente(clienteId){
+  const c=clienteDe(clienteId)||{};
+  const ops=S.pedidos.filter(p=>p.clienteId===clienteId && grupoDe(p.etapa)!=='fim');
+  const planos=ops.map(planoDaOP).filter(x=>x.passos.length);
+  return {cliente:c, ops, planos,
+    trava:planos.reduce((s,x)=>s+x.trava,0),
+    passos:planos.reduce((s,x)=>s+x.passos.length,0),
+    valor:ops.reduce((s,p)=>s+valorDaOP(p),0)};
+}
+function blocoPlano(p){
+  const pl=planoDaOP(p);
+  if(!pl.passos.length) return '<div class="secao planoBox"><h4>Plano de ação'+
+    '<span class="secN" style="color:#3d6b32">nada travando</span></h4>'+
+    '<div class="mini">Não vejo nada faltando nessa OP'+
+      (pl.minhas? ', fora as '+pl.minhas+' pendências que você anotou aqui embaixo' : '')+
+      '. O próximo passo é o botão de avançar.</div></div>';
+  return '<div class="secao planoBox"><h4>Plano de ação'+
+      '<span class="secN">'+pl.passos.length+' passo'+(pl.passos.length>1?'s':'')+
+      (pl.trava? ' · <b style="color:var(--vermelho)">'+pl.trava+' travando</b>':'')+'</span></h4>'+
+    /* o texto do passo NÃO vai dentro do onclick: esc() vira aspas em &#39;, o
+       navegador desfaz antes do JS ler, e uma pendência com apóstrofo quebrava
+       o botão. Vai o número do passo, e a função busca o texto de novo. */
+    '<ol class="plano">'+pl.passos.map((x,i)=>
+      '<li class="p'+x.peso+'"><span class="planoTxt">'+esc(x.txt)+'</span>'+
+      (x.como? '<span class="planoPq">'+esc(x.como)+'</span>':'')+
+      '<button class="pendX" title="virar pendência" onclick="planoViraPend(\''+p.id+'\','+i+')">+</button>'+
+      '</li>').join('')+
+      (pl.minhas? '<li class="suas"><span class="planoTxt">+ '+pl.minhas+' pendência'+
+        (pl.minhas>1?'s':'')+' que você anotou</span><span class="planoPq">logo abaixo, '+
+        'em "o que falta"</span></li>':'')+
+    '</ol>'+
+    '<button class="acao mini sec" onclick="copiarPlano(\''+p.id+'\')">Copiar o plano</button>'+
+  '</div>';
+}
+function planoViraPend(opId, ix){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  const passo=(planoDaOP(p).passos||[])[Number(ix)]; if(!passo) return;
+  const txt=passo.txt;
+  p.pend=p.pend||[];
+  if(p.pend.some(x=>x.t===txt)) return avisoRapido('Essa já está em "o que falta".');
+  p.pend.push({t:txt, ok:false}); p.ts=Date.now(); salvar(); render();
+  avisoRapido('Virou pendência: '+txt);
+}
+function textoPlano(p){
+  const pl=planoDaOP(p);
+  const L=[(pl.cliente.nome||'')+' · '+(p.codigo||'')+' · '+etapaDe(p.etapa).nome, '']
+    .concat(pl.passos.map((x,i)=>(i+1)+'. '+x.txt+(x.como? '  ('+x.como+')':'')));
+  /* copiado, o plano leva tudo: na tela as pendências dele estão logo abaixo,
+     mas no texto colado não teria nada abaixo */
+  const minhas=pendencias(p).filter(x=>!x.ok);
+  if(minhas.length) L.push('', 'Pendências suas:', ...minhas.map(x=>'- '+x.t));
+  return L.join('\n');
+}
+function copiarPlano(opId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  const t=textoPlano(p);
+  const pos=()=>avisoRapido('Plano copiado.');
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(pos,pos); else pos();
+}
+
+/* ================= PILOTAGEM =================
+   A pergunta da fábrica não é "quais OPs estão em piloto", é "o que eu corto
+   hoje". Isso se organiza por MALHA, porque é assim que o tecido chega e é
+   assim que se corta — não por cliente.
+
+   E tem uma coisa que os dados mostram e a tela tem que gritar: metade dos
+   pilotos está sem cor ou sem tamanho definido. Piloto sem cor e sem tamanho
+   não se corta. Então a primeira coisa do painel é o que falta perguntar. */
+function itensPraPilotar(){
+  const L=[];
+  S.pedidos.filter(p=>p.etapa==='piloto').forEach(p=>{
+    const c=clienteDe(p.clienteId)||{};
+    itensDaOP(p).forEach((i,ix)=>{
+      L.push({
+        op:p, opId:p.id, codigo:p.codigo||'—', cliente:c.nome||'(sem nome)', tel:c.telefone||'',
+        ix, corte:i.corte||'', corteId:i.corteId||'',
+        malha:i.malha||'', malhaId:malhaIdDe(i.malha)||'', gramatura:i.gramatura||'',
+        cores:(i.cores||[]).map(tituloCaixa),
+        tams:(i.tamanhos||[]),
+        qtd:Number(i.qtd)||0,
+        entregaEm:p.entregaEm||''
+      });
+    });
+  });
+  return L;
+}
+function faltaPraPilotar(){
+  return itensPraPilotar().map(x=>{
+    const falta=[];
+    if(!x.malha) falta.push('malha');
+    if(!x.cores.length) falta.push('cor');
+    if(!x.tams.length) falta.push('tamanho');
+    if(!x.corte) falta.push('modelagem');
+    return Object.assign({}, x, {falta});
+  }).filter(x=>x.falta.length);
+}
+function pilotagemPorMalha(){
+  const m={};
+  itensPraPilotar().forEach(x=>{
+    const k=x.malha||'(falta definir a malha)';
+    m[k]=m[k]||{malha:k, malhaId:x.malhaId, gramatura:x.gramatura, linhas:[], pecas:0, ops:new Set()};
+    m[k].linhas.push(x);
+    m[k].pecas+=x.qtd||1;      /* piloto sem quantidade é uma peça */
+    m[k].ops.add(x.codigo);
+    if(!m[k].gramatura && x.gramatura) m[k].gramatura=x.gramatura;
+  });
+  return Object.values(m).sort((a,b)=>b.pecas-a.pecas);
+}
+function kgDaMalha(nome, pecas){
+  const r=RENDIMENTO[nome]; if(!r) return 0;
+  return pecas/r*1.05;                       /* 5% de ribana, igual ao resto do sistema */
+}
+
+function renderPiloto(){
+  const el=document.getElementById('pilotoOut'); if(!el) return;
+  const todos=itensPraPilotar();
+  const falta=faltaPraPilotar();
+  const grupos=pilotagemPorMalha();
+  const totPc=grupos.reduce((s,g)=>s+g.pecas,0);
+
+  if(!todos.length){
+    el.innerHTML='<div class="card vazio">Nenhuma OP na etapa Piloto agora. '+
+      'Quando você passar uma OP pra Piloto, ela aparece aqui pra cortar.</div>';
+    return;
+  }
+
+  const porFalta={};
+  falta.forEach(x=>x.falta.forEach(f=>{ porFalta[f]=(porFalta[f]||0)+1; }));
+
+  el.innerHTML=
+    '<div class="card"><div class="numerao">'+totPc.toLocaleString('pt-BR')+'</div>'+
+      '<div class="mini">peças pra pilotar · '+grupos.length+' malha'+(grupos.length>1?'s':'')+
+      ' · '+new Set(todos.map(x=>x.codigo)).size+' OPs</div></div>'+
+
+    (falta.length? '<div class="card urgente"><h3>Falta combinar antes de cortar — '+falta.length+'</h3>'+
+      '<div class="mini" style="margin-bottom:9px;">'+
+        Object.keys(porFalta).map(f=>'<b>'+porFalta[f]+'</b> sem '+f).join(' · ')+
+        '. Piloto sem cor e sem tamanho não se corta — é aqui que o pedido trava.</div>'+
+      '<div class="rolar"><table class="tabPrinc">'+
+      '<tr><th>OP</th><th>Cliente</th><th>Peça</th><th>Falta</th><th></th></tr>'+
+      falta.map(x=>'<tr><td data-rot="OP"><span class="opCod">'+esc(x.codigo)+'</span></td>'+
+        '<td data-rot="Cliente"><b>'+esc(x.cliente)+'</b></td>'+
+        '<td data-rot="Peça">'+esc([x.corte, x.malha].filter(Boolean).join(' · ')||'—')+'</td>'+
+        '<td data-rot="Falta"><span class="opAlerta alto">'+esc(x.falta.join(', '))+'</span></td>'+
+        '<td data-rot=""><button class="acao mini" onclick="abrirDaLista(\''+x.opId+'\')">abrir a OP</button></td>'+
+        '</tr>').join('')+
+      '</table></div></div>' : '<div class="card"><h3>Falta combinar</h3>'+
+      '<div class="mini">Nada. Todo piloto tem malha, cor, tamanho e modelagem.</div></div>')+
+
+    grupos.map(g=>{
+      const kg=kgDaMalha(g.malha, g.pecas);
+      const cores=[...new Set(g.linhas.flatMap(x=>x.cores))];
+      const tams=[...new Set(g.linhas.flatMap(x=>x.tams))];
+      const semMalha=/falta definir/.test(g.malha);
+      return '<div class="card'+(semMalha?' urgente':'')+'">'+
+        '<h3>'+esc(g.malha)+(g.gramatura? ' <span class="mini">'+esc(g.gramatura)+'</span>':'')+
+          '<span class="secN" style="margin-left:auto">'+g.pecas+' peça'+(g.pecas>1?'s':'')+
+          (kg? ' · '+kg.toFixed(1).replace('.',',')+' kg':'')+'</span></h3>'+
+        '<div class="mini" style="margin-bottom:9px;">'+
+          '<b>Cores:</b> '+(cores.length? esc(cores.join(', ')):'<span class="opAlerta alto">a combinar</span>')+
+          ' &nbsp;·&nbsp; <b>Tamanhos:</b> '+(tams.length? esc(tams.join(' ')):'<span class="opAlerta alto">a combinar</span>')+
+        '</div>'+
+        '<div class="rolar"><table class="tabPrinc">'+
+        '<tr><th>Modelagem</th><th>Cor</th><th>Tam</th><th class="num">Pç</th><th>Cliente</th><th>OP</th></tr>'+
+        g.linhas.map(x=>'<tr>'+
+          '<td data-rot="Modelagem"><b>'+esc(x.corte||'—')+'</b></td>'+
+          '<td data-rot="Cor">'+(x.cores.length? esc(x.cores.join(', ')):'<span class="falta">a combinar</span>')+'</td>'+
+          '<td data-rot="Tam">'+(x.tams.length? esc(x.tams.join(' ')):'<span class="falta">a combinar</span>')+'</td>'+
+          '<td class="num" data-rot="Pç">'+(x.qtd||1)+'</td>'+
+          '<td data-rot="Cliente">'+esc(x.cliente)+'</td>'+
+          '<td data-rot="OP"><span class="opCod" style="cursor:pointer" onclick="abrirDaLista(\''+x.opId+'\')">'+
+            esc(x.codigo)+'</span></td></tr>').join('')+
+        '</table></div></div>';
+    }).join('')+
+
+    '<div class="card"><h3>Levar pra fábrica</h3>'+
+      '<div style="display:flex; gap:7px; flex-wrap:wrap;">'+
+        '<button class="acao" onclick="imprimirPilotagem()">🖨 Ficha de pilotagem</button>'+
+        '<button class="acao sec" onclick="copiarPilotagem()">Copiar como texto</button>'+
+      '</div>'+
+      '<div class="mini" style="margin-top:9px;">A ficha sai agrupada por malha, que é como se corta. '+
+        'Os quilos já incluem 5% de ribana.</div>'+
+    '</div>';
+}
+
+function textoPilotagem(){
+  const grupos=pilotagemPorMalha();
+  const L=['PILOTAGEM — BORINELLI','Gerado em '+new Date().toLocaleString('pt-BR'),''];
+  grupos.forEach(g=>{
+    const kg=kgDaMalha(g.malha, g.pecas);
+    L.push(g.malha.toUpperCase()+(g.gramatura? ' ('+g.gramatura+')':'')+
+      ' — '+g.pecas+' peça(s)'+(kg? ' · '+kg.toFixed(1).replace('.',',')+' kg':''));
+    g.linhas.forEach(x=>{
+      L.push('  · '+(x.corte||'modelagem a definir')+
+        ' | cor: '+(x.cores.join(', ')||'A COMBINAR')+
+        ' | tam: '+(x.tams.join(' ')||'A COMBINAR')+
+        ' | '+(x.qtd||1)+' pç'+
+        ' | '+x.cliente+' ('+x.codigo+')');
+    });
+    L.push('');
+  });
+  const f=faltaPraPilotar();
+  if(f.length){
+    L.push('FALTA COMBINAR ANTES DE CORTAR ('+f.length+'):');
+    f.forEach(x=>L.push('  · '+x.codigo+' '+x.cliente+' — falta '+x.falta.join(', ')));
+  }
+  return L.join('\n');
+}
+function copiarPilotagem(){
+  const t=textoPilotagem();
+  const pos=()=>avisoRapido('Pilotagem copiada.');
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(pos, pos); else pos();
+}
+function imprimirPilotagem(){
+  const grupos=pilotagemPorMalha();
+  const f=faltaPraPilotar();
+  const el=document.getElementById('impressao');
+  el.innerHTML='<div class="folha"><svg class="bmark impAgua"><use href="#bmark"></use></svg>'+
+    '<div class="impCab"><div><h2>Ficha de pilotagem</h2>'+
+      '<div class="mini">'+grupos.reduce((s,g)=>s+g.pecas,0)+' peças · '+grupos.length+' malhas · '+
+      new Date().toLocaleDateString('pt-BR')+'</div></div></div>'+
+    (f.length? '<div class="impAviso"><b>'+f.length+' peça(s) não dá pra cortar ainda</b> — falta cor, '+
+      'tamanho ou malha. Veja a lista no fim.</div>':'')+
+    grupos.map(g=>{
+      const kg=kgDaMalha(g.malha, g.pecas);
+      return '<div class="impBloco"><h4>'+esc(g.malha)+(g.gramatura? ' · '+esc(g.gramatura):'')+
+        ' — '+g.pecas+' peça(s)'+(kg? ' · '+kg.toFixed(1).replace('.',',')+' kg':'')+'</h4>'+
+        '<table class="impTab impMini">'+
+        '<tr><th>Modelagem</th><th>Cor</th><th>Tam</th><th class="num">Pç</th><th>Cliente</th><th>OP</th></tr>'+
+        g.linhas.map(x=>'<tr><td><b>'+esc(x.corte||'—')+'</b></td>'+
+          '<td>'+esc(x.cores.join(', ')||'A COMBINAR')+'</td>'+
+          '<td>'+esc(x.tams.join(' ')||'A COMBINAR')+'</td>'+
+          '<td class="num">'+(x.qtd||1)+'</td>'+
+          '<td>'+esc(x.cliente)+'</td><td class="mini">'+esc(x.codigo)+'</td></tr>').join('')+
+        '</table></div>';
+    }).join('')+
+    (f.length? '<div class="impBloco"><h4>Falta combinar antes de cortar</h4>'+
+      '<ul class="impCheck">'+f.map(x=>'<li>☐ <b>'+esc(x.codigo)+'</b> '+esc(x.cliente)+
+        ' — falta '+esc(x.falta.join(', '))+'</li>').join('')+'</ul></div>':'')+
+    '<div class="impRodape">Pilotagem · impresso em '+new Date().toLocaleString('pt-BR')+'</div>'+
+  '</div>';
+  el.className='paraMim';
+  document.body.classList.add('imprimindo');
+  setTimeout(()=>{ window.print();
+    setTimeout(()=>document.body.classList.remove('imprimindo'), 400); }, 120);
+}
+
 /* ================= PAINEL DE CUSTOS =================
    Todo o catálogo num lugar só. Combinação que aparece num pedido e não tem
    preço fechado entra sozinha na fila de "faltando custo" — é o caso da Pima
@@ -5241,6 +5857,7 @@ function render(){
   if(aba==='resumo') renderResumo();
   if(aba==='dados') renderDados();
   if(aba==='custos') renderCustos();
+  if(aba==='piloto') renderPiloto();
   if(aba==='painel') document.getElementById('painelOut').innerHTML=renderPainel();
   const n=document.getElementById('nClientes');
   if(n){ const ab=S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim').length; n.textContent=ab? '('+ab+')':''; }
