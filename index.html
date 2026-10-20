@@ -389,6 +389,101 @@ table.tabPrinc tr.semTab td:first-child b{color:var(--vermelho);}
 #custosOut table.tabPrinc td:first-child{min-width:140px;}
 #custosOut .acao.mini{padding:3px 9px; font-size:11.5px;}
 .tag.fora{background:#fbe9e6; color:var(--vermelho); border-color:#e7cdc8;}
+/* a OP que a busca acabou de achar pisca, pra ele não procurar com o olho */
+.card.op.achada{animation:achou 1.4s ease-out;}
+@keyframes achou{
+  0%{box-shadow:0 0 0 0 rgba(193,154,74,.75);}
+  40%{box-shadow:0 0 0 7px rgba(193,154,74,.22);}
+  100%{box-shadow:0 0 0 0 rgba(193,154,74,0);}
+}
+/* ---------- lista de OPs: linha enxuta + painel ao lado ----------
+   A linha fechada carrega cinco coisas, não doze: quem é, telefone, peças,
+   valor e UM alerta. A etapa vem do cabeçalho do grupo. O corpo da OP saiu
+   da lista e foi pro painel. */
+#opsPalco{display:block;}
+#painelOP{display:none;}
+#opsPalco.comPainel #painelOP{display:block;}
+
+.opDados{display:flex; gap:10px; align-items:baseline; flex-wrap:wrap;
+  font-size:12.5px; color:var(--sub); margin-top:2px;}
+.opDados b{color:var(--ink); font-weight:600;}
+.opDados i{font-style:italic;}
+.opAlerta{font-weight:600;}
+.opAlerta.alto{color:var(--vermelho);}
+.opAlerta.medio{color:var(--ambar);}
+.opAlerta.bola{color:var(--verde); font-weight:500;}
+.opAlerta.ok{color:var(--sub); font-weight:400;}
+
+.grupoEtapa{margin-bottom:16px;}
+.grupoCab{display:flex; align-items:baseline; gap:9px; padding:3px 0 7px 10px;
+  border-left:3px solid var(--linha); margin-bottom:6px;}
+.grupoCab b{font-size:14px; letter-spacing:.2px;}
+.grupoN{background:var(--linha); color:var(--verde); border-radius:20px;
+  padding:1px 9px; font-size:11.5px; font-weight:600;}
+.grupoCab .mini{margin-left:auto;}
+
+.painelCab{display:flex; align-items:center; gap:10px; padding:11px 14px;
+  border-bottom:1px solid var(--linha); background:#f4f8ec; position:sticky; top:0; z-index:3;}
+.painelTit{flex:1 1 auto; min-width:0; display:flex; align-items:center; gap:8px; flex-wrap:wrap;}
+.painelTit b{font-size:15px;}
+.painelVolta{border:1px solid var(--linha); background:#fff; border-radius:8px;
+  width:32px; height:32px; font-size:17px; line-height:1; cursor:pointer; color:var(--verde); flex:0 0 auto;}
+.painelVolta:hover{background:var(--verde); color:#fff;}
+.painelAbas{display:flex; gap:3px; padding:7px 12px 0; border-bottom:1px solid var(--linha);
+  background:#fff; position:sticky; top:54px; z-index:2;}
+.painelAbas button{border:0; background:none; padding:8px 13px 9px; font-size:13.5px;
+  color:var(--sub); cursor:pointer; border-bottom:2px solid transparent; font-family:inherit;}
+.painelAbas button.on{color:var(--verde); font-weight:600; border-bottom-color:var(--dourado);}
+.painelAbas button i{font-style:normal; background:var(--vermelho); color:#fff;
+  border-radius:20px; padding:0 6px; font-size:10.5px; margin-left:3px;}
+
+.opEstado{display:flex; gap:11px; flex-wrap:wrap; padding:11px 0 2px; border-top:1px solid var(--linha); margin-top:11px;}
+.opEstado label{flex:1 1 180px; font-size:10.5px;}
+.maisOP{display:inline-block; position:relative;}
+.maisOP summary{list-style:none; cursor:pointer; display:inline-block;}
+.maisOP summary::-webkit-details-marker{display:none;}
+.maisCaixa{position:absolute; right:0; z-index:9; background:#fff; border:1px solid var(--linha);
+  border-radius:10px; padding:7px; display:flex; flex-direction:column; gap:5px; min-width:190px;
+  box-shadow:0 10px 26px rgba(32,45,24,.16);}
+.maisCaixa .acao{width:100%; text-align:left;}
+
+@media(min-width:1025px){
+  #opsPalco.comPainel{display:grid; grid-template-columns:minmax(0,1fr) minmax(380px,44%); gap:14px; align-items:start;}
+  #opsPalco.comPainel #painelOP{position:sticky; top:8px; max-height:calc(100vh - 24px); overflow:auto;
+    border:1px solid var(--linha); border-radius:13px; background:#fff;
+    box-shadow:0 10px 30px rgba(32,45,24,.10);}
+  #opsPalco.comPainel .card.op .opResumo{display:none;}   /* com o painel aberto, a lista fica lista */
+}
+@media(max-width:1024px){
+  /* no celular o painel cobre a tela: split view não cabe, e meia tela não serve */
+  #opsPalco.comPainel #painelOP{position:fixed; inset:0; z-index:60; background:var(--creme);
+    overflow:auto; -webkit-overflow-scrolling:touch; padding-bottom:70px;}
+  body.painelAberto #rodape{display:none;}
+}
+
+/* ---------- artes e estamparia ---------- */
+.listaArtes{display:flex; flex-direction:column; gap:9px; margin:8px 0;}
+.arte{display:flex; gap:11px; border:1px solid var(--linha); border-radius:10px; padding:9px; background:#fff;}
+.arteCapa{flex:0 0 76px; width:76px; height:76px; border-radius:8px; overflow:hidden;
+  background:#f4f8ec; display:flex; align-items:center; justify-content:center;}
+.arteCapa img{width:100%; height:100%; object-fit:cover; display:block;}
+.arteIco{font-size:12px; font-weight:600; letter-spacing:.5px; color:var(--sub);}
+.arteCorpo{flex:1 1 auto; min-width:0; display:flex; flex-direction:column; gap:6px;}
+.arteCorpo input, .arteCorpo select{margin:0;}
+.arteNome{font-weight:600;}
+.arteCampos{display:flex; gap:6px; flex-wrap:wrap;}
+.arteCampos select, .arteCampos input{flex:1 1 130px; min-width:0;}
+.arteRodape{display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
+.arteRodape .mini{flex:1 1 auto; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;}
+.artesAcoes{display:flex; gap:7px; flex-wrap:wrap; margin-top:4px;}
+@media(max-width:760px){
+  .arte{flex-direction:column;}
+  .arteCapa{width:100%; flex:0 0 120px; height:120px;}
+  .arteCampos select, .arteCampos input{flex:1 1 100%;}
+}
+
+.barraAtraso{background:#8f2f22; color:#fff; padding:11px 16px; font-size:13.5px; line-height:1.5;}
+.barraAtraso b{color:#ffd9a0;}
 details.linhaCat summary{cursor:pointer; list-style:none; display:flex; align-items:baseline;
   gap:10px; flex-wrap:wrap; padding:2px 0 8px;}
 details.linhaCat summary::-webkit-details-marker{display:none;}
@@ -495,6 +590,7 @@ details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bott
 
 <nav id="abas"></nav>
 <div id="faixa"></div>
+<div id="avisoAtraso" class="barraAtraso" style="display:none"></div>
 
 <div id="tranca" style="display:none">
   <div class="trancaCaixa">
@@ -580,8 +676,7 @@ details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bott
     <section class="tela" id="tela-clientes">
       <div class="cab"><h1>Ordens de produção</h1>
         <div class="dir">
-          <button class="acao mini sec" onclick="abrirTudo(true)">Abrir todas</button>
-          <button class="acao mini sec" onclick="abrirTudo(false)">Fechar todas</button>
+          <button class="acao mini sec" id="btAgrupar" onclick="alternarAgrupar()">Agrupar por etapa</button>
           <button class="acao mini sec" id="btResumo" onclick="alternarResumo()">Resumo: ligado</button>
         </div></div>
       <div id="rapidosOPs" class="rapidos"></div>
@@ -602,7 +697,10 @@ details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bott
         </div>
       </div>
       <div class="mini" id="resOPs" style="margin:-4px 0 10px;"></div>
-      <div id="listaCli"></div>
+      <div id="opsPalco">
+        <div id="listaCli"></div>
+        <aside id="painelOP"><div id="painelOPcorpo"></div></aside>
+      </div>
       <div id="barraLote" style="display:none"></div>
     </section>
 
@@ -741,6 +839,24 @@ const EXTRAS = [
   {id:'TAG',       nome:'Tag personalizada',      termos:['TAG','TAGS','TAG DE PAPEL']},
   {id:'EMBALAGEM', nome:'Embalagem personalizada',termos:['EMBALAGEM','EMBALAGENS','SAQUINHO','SACOLA']}
 ];
+
+/* ---- TÉCNICAS DE ESTAMPARIA ----
+   Cada arte da OP é feita de um jeito, e o jeito muda quem faz, quanto custa
+   e quanto demora. Por isso é escolha por arte, não um chip solto da OP.
+   'por' é como a conta é fechada — serve pro orçamento saber o que perguntar. */
+const TECNICAS = [
+  {id:'DTF',     nome:'DTF',               curto:'DTF',     cor:'#4a6fa5', por:'m²',   obs:'cobrado por m² de arte'},
+  {id:'SILK',    nome:'Silk / serigrafia', curto:'Silk',    cor:'#7a5ea8', por:'cor',  obs:'por cor e por peça, tem custo de tela'},
+  {id:'BORDADO', nome:'Bordado',           curto:'Bordado', cor:'#2f6b4f', por:'ponto',obs:'por mil pontos, tem custo de matriz'},
+  {id:'SUBLIM',  nome:'Sublimação',        curto:'Sublim.', cor:'#b06a2c', por:'peça', obs:'só em malha clara com poliéster'},
+  {id:'TRANSFER',nome:'Transfer',          curto:'Transfer',cor:'#8a7b3f', por:'peça', obs:''},
+  {id:'',        nome:'ainda a definir',   curto:'a definir',cor:'#9aa08f',por:'',     obs:''}
+];
+function tecnicaDe(id){ return TECNICAS.find(t=>t.id===(id||'')) || TECNICAS[TECNICAS.length-1]; }
+
+/* ---- ONDE A ARTE VAI NA PEÇA ---- */
+const LOCAIS_ARTE = ['frente','costas','peito esquerdo','peito direito','manga direita','manga esquerda',
+  'nuca / gola','barra','lateral','etiqueta','outro'];
 
 /* ---- COMO A PESSOA QUER A PEÇA ----
    Não é o que ela pede (isso é corte e malha), é como ela quer que seja feita.
@@ -1631,7 +1747,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.5.0';
+const VERSAO='3.6.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -1660,7 +1776,7 @@ function salvar(){
       : 'Falha ao salvar neste aparelho. Baixe um backup antes de fechar a página.');
   }
   if(fbDB && !aplicandoRemoto && jaRecebeu){
-    fbDB.ref(NO).set({dados:JSON.stringify(S), origem:meuId, ts:Date.now()}).catch(()=>{});
+    fbDB.ref(NO).set({dados:JSON.stringify(S), origem:meuId, ts:Date.now(), ver:VERSAO}).catch(()=>{});
   }
 }
 function carregar(){
@@ -1670,6 +1786,80 @@ function carregar(){
   usarPrecosExtra(S.precos);
   migrarCodigos();
   migrarPendencias();
+  pontoDeVersao();
+}
+/* ---- rede de segurança na troca de versão ----
+   Na primeira vez que o aparelho abre com um index.html novo, eu guardo
+   uma cópia inteira do que estava aqui ANTES de qualquer coisa nova rodar.
+   Fica numa gaveta própria, que o "apagar tudo" não mexe. Se a atualização
+   estragar alguma coisa, é um clique pra voltar ao que estava. */
+const CHAVE_ANTESUP='borinelli-pedidos-antes-update';
+function pontoDeVersao(){
+  S.config=S.config||{};
+  const antes=S.config.verRodando;
+  if(antes===VERSAO) return;
+  if(antes && (S.pedidos.length || S.clientes.length)){
+    try{
+      localStorage.setItem(CHAVE_ANTESUP, JSON.stringify({
+        ts:Date.now(), de:antes, para:VERSAO,
+        ops:S.pedidos.length, clientes:S.clientes.length,
+        dados:JSON.stringify(S)
+      }));
+    }catch(e){ /* sem espaço: segue, o backup manual continua valendo */ }
+  }
+  S.config.verRodando=VERSAO;
+  try{ localStorage.setItem(CHAVE_LOCAL, JSON.stringify(S)); }catch(e){}
+}
+/* ---- um aparelho atrasado é o único jeito de perder dado hoje ----
+   O outro celular rodando uma versão velha mescla sem conhecer os campos
+   novos e devolve pro banco sem eles. Da 3.5.1 em diante isso não acontece
+   mais (ver guardarOQueEuNaoConheco), mas enquanto um aparelho estiver num
+   index.html antigo, o risco existe — então ele grita. */
+function verNum(v){ return String(v||'0').split('.').map(x=>Number(x)||0); }
+function maisNova(a,b){                       /* a > b ? */
+  const x=verNum(a), y=verNum(b);
+  for(let i=0;i<3;i++){ if((x[i]||0)!==(y[i]||0)) return (x[i]||0)>(y[i]||0); }
+  return false;
+}
+var jaAvisouAtraso=false;
+function conferirAparelhoAtrasado(verDoBanco){
+  if(!verDoBanco || jaAvisouAtraso) return;
+  if(!maisNova(verDoBanco, VERSAO)) return;
+  jaAvisouAtraso=true;
+  const el=document.getElementById('avisoAtraso');
+  if(el){
+    el.style.display='';
+    el.innerHTML='<b>Este aparelho está atrasado.</b> Ele está na v'+esc(VERSAO)+
+      ' e o outro já está na v'+esc(verDoBanco)+'. Enquanto estiver assim, '+
+      'o que você fizer aqui pode apagar coisas que o outro gravou. '+
+      'Atualize esta página com Ctrl+Shift+R (ou feche e abra o app) antes de mexer.';
+  }
+  avisoRapido('Aparelho atrasado: v'+VERSAO+' contra v'+verDoBanco+'. Atualize antes de mexer.');
+}
+
+function pontoAntesUp(){
+  try{ const v=localStorage.getItem(CHAVE_ANTESUP); return v? JSON.parse(v):null; }catch(e){ return null; }
+}
+function voltarAntesUp(){
+  const p=pontoAntesUp(); if(!p) return;
+  if(!confirm('Voltar o sistema para como ele estava ANTES da atualização da v'+p.de+' para a v'+p.para+'.\n\n'+
+    'Era '+p.ops+' OPs e '+p.clientes+' clientes, em '+new Date(p.ts).toLocaleString('pt-BR')+'.\n\n'+
+    'O que você fez depois disso se perde. Tem certeza?')) return;
+  gravarPonto('antes de voltar da atualização');
+  try{
+    S=JSON.parse(p.dados);
+    S.config=S.config||{}; S.config.verRodando=VERSAO;
+    usarPrecosExtra(S.precos||{}); esqueceCombos();
+    salvar(); render();
+    avisoRapido('Voltei para antes da atualização.');
+  }catch(e){ alert('Não consegui ler a cópia guardada.'); }
+}
+function baixarAntesUp(){
+  const p=pontoAntesUp(); if(!p) return;
+  const b=new Blob([p.dados],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+  a.download='pedidos-borinelli-antes-da-v'+p.para+'-'+p.ops+'ops.json'; a.click();
+  avisoRapido('Baixei a cópia de antes da atualização.');
 }
 /* junta em vez de sobrescrever: dois aparelhos podem cadastrar ao mesmo tempo */
 function mesclar(remoto, forcar){
@@ -1692,6 +1882,21 @@ function mesclar(remoto, forcar){
   const meuPin=(S.config||{}).pin;
   if(remoto.config) S.config=Object.assign(S.config||{}, remoto.config);
   if(meuPin && pinGuardadoDepois) S.config.pin=meuPin;   /* a que eu acabei de criar manda */
+  guardarOQueEuNaoConheco(remoto);
+}
+/* ---- a trava que faltava ----
+   Antes, versão nova gravava um campo (a tabela de custos, por exemplo) e a
+   versão velha do outro aparelho, que não conhecia o campo, mesclava sem ele
+   e devolvia pro banco sem ele. O campo sumia sem ninguém apagar nada.
+   Daqui pra frente: campo que eu não sei tratar eu não jogo fora — copio
+   igual e devolvo igual. Vale pra qualquer coisa que a gente acrescentar
+   depois, sem precisar mexer aqui de novo. */
+const CAMPOS_CONHECIDOS=['clientes','pedidos','removidos','meusNomes','precos','config'];
+function guardarOQueEuNaoConheco(remoto){
+  Object.keys(remoto||{}).forEach(k=>{
+    if(CAMPOS_CONHECIDOS.indexOf(k)>=0) return;
+    if(S[k]===undefined) S[k]=remoto[k];
+  });
 }
 function iniciarFirebase(){
   if(typeof firebase==='undefined') return pintarSync('sem biblioteca');
@@ -1712,6 +1917,7 @@ function ligarBanco(){
     jaRecebeu=true;
     const v=snap.val();
     if(!v || !v.dados){ if(S.clientes.length||S.pedidos.length) salvar(); return; }
+    conferirAparelhoAtrasado(v.ver);
     if(v.origem===meuId) return;
     try{
       aplicandoRemoto=true;
@@ -2755,18 +2961,70 @@ function mudarCampoOP(id, campo, valor){
 var abertos={};
 var rapidoOP='';
 var marcadas={};
-function abrirOP(id){ abertos[id]=!abertos[id]; guardarAbertos(); render(); }
+/* ---- uma OP por vez, num painel ao lado ----
+   O corpo da OP tem tabela de itens, pendências, orçamento, artes, anotações
+   e linha do tempo: quase 2.000 px no celular. Isso dentro da lista empurra
+   as outras 129 OPs pra fora da tela e faz comparar virar rolagem.
+   Então o corpo saiu da lista e foi pro painel: no computador ele fica do
+   lado, no celular ele cobre a tela com um "voltar". A lista continua lista. */
+function abrirOP(id){
+  if(abertos[id]){ abertos={}; }
+  else { abertos={}; abertos[id]=true; }
+  guardarAbertos(); render();
+  if(abertos[id]) setTimeout(()=>{
+    const el=document.getElementById('painelOP');
+    if(el && largura()<=1024 && el.scrollIntoView) el.scrollIntoView({block:'start'});
+  }, 40);
+}
+function fecharPainelOP(){ abertos={}; guardarAbertos(); render(); }
+function opNoPainel(){
+  const id=Object.keys(abertos).find(k=>abertos[k]);
+  return id? S.pedidos.find(p=>p.id===id)||null : null;
+}
+var abaOP='pedido';
+const ABAS_OP=[
+  {id:'pedido',   nome:'Pedido'},
+  {id:'dinheiro', nome:'Orçamento'},
+  {id:'conversa', nome:'Conversa'}
+];
+function irAbaOP(x){ abaOP=x; pintarPainel(); }
+function pintarPainel(){
+  const palco=document.getElementById('opsPalco');
+  const cx=document.getElementById('painelOPcorpo');
+  if(!palco || !cx) return;
+  const p=opNoPainel();
+  palco.classList.toggle('comPainel', !!p);
+  document.body.classList.toggle('painelAberto', !!p && largura()<=1024);
+  if(!p){ cx.innerHTML=''; return; }
+  const c=clienteDe(p.clienteId)||{nome:'(sem cliente)'};
+  cx.innerHTML=cabecaPainel(p, c)+corpoOP(p, c, itensDaOP(p));
+}
+function cabecaPainel(p, c){
+  const e=etapaDe(p.etapa);
+  return '<div class="painelCab">'+
+    '<button class="painelVolta" onclick="fecharPainelOP()" title="fechar">←</button>'+
+    '<div class="painelTit"><span class="opCod">'+esc(p.codigo||'—')+'</span>'+
+      '<b>'+esc(c.nome)+'</b>'+
+      (c.telefone? '<span class="tel" onclick="copiarTel(event,\''+esc(c.telefone)+'\')" '+
+        'title="clique pra copiar">'+esc(c.telefone)+'</span>':'')+
+    '</div>'+
+    '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>'+
+  '</div>'+
+  '<div class="painelAbas">'+ABAS_OP.map(x=>{
+    const n=x.id==='pedido'? abertasPend(p) : 0;
+    return '<button'+(x.id===abaOP?' class="on"':'')+' onclick="irAbaOP(\''+x.id+'\')">'+esc(x.nome)+
+      (n? ' <i>'+n+'</i>':'')+'</button>';
+  }).join('')+'</div>';
+}
 function guardarAbertos(){
   try{ sessionStorage.setItem('borinelli-abertos', JSON.stringify(Object.keys(abertos).filter(k=>abertos[k]))); }catch(e){}
 }
 function lerAbertos(){
-  try{ (JSON.parse(sessionStorage.getItem('borinelli-abertos')||'[]')||[]).forEach(k=>abertos[k]=true); }catch(e){}
+  /* uma por vez: se a sessão antiga tinha várias abertas, vale a primeira */
+  try{ const L=JSON.parse(sessionStorage.getItem('borinelli-abertos')||'[]')||[];
+    if(L.length) abertos[L[0]]=true; }catch(e){}
 }
-function abrirTudo(v){
-  const L=opsFiltradas();
-  L.forEach(p=>{ if(v) abertos[p.id]=true; else delete abertos[p.id]; });
-  guardarAbertos(); render();
-}
+function abrirTudo(v){ if(!v){ abertos={}; guardarAbertos(); render(); } }
 function fixarOP(id){
   if(event&&event.stopPropagation) event.stopPropagation();
   const p=S.pedidos.find(x=>x.id===id); if(!p) return;
@@ -2886,6 +3144,8 @@ function renderOPs(){
   const L=opsFiltradas();
   const btR=document.getElementById('btResumo');
   if(btR) btR.textContent='Resumo: '+(resumoLigado()? 'ligado':'desligado');
+  const btA=document.getElementById('btAgrupar');
+  if(btA) btA.textContent='Agrupar por etapa: '+(agruparLigado()? 'sim':'não');
   const rap=document.getElementById('rapidosOPs');
   if(rap) rap.innerHTML=RAPIDOS.map(x=>{
     const n=S.pedidos.filter(x.f).length;
@@ -2905,8 +3165,45 @@ function renderOPs(){
       : 'Nenhuma OP ainda. Vá em <b>Nova conversa</b> e cole ou importe as conversas.')+'</div>';
     pintarBarraLote(); return;
   }
-  box.innerHTML=L.map(p=>linhaOP(p)).join('');
+  /* Agrupar por etapa tira a etiqueta de etapa de 130 linhas e põe uma só
+     por grupo — e de quebra dá a contagem por etapa de graça.
+     Quando ele ordena por outra coisa, o agrupamento sai da frente. */
+  box.innerHTML = agruparLigado()? porEtapaHTML(L) : L.map(p=>linhaOP(p)).join('');
   pintarBarraLote();
+  pintarPainel();
+}
+function ordemAtual(){ return (document.getElementById('fOrdemCli')||{}).value||'atencao'; }
+/* Agrupar por etapa e ordenar por urgência puxam pra lados opostos: agrupado,
+   o topo da tela é a primeira etapa, não o caso mais urgente. A tela de OPs é
+   onde ele faz triagem, então urgência manda e o agrupamento fica como escolha
+   dele — ligada, a etiqueta de etapa sai das linhas e vira cabeçalho de grupo. */
+function agruparLigado(){
+  try{ return localStorage.getItem('borinelli-agrupar')==='1'; }catch(e){ return false; }
+}
+function alternarAgrupar(){
+  const a=ancoraOPs();
+  try{ localStorage.setItem('borinelli-agrupar', agruparLigado()? '0':'1'); }catch(e){}
+  renderOPs(); voltarAncora(a);
+  if(agruparLigado() && ordemAtual()==='atencao')
+    avisoRapido('Agrupado por etapa. O mais urgente agora vem no topo de cada etapa, não no topo da tela.');
+}
+function porEtapaHTML(L){
+  const grupos=new Map();
+  L.forEach(p=>{ const k=p.etapa||'novo'; if(!grupos.has(k)) grupos.set(k,[]); grupos.get(k).push(p); });
+  const ordem=ETAPAS.map(e=>e.id).filter(id=>grupos.has(id));
+  [...grupos.keys()].forEach(k=>{ if(ordem.indexOf(k)<0) ordem.push(k); });
+  return ordem.map(id=>{
+    const e=etapaDe(id), lista=grupos.get(id);
+    const pc=lista.reduce((s,p)=>s+pecasDaOP(p),0);
+    const vl=lista.reduce((s,p)=>s+valorDaOP(p),0);
+    return '<div class="grupoEtapa">'+
+      '<div class="grupoCab" style="border-left-color:'+e.cor+'">'+
+        '<b>'+esc(e.nome)+'</b><span class="grupoN">'+lista.length+'</span>'+
+        '<span class="mini">'+pc.toLocaleString('pt-BR')+' peças'+(vl? ' · '+reais(vl):'')+'</span>'+
+      '</div>'+
+      lista.map(p=>linhaOP(p, true)).join('')+
+    '</div>';
+  }).join('');
 }
 
 function pintarBarraLote(){
@@ -2942,12 +3239,19 @@ function excluirLote(){
   avisoRapido(ids.length+' OP(s) excluídas.');
 }
 
-function linhaOP(p){
+function linhaOP(p, semEtapa){
   const c=clienteDe(p.clienteId)||{nome:'(sem cliente)'};
-  const e=etapaDe(p.etapa), at=atencao(p), ab=abertos[p.id], sit=situacaoDe(p.situacao);
+  const e=etapaDe(p.etapa), at=atencao(p), ab=abertos[p.id];
   const itens=itensDaOP(p), pecas=pecasDaOP(p);
   const {t}=orcamentoDaOP(p);
   const fa=faltamDias(p);
+  /* ---- a linha fechada ----
+     Antes ela carregava doze coisas ao mesmo tempo: peças, valor, margem,
+     pendências, entrega, dias parado, situação, etapa, a lista dos itens e
+     mais um aviso de pendências embaixo. Lendo tudo junto, nada pulava aos
+     olhos. Agora são três coisas fixas — quem é, quanto, em que etapa — e
+     UM alerta só: o pior deles. O resto está a um clique. */
+  const alerta=piorAlerta(p, at, fa, t);
   return '<div class="card op'+(at? ' at-'+at.nivel : '')+(p.fixa?' fixa':'')+
       (marcadas[p.id]?' marcada':'')+(ab?' aberta':'')+'" data-id="'+p.id+'">'+
     '<div class="opTopo" onclick="abrirOP(\''+p.id+'\')">'+
@@ -2961,22 +3265,38 @@ function linhaOP(p){
         (c.telefone? '<span class="tel" onclick="copiarTel(event,\''+esc(c.telefone)+'\')"'+
           ' title="clique pra copiar">'+esc(c.telefone)+'</span>':
           '<span class="tel semTel">sem número</span>')+
-        '<div class="mini">'+[
-          pecas? pecas.toLocaleString('pt-BR')+' peças':'sem quantidade',
-          t.fat? reais(t.fat):'',
-          (t.fat && t.margem>0 && t.margem<10)? '<span class="at">margem '+t.margem.toFixed(0)+'%</span>':'',
-          abertasPend(p)? '<span class="pendBadge">'+abertasPend(p)+' pendência'+(abertasPend(p)>1?'s':'')+'</span>':'',
-          fa!==null? (fa<0? '<span class="at">venceu há '+(-fa)+'d</span>' : 'entrega em '+fa+'d') : '',
-          at? '<span class="at">'+esc(at.txt)+'</span>' : (diasParado(p)+'d')
-        ].filter(Boolean).join(' · ')+'</div>'+
+        '<div class="opDados">'+
+          '<span>'+(pecas? '<b>'+pecas.toLocaleString('pt-BR')+'</b> peças':'<i>sem quantidade</i>')+'</span>'+
+          (t.fat? '<span><b>'+reais(t.fat)+'</b></span>':'')+
+          (alerta? '<span class="opAlerta '+alerta.nivel+'">'+esc(alerta.txt)+'</span>':'')+
+        '</div>'+
         ((!ab && resumoLigado())? resumoOP(p, itens) : '')+
       '</div>'+
-      (sit? '<span class="tag sitTag" style="background:'+sit.cor+'">'+esc(sit.curto)+'</span>':'')+
-      '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>'+
+      /* Etapa e situação são duas medidas de estado. Nenhum sistema sério põe
+         as duas na mesma linha fechada — vira ruído. A situação já subiu pro
+         alerta ("esperando você"); a etapa some quando o grupo já diz qual é. */
+      (semEtapa? '' : '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>')+
       '<span class="seta">'+(ab?'▾':'▸')+'</span>'+
     '</div>'+
     (ab? corpoOP(p, c, itens) : '')+
   '</div>';
+}
+/* De tudo que pode estar errado nesta OP, o que ele tem que ver primeiro.
+   Um só. Dois alertas na mesma linha já viram ruído — e ele olha 130 linhas. */
+function piorAlerta(p, at, fa, t){
+  /* A ordem é a da gravidade, e "esperando você" fica quase no fim de
+     propósito: 94 das 130 OPs estão nesse estado, então em vermelho na linha
+     ele vira paisagem e some com o que é raro. O número total já está na
+     faixa de cima; aqui só aparece quando não há nada pior pra dizer. */
+  if(fa!==null && fa<0)      return {nivel:'alto', txt:'entrega venceu há '+(-fa)+'d'};
+  if(at && at.nivel==='alto')return {nivel:'alto', txt:at.txt};
+  const pend=abertasPend(p);
+  if(pend)                   return {nivel:'medio', txt:pend+' pendência'+(pend>1?'s':'')};
+  if(at)                     return {nivel:'medio', txt:at.txt};
+  if(t.fat && t.margem>0 && t.margem<10) return {nivel:'medio', txt:'margem '+t.margem.toFixed(0)+'%'};
+  if(p.situacao==='semresp') return {nivel:'bola', txt:'esperando você'};
+  if(fa!==null)              return {nivel:'ok', txt:'entrega em '+fa+'d'};
+  return null;
 }
 /* copiar o número sem abrir o WhatsApp nem sair da tela */
 function copiarTel(ev, tel){
@@ -2993,12 +3313,21 @@ function faltamDias(p){
   return Math.ceil((d-Date.now())/DIA);
 }
 
+/* O corpo é dividido em três abas porque ele nunca precisa das três ao mesmo
+   tempo: ou está conferindo o que o cliente pediu, ou está mexendo no preço,
+   ou está lendo o que foi combinado. Tudo junto dava quase 2.000 px. */
 function corpoOP(p, c, itens){
-  const mud=p.mudancas||[], det=p.detalhes||[], ext=p.extras||[], fotos=p.fotos||[];
+  const dentro = abaOP==='dinheiro'? abaDinheiro(p)
+               : abaOP==='conversa'? abaConversa(p)
+               : abaPedido(p, itens);
+  return '<div class="opCorpo">'+dentro+rodapeOP(p, c)+'</div>';
+}
+
+function abaPedido(p, itens){
+  const det=p.detalhes||[], ext=p.extras||[], fotos=p.fotos||[];
   const como=(p.comoQuer||'').split('\n').filter(Boolean);
   const temRef=itens.some(i=>i.ref);
-  return '<div class="opCorpo">'+
-    '<div class="linha">'+
+  return '<div class="linha">'+
       '<div><label>Ref do cliente</label><input value="'+esc(p.refCliente||'')+
         '" placeholder="como ele chama esse pedido" onchange="mudarCampoOP(\''+p.id+'\',\'refCliente\',this.value)"></div>'+
       '<div><label>Entrega prometida</label><input type="date" value="'+esc(p.entregaEm||'')+
@@ -3021,10 +3350,8 @@ function corpoOP(p, c, itens){
       '</table></div>' : '<div class="mini" style="margin:8px 0;">Nada reconhecido — clique em Editar e preencha.</div>')+
 
     blocoPendencias(p)+
-    blocoOrcamento(p)+
+    blocoArtes(p)+
 
-    (mud.length>1? '<div class="evol"><b>Como a conversa evoluiu</b><ol>'+
-      mud.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ol></div>':'')+
     (det.length||ext.length? '<div class="chips" style="margin:9px 0;">'+
       det.map(id=>'<span class="chip on">'+esc((DETALHES.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
       ext.map(id=>'<span class="chip">'+esc((EXTRAS.find(x=>x.id===id)||{}).nome||id)+'</span>').join('')+
@@ -3033,34 +3360,52 @@ function corpoOP(p, c, itens){
     (fotos.length? '<div class="fotos" style="margin-top:10px;"><div>'+
       fotos.map(f=>'<div class="foto"><img src="'+f.thumb+'" alt="estampa" '+
         'onclick="abrirFoto(\''+p.id+'\',\''+f.id+'\')"></div>').join('')+'</div></div>':'')+
-    (p.motivoPerda? '<div class="aviso" style="margin-top:9px;">Perdida: '+esc(p.motivoPerda)+'</div>':'')+
-
-    blocoAnotacoes(p)+
-    historicoOP(p)+
-
-    '<div class="cliAcoes">'+
-      ((()=>{ const n=proximaEtapa(p);
-        return n? '<button class="acao mini" onclick="avancarOP(\''+p.id+'\')">→ '+esc(n.nome)+'</button>':''; })())+
-      (c.telefone? '<a class="acao mini wpp" target="_blank" href="https://wa.me/55'+soDigitos(c.telefone)+'">WhatsApp</a>':'')+
-      '<button class="acao mini sec" onclick="editarPedido(\''+p.id+'\')">Editar</button>'+
-      (p.conversa? '<button class="acao mini sec" onclick="verConversa(\''+p.id+'\')">Ver conversa</button>':'')+
-      '<button class="acao mini" onclick="imprimir(\''+p.id+'\',\'cliente\')">🖨 Orçamento pro cliente</button>'+
-      '<button class="acao mini sec" onclick="imprimir(\''+p.id+'\',\'interna\')">🖨 Ficha interna</button>'+
-      '<button class="acao mini sec" onclick="duplicarOP(\''+p.id+'\')">Duplicar</button>'+
-      (pedidosDe(p.clienteId).length>1? '<button class="acao mini sec" onclick="juntarPedidosDoCliente(\''+p.clienteId+'\')">⇅ Juntar as '+pedidosDe(p.clienteId).length+' OPs deste cliente</button>':'')+
-      '<button class="acao mini alerta" onclick="excluirPedido(\''+p.id+'\')">Excluir OP</button>'+
-    '</div>'+
-    '<div class="opEtapas"><span class="opRot">De quem é a bola</span>'+
-      SITUACOES.map(x=>'<button class="pill'+(x.id===p.situacao?' on':'')+'"'+
-        (x.id===p.situacao?' style="background:'+x.cor+';border-color:'+x.cor+'"':'')+
-        ' onclick="mudarSituacao(\''+p.id+'\',\''+x.id+'\')">'+esc(x.nome)+'</button>').join('')+
-    '</div>'+
-    '<div class="opEtapas"><span class="opRot">Etapa</span>'+ETAPAS.map(x=>'<button class="pill'+(x.id===p.etapa?' on':'')+'"'+
-      (x.id===p.etapa?' style="background:'+x.cor+';border-color:'+x.cor+'"':'')+
-      ' onclick="mudarEtapaOP(\''+p.id+'\',\''+x.id+'\')">'+esc(x.nome)+'</button>').join('')+'</div>'+
-  '</div>';
+    (p.motivoPerda? '<div class="aviso" style="margin-top:9px;">Perdida: '+esc(p.motivoPerda)+'</div>':'');
 }
 
+function abaDinheiro(p){ return blocoOrcamento(p); }
+
+function abaConversa(p){
+  const mud=p.mudancas||[];
+  return blocoAnotacoes(p)+
+    (mud.length>1? '<div class="evol"><b>Como a conversa evoluiu</b><ol>'+
+      mud.map(m=>'<li>'+esc(m)+'</li>').join('')+'</ol></div>':'')+
+    historicoOP(p)+
+    (p.conversa? '<button class="acao mini sec" style="margin-top:9px" onclick="verConversa(\''+p.id+'\')">'+
+      'Ver a conversa original</button>'
+      : '<div class="mini" style="margin-top:9px;">Esta OP não veio de uma conversa colada.</div>');
+}
+
+/* Antes eram nove botões em fila e catorze pastilhas de estado. Agora: a ação
+   que ele faz toda hora na frente, o resto atrás do "mais". */
+function rodapeOP(p, c){
+  const n=proximaEtapa(p);
+  return '<div class="cliAcoes">'+
+      (n? '<button class="acao mini" onclick="avancarOP(\''+p.id+'\')">→ '+esc(n.nome)+'</button>':'')+
+      (c.telefone? '<a class="acao mini wpp" target="_blank" href="https://wa.me/55'+soDigitos(c.telefone)+'">WhatsApp</a>':'')+
+      '<button class="acao mini sec" onclick="editarPedido(\''+p.id+'\')">Editar</button>'+
+      '<button class="acao mini" onclick="imprimir(\''+p.id+'\',\'cliente\')">🖨 Orçamento</button>'+
+      '<details class="maisOP"><summary class="acao mini sec">mais ⋯</summary><div class="maisCaixa">'+
+        '<button class="acao mini sec" onclick="imprimir(\''+p.id+'\',\'interna\')">🖨 Ficha interna</button>'+
+        '<button class="acao mini sec" onclick="duplicarOP(\''+p.id+'\')">Duplicar</button>'+
+        (pedidosDe(p.clienteId).length>1? '<button class="acao mini sec" onclick="juntarPedidosDoCliente(\''+p.clienteId+'\')">⇅ Juntar as '+pedidosDe(p.clienteId).length+' OPs deste cliente</button>':'')+
+        '<button class="acao mini alerta" onclick="excluirPedido(\''+p.id+'\')">Excluir OP</button>'+
+      '</div></details>'+
+    '</div>'+
+    '<div class="opEstado">'+
+      '<label>De quem é a bola<select onchange="mudarSituacaoSel(\''+p.id+'\',this.value)">'+
+        '<option value="">—</option>'+
+        SITUACOES.map(x=>'<option value="'+x.id+'"'+(x.id===p.situacao?' selected':'')+'>'+esc(x.nome)+'</option>').join('')+
+      '</select></label>'+
+      '<label>Etapa<select onchange="mudarEtapaOP(\''+p.id+'\',this.value)">'+
+        ETAPAS.map(x=>'<option value="'+x.id+'"'+(x.id===p.etapa?' selected':'')+'>'+esc(x.nome)+'</option>').join('')+
+      '</select></label>'+
+    '</div>';
+}
+function mudarSituacaoSel(id, v){
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  p.situacao=v; p.ts=Date.now(); salvar(); render();
+}
 /* 80% dos pedidos que voltam são o anterior com outra cor */
 function duplicarOP(id){
   const p=S.pedidos.find(x=>x.id===id); if(!p) return;
@@ -3457,6 +3802,239 @@ function delAnotacao(opId, ix){
   if(!confirm('Tirar essa anotação?')) return;
   p.notas.splice(ix,1); p.ts=Date.now(); salvar(); render();
 }
+/* ================= ARTES =================
+   O arquivo da arte (PDF ou imagem), onde ela vai na peça, de que tamanho e
+   por qual técnica. É o que ele manda pro estampador — então tem que sair
+   daqui como arquivo, não como texto.
+
+   Onde cada coisa mora, e por quê:
+     · a FICHA da arte (nome, técnica, local, tamanho, observação) vai em S,
+       então sincroniza: nos dois aparelhos ele vê o que foi combinado.
+     · o ARQUIVO em si vai no IndexedDB deste aparelho. Um PDF de 2 MB em
+       localStorage estoura os 5 MB do navegador e derruba o sistema inteiro.
+       Por isso o arquivo não viaja — e a tela diz isso na cara, em vez de
+       deixar ele clicar em "baixar" e não vir nada. */
+const MAX_ARTE = 12*1024*1024;            /* 12 MB por arquivo */
+const EH_PDF = n=>/\.pdf$/i.test(String(n||''));
+const EH_IMG = n=>/\.(png|jpe?g|webp|gif|bmp|avif)$/i.test(String(n||''));
+
+function artesDa(p){ return p.artes||[]; }
+function arteDe(p, arteId){ return artesDa(p).find(a=>a.id===arteId)||null; }
+
+function addArtes(inp, opId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  const arqs=[...(inp.files||[])]; inp.value='';
+  if(!arqs.length) return;
+  const msg=document.getElementById('artesMsg-'+opId);
+  const diz=t=>{ if(msg) msg.textContent=t; };
+  diz('Lendo '+arqs.length+' arquivo'+(arqs.length>1?'s':'')+'…');
+  Promise.all(arqs.map(f=>{
+    if(f.size>MAX_ARTE) return Promise.resolve({erro:f.name+': passa de 12 MB'});
+    if(!EH_PDF(f.name) && !EH_IMG(f.name)) return Promise.resolve({erro:f.name+': só PDF ou imagem'});
+    const id=uid();
+    const bytes=new Promise(res=>{ const fr=new FileReader();
+      fr.onerror=()=>res(null); fr.onload=()=>res(fr.result); fr.readAsDataURL(f); });
+    const mini=EH_IMG(f.name)? encolher(f, 260, 0.72).catch(()=>'') : Promise.resolve('');
+    return Promise.all([bytes, mini]).then(([b, t])=>{
+      if(!b) return {erro:f.name+': não consegui ler'};
+      return idbPut(id, b).then(()=>({
+        id, nome:f.name.replace(/\.[^.]+$/,''), arquivo:f.name,
+        tipo: EH_PDF(f.name)? 'pdf':'img', tam:f.size, thumb:t||'',
+        tecnica:'', local:'frente', tamanho:'', obs:'', ts:Date.now(), onde:meuId
+      }));
+    });
+  })).then(res=>{
+    const erros=res.filter(x=>x && x.erro).map(x=>x.erro);
+    const ok=res.filter(x=>x && !x.erro);
+    if(ok.length){ p.artes=[...artesDa(p), ...ok]; p.ts=Date.now(); salvar(); render(); }
+    diz(erros.length? erros.join(' · ') : '');
+    if(ok.length) avisoRapido(ok.length+' arte'+(ok.length>1?'s':'')+' anexada'+(ok.length>1?'s':'')+'.');
+  });
+}
+function mudarArte(opId, arteId, campo, valor){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  const a=arteDe(p, arteId); if(!a) return;
+  a[campo]=valor; p.ts=Date.now(); salvar();
+  if(campo==='tecnica' || campo==='local') render();
+}
+function apagarArte(opId, arteId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  const a=arteDe(p, arteId); if(!a) return;
+  if(!confirm('Tirar a arte "'+(a.nome||a.arquivo)+'" desta OP?\n\nO arquivo sai deste aparelho junto.')) return;
+  idbDel(arteId);
+  p.artes=artesDa(p).filter(x=>x.id!==arteId); p.ts=Date.now();
+  salvar(); render();
+}
+function baixarUm(dataUrl, nome){
+  const a=document.createElement('a'); a.href=dataUrl; a.download=nome; a.click();
+}
+function baixarArte(opId, arteId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  const a=arteDe(p, arteId); if(!a) return;
+  idbGet(arteId).then(d=>{
+    if(!d) return alert('O arquivo desta arte não está neste aparelho.\n\n'+
+      'Os arquivos ficam onde foram anexados; só a ficha (técnica, local, tamanho) viaja entre os aparelhos.\n\n'+
+      'Abra o sistema no aparelho em que você subiu a arte, ou anexe de novo aqui.');
+    baixarUm(d, a.arquivo||((a.nome||'arte')+(a.tipo==='pdf'?'.pdf':'.jpg')));
+  });
+}
+
+/* ---- um .zip escrito na mão ----
+   O sistema já LÊ zip (o export do WhatsApp) com o DecompressionStream do
+   navegador. Pra ESCREVER não dá pelo mesmo caminho, e carregar uma biblioteca
+   só pra isso engordaria o arquivo único. Então: zip sem compressão (método 0).
+   O cabeçalho é simples, e arte já é PNG/JPG/PDF, que não comprimem mais mesmo.
+   O que ele manda pro estampador vira UM arquivo só. */
+const CRC_TAB=(()=>{ const t=new Uint32Array(256);
+  for(let n=0;n<256;n++){ let c=n; for(let k=0;k<8;k++) c=(c&1)? (0xEDB88320^(c>>>1)) : (c>>>1); t[n]=c>>>0; }
+  return t; })();
+function crc32(buf){ let c=0xFFFFFFFF;
+  for(let i=0;i<buf.length;i++) c=CRC_TAB[(c^buf[i])&0xFF]^(c>>>8);
+  return (c^0xFFFFFFFF)>>>0; }
+function bytesDeDataUrl(d){
+  const v=String(d||''); const i=v.indexOf(',');
+  const b=atob(i>=0? v.slice(i+1) : v);
+  const u=new Uint8Array(b.length);
+  for(let k=0;k<b.length;k++) u[k]=b.charCodeAt(k);
+  return u;
+}
+function zipSimples(arquivos){                 /* [{nome, bytes:Uint8Array}] */
+  const cod=new TextEncoder();
+  const pecas=[], centro=[];
+  let off=0;
+  const d=new Date();
+  const hora=((d.getHours()<<11)|(d.getMinutes()<<5)|(Math.floor(d.getSeconds()/2)))&0xFFFF;
+  const data=(((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate())&0xFFFF;
+  const w=(n,v,tam)=>{ for(let i=0;i<tam;i++) n.push((v>>>(i*8))&0xFF); };
+  arquivos.forEach(a=>{
+    const nome=cod.encode(a.nome), crc=crc32(a.bytes), tam=a.bytes.length;
+    const h=[]; w(h,0x04034b50,4); w(h,20,2); w(h,0x0800,2); w(h,0,2);
+    w(h,hora,2); w(h,data,2); w(h,crc,4); w(h,tam,4); w(h,tam,4);
+    w(h,nome.length,2); w(h,0,2);
+    pecas.push(new Uint8Array(h), nome, a.bytes);
+    const c=[]; w(c,0x02014b50,4); w(c,20,2); w(c,20,2); w(c,0x0800,2); w(c,0,2);
+    w(c,hora,2); w(c,data,2); w(c,crc,4); w(c,tam,4); w(c,tam,4);
+    w(c,nome.length,2); w(c,0,2); w(c,0,2); w(c,0,2); w(c,0,2); w(c,0,4); w(c,off,4);
+    centro.push(new Uint8Array(c), nome);
+    off += h.length + nome.length + tam;
+  });
+  const tamCentro=centro.reduce((s,x)=>s+x.length,0);
+  const f=[]; w(f,0x06054b50,4); w(f,0,2); w(f,0,2);
+  w(f,arquivos.length,2); w(f,arquivos.length,2); w(f,tamCentro,4); w(f,off,4); w(f,0,2);
+  return new Blob([...pecas, ...centro, new Uint8Array(f)], {type:'application/zip'});
+}
+
+/* a ficha que vai junto no zip: o estampador precisa saber o que fazer com
+   cada arquivo, não receber um monte de arquivo solto */
+function fichaDasArtes(p, c, faltando){
+  const L=['PEDIDO DE ESTAMPARIA — BORINELLI CONFECÇÕES','',
+    'OP: '+(p.codigo||'—'),
+    'Cliente: '+((c||{}).nome||'—')];
+  if(p.refCliente) L.push('Referência do cliente: '+p.refCliente);
+  L.push('Peças no pedido: '+pecasDaOP(p).toLocaleString('pt-BR'));
+  if(p.entregaEm) L.push('Entrega prometida: '+p.entregaEm.split('-').reverse().join('/'));
+  L.push('Gerado em: '+new Date().toLocaleString('pt-BR'), '', 'ARTES ('+artesDa(p).length+')','');
+  artesDa(p).forEach((a,i)=>{
+    const t=tecnicaDe(a.tecnica);
+    L.push((i+1)+'. '+(a.nome||a.arquivo));
+    L.push('   arquivo: '+(a.arquivo||'—'));
+    L.push('   técnica: '+t.nome+(t.obs? '  ('+t.obs+')':''));
+    L.push('   onde: '+(a.local||'—')+(a.tamanho? '   tamanho: '+a.tamanho : ''));
+    if(a.obs) L.push('   obs: '+a.obs);
+    L.push('');
+  });
+  const cores=[...new Set(itensDaOP(p).flatMap(i=>(i.cores||[]).map(tituloCaixa)))];
+  if(cores.length) L.push('CORES DAS PEÇAS: '+cores.join(', '),'');
+  const malhas=[...new Set(itensDaOP(p).map(i=>i.malha).filter(Boolean))];
+  if(malhas.length) L.push('MALHAS: '+malhas.join(', '),'');
+  if(faltando && faltando.length)
+    L.push('ATENÇÃO: '+faltando.length+' arquivo(s) não estavam neste aparelho e ficaram de fora:',
+      ...faltando.map(x=>'  - '+x), '');
+  return L.join('\n');
+}
+function baixarPacoteArtes(opId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  const c=clienteDe(p.clienteId)||{};
+  const artes=artesDa(p);
+  if(!artes.length) return alert('Esta OP ainda não tem arte anexada.');
+  avisoRapido('Montando o pacote…');
+  Promise.all(artes.map(a=>idbGet(a.id).then(d=>({a, d}))))
+    .then(res=>{
+      const faltando=res.filter(x=>!x.d).map(x=>x.a.arquivo||x.a.nome);
+      const usados={};
+      const arquivos=res.filter(x=>x.d).map((x,i)=>{
+        const t=tecnicaDe(x.a.tecnica);
+        let nome=String(i+1).padStart(2,'0')+'-'+(t.id? t.curto+'-':'')+
+             String(x.a.local||'').replace(/[^\wÀ-ú]+/g,'-')+'-'+
+             (x.a.arquivo||((x.a.nome||'arte')+(x.a.tipo==='pdf'?'.pdf':'.jpg')));
+        while(usados[nome]) nome=nome.replace(/(\.\w+)$/, '-2$1');
+        usados[nome]=true;
+        return {nome, bytes:bytesDeDataUrl(x.d)};
+      });
+      arquivos.unshift({nome:'FICHA-'+(p.codigo||'op')+'.txt',
+        bytes:new TextEncoder().encode(fichaDasArtes(p, c, faltando))});
+      const a=document.createElement('a');
+      a.href=URL.createObjectURL(zipSimples(arquivos));
+      a.download='artes-'+(p.codigo||'op')+'-'+((c.nome||'').replace(/[^\wÀ-ú]+/g,'-').slice(0,24)||'cliente')+'.zip';
+      a.click();
+      avisoRapido(faltando.length
+        ? 'Pacote baixado, mas '+faltando.length+' arquivo(s) não estão neste aparelho.'
+        : 'Pacote com '+(arquivos.length-1)+' arte'+(arquivos.length-1>1?'s':'')+' e a ficha.');
+    });
+}
+
+function blocoArtes(p){
+  const artes=artesDa(p);
+  const porTec={};
+  artes.forEach(a=>{ const t=tecnicaDe(a.tecnica); if(t.id) porTec[t.id]=(porTec[t.id]||0)+1; });
+  const semTec=artes.filter(a=>!a.tecnica).length;
+  return '<div class="pendBox artesBox">'+
+    '<h4>Artes e estamparia'+(artes.length? ' <span class="pendN">'+artes.length+'</span>':'')+
+      (Object.keys(porTec).length? ' <span class="mini">'+Object.keys(porTec)
+        .map(id=>tecnicaDe(id).curto+(porTec[id]>1? ' ×'+porTec[id]:'')).join(', ')+'</span>':'')+'</h4>'+
+    '<input type="file" id="arqArte-'+p.id+'" multiple accept=".pdf,image/*" style="display:none" '+
+      'onchange="addArtes(this,\''+p.id+'\')">'+
+    (semTec? '<div class="aviso" style="margin:8px 0;">'+semTec+' arte'+(semTec>1?'s':'')+
+      ' sem técnica. Sem isso eu não sei quem faz nem quanto cobrar.</div>':'')+
+    (artes.length? '<div class="listaArtes">'+artes.map(a=>{
+      const t=tecnicaDe(a.tecnica);
+      return '<div class="arte">'+
+        '<div class="arteCapa">'+
+          (a.thumb? '<img src="'+a.thumb+'" alt="">' : '<span class="arteIco">'+(a.tipo==='pdf'?'PDF':'IMG')+'</span>')+
+        '</div>'+
+        '<div class="arteCorpo">'+
+          '<input class="arteNome" value="'+esc(a.nome||'')+'" placeholder="nome da arte" '+
+            'onchange="mudarArte(\''+p.id+'\',\''+a.id+'\',\'nome\',this.value)">'+
+          '<div class="arteCampos">'+
+            '<select onchange="mudarArte(\''+p.id+'\',\''+a.id+'\',\'tecnica\',this.value)">'+
+              TECNICAS.map(x=>'<option value="'+x.id+'"'+(x.id===(a.tecnica||'')?' selected':'')+'>'+
+                esc(x.nome)+'</option>').join('')+'</select>'+
+            '<select onchange="mudarArte(\''+p.id+'\',\''+a.id+'\',\'local\',this.value)">'+
+              LOCAIS_ARTE.map(x=>'<option'+(x===(a.local||'')?' selected':'')+'>'+esc(x)+'</option>').join('')+'</select>'+
+            '<input value="'+esc(a.tamanho||'')+'" placeholder="tamanho (ex.: 28×35 cm)" '+
+              'onchange="mudarArte(\''+p.id+'\',\''+a.id+'\',\'tamanho\',this.value)">'+
+          '</div>'+
+          '<input class="arteObs" value="'+esc(a.obs||'')+'" placeholder="observação pro estampador" '+
+            'onchange="mudarArte(\''+p.id+'\',\''+a.id+'\',\'obs\',this.value)">'+
+          '<div class="arteRodape">'+
+            '<span class="tag" style="background:'+t.cor+'">'+esc(t.curto)+'</span>'+
+            '<span class="mini">'+esc(a.arquivo||'')+(a.tam? ' · '+Math.round(a.tam/1024)+' KB':'')+'</span>'+
+            '<button class="acao mini sec" onclick="baixarArte(\''+p.id+'\',\''+a.id+'\')">⤓ baixar</button>'+
+            '<button class="acao mini alerta" onclick="apagarArte(\''+p.id+'\',\''+a.id+'\')">tirar</button>'+
+          '</div>'+
+        '</div>'+
+      '</div>'; }).join('')+'</div>'
+      : '<div class="mini" style="margin:6px 0;">Nenhuma arte ainda. Anexe o PDF ou a foto que o cliente mandou, '+
+        'marque se é DTF, silk ou bordado, e depois baixe tudo num zip pra mandar fazer.</div>')+
+    '<div class="artesAcoes">'+
+      '<button class="acao mini sec" onclick="document.getElementById(\'arqArte-'+p.id+'\').click()">+ anexar PDF ou foto</button>'+
+      (artes.length? '<button class="acao mini" onclick="baixarPacoteArtes(\''+p.id+'\')">⤓ Baixar o pacote (.zip)</button>':'')+
+    '</div>'+
+    (artes.length? '<div class="mini" style="margin-top:7px;">O arquivo fica guardado neste aparelho; '+
+      'a ficha da arte (técnica, local, tamanho) aparece nos dois.</div>':'')+
+  '</div>';
+}
+
 function blocoAnotacoes(p){
   const L=p.notas||[];
   return '<div class="pendBox"><h4>Anotações'+(L.length? ' <span class="pendN">'+L.length+'</span>':'')+'</h4>'+
@@ -3577,6 +4155,13 @@ function folhaCliente(p){
       como.map(esc).join('<br>')+'</p></div>':'')+
     ((p.detalhes||[]).length? '<div class="impBloco"><h4>Acabamento</h4><p>'+
       p.detalhes.map(id=>esc((DETALHES.find(x=>x.id===id)||{}).nome||id)).join(' · ')+'</p></div>':'')+
+    /* o cliente precisa ver a técnica combinada — é o que ele vai cobrar depois.
+       Valor da estampa não entra aqui: é cotado à parte, como diz nas condições. */
+    (artesDa(p).length? '<div class="impBloco"><h4>Estampa</h4><ul>'+
+      artesDa(p).map(x=>'<li><b>'+esc(x.nome||x.arquivo||'arte')+'</b> — '+
+        esc(tecnicaDe(x.tecnica).nome)+(x.local? ', '+esc(x.local):'')+
+        (x.tamanho? ', '+esc(x.tamanho):'')+'</li>').join('')+
+      '</ul><p class="mini">Valor da estampa cotado à parte.</p></div>':'')+
 
     '<div class="impBloco"><h4>Condições</h4><ul>'+
       '<li>Valores por peça lisa. Estampa, etiqueta, tag e embalagem personalizadas são cotadas à parte.</li>'+
@@ -3653,6 +4238,19 @@ function folhaInterna(p){
         itensDaOP(p).reduce((s,i)=>s+(Number(i.qtd)||0),0).toLocaleString('pt-BR')+'</td>'+
         '<td class="num">'+malhasDaOP(p).reduce((s,m)=>s+m.kg,0).toFixed(1).replace('.',',')+' kg</td></tr>'+
       '</table><div class="mini">Já inclui 5% de ribana. Confira o rendimento antes de comprar.</div></div>':'')+
+    /* a estamparia é serviço de fora: a ficha interna tem que dizer o que
+       mandar fazer, de que jeito e onde, senão a arte volta errada */
+    (artesDa(p).length? '<div class="impBloco"><h4>Estamparia — o que mandar fazer</h4>'+
+      '<table class="impTab impMini"><tr><th>Arte</th><th>Técnica</th><th>Onde</th><th>Tamanho</th><th>Arquivo</th></tr>'+
+      artesDa(p).map(x=>'<tr><td><b>'+esc(x.nome||'—')+'</b>'+
+          (x.obs? '<br><span class="mini">'+esc(x.obs)+'</span>':'')+'</td>'+
+        '<td>'+esc(tecnicaDe(x.tecnica).nome)+'</td>'+
+        '<td>'+esc(x.local||'—')+'</td>'+
+        '<td>'+esc(x.tamanho||'—')+'</td>'+
+        '<td class="mini">'+esc(x.arquivo||'—')+'</td></tr>').join('')+
+      '</table>'+
+      (artesDa(p).filter(x=>!x.tecnica).length? '<div class="mini">Falta definir a técnica de '+
+        artesDa(p).filter(x=>!x.tecnica).length+' arte(s).</div>':'')+'</div>':'')+
     (pendencias(p).length? '<div class="impBloco"><h4>O que falta</h4><ul class="impCheck">'+
       pendencias(p).map(x=>'<li>'+(x.ok?'☑':'☐')+' <span'+(x.ok?' class="feito"':'')+'>'+esc(x.t)+'</span></li>').join('')+
       '</ul></div>':'')+
@@ -3900,21 +4498,31 @@ function blocoPerdidas(){
    filtro de agora a esconda — por isso limpa os filtros antes */
 function abrirDaLista(id){
   const b=document.getElementById('buscaCli'), e=document.getElementById('fEtapaCli');
-  /* anota onde estava, pra dar "voltar" depois */
+  /* anota onde estava, pra dar "voltar" depois — inclusive QUAIS estavam abertas */
   const volta={aba, rapido:rapidoOP, busca:b?b.value:'', etapa:e?e.value:'', y:window.scrollY,
-    ancora: aba==='clientes'? (antesBusca||ancoraOPs()) : null, id, estavaAberta:!!abertos[id]};
+    ancora: aba==='clientes'? (antesBusca||ancoraOPs()) : null, id,
+    abertasAntes:Object.keys(abertos).filter(k=>abertos[k])};
   antesBusca=null;
-  abertos[id]=true; guardarAbertos();
+  /* Pesquisar outra pessoa fecha o que ficou aberto da pesquisa anterior.
+     Senão a tela desce até a PRIMEIRA aberta, que é a de antes, e parece que
+     a busca não funcionou. Uma pesquisa, uma OP aberta. */
+  abertos={}; abertos[id]=true; guardarAbertos();
   rapidoOP='tudo';
   if(b) b.value='';
   if(e) e.value='';
   avisoVoltar(volta);
   irPara('clientes');
   setTimeout(()=>{
-    const el=document.querySelector('.card.op.aberta') ||
-      [...document.querySelectorAll('#listaCli .card.op')].find(d=>d.dataset.id===id);
+    /* desce até ESTA OP, não até a primeira que estiver aberta */
+    const el=[...document.querySelectorAll('#listaCli .card.op')].find(d=>d.dataset.id===id)
+      || document.querySelector('#listaCli .card.op.aberta');
     if(el && el.scrollIntoView) el.scrollIntoView({block:'center', behavior:'smooth'});
+    if(el) piscar(el);
   },90);
+}
+/* um pisca rápido pra ele achar a OP com o olho, já que a lista é longa */
+function piscar(el){
+  try{ el.classList.add('achada'); setTimeout(()=>el.classList.remove('achada'), 1400); }catch(e){}
 }
 
 /* ================= EXPORTAR ================= */
@@ -3990,7 +4598,8 @@ function avisoVoltar(v){
 function voltarDaLista(){
   const v=voltaLista; voltaLista=null; esconderAviso();
   if(!v) return;
-  if(!v.estavaAberta){ delete abertos[v.id]; guardarAbertos(); }
+  /* devolve exatamente as que estavam abertas antes da busca */
+  abertos={}; (v.abertasAntes||[]).forEach(k=>abertos[k]=true); guardarAbertos();
   rapidoOP=v.rapido||'';
   const b=document.getElementById('buscaCli'); if(b) b.value=v.busca||'';
   const e=document.getElementById('fEtapaCli'); if(e) e.value=v.etapa||'';
@@ -4264,6 +4873,29 @@ function renderDados(){
       (ponto? '<div class="dica">Guardado em <b>'+new Date(ponto.ts).toLocaleString('pt-BR')+'</b> — '+esc(ponto.motivo)+'.</div>'+
         '<button class="acao sec" onclick="voltarPonto()">↶ Voltar para esse ponto</button>'
         : '<div class="mini">Ainda não tem. Eu gravo um automaticamente antes de apagar tudo ou restaurar um arquivo.</div>')+
+    '</div>'+
+
+    (()=>{ const a=pontoAntesUp(); if(!a) return '';
+      return '<div class="card"><h3>Antes da atualização</h3>'+
+      '<div class="dica">Quando este aparelho passou da <b>v'+esc(a.de)+'</b> para a <b>v'+esc(a.para)+
+        '</b>, em '+new Date(a.ts).toLocaleString('pt-BR')+', guardei uma cópia inteira do que estava aqui: '+
+        '<b>'+a.ops+' OPs</b> e <b>'+a.clientes+' clientes</b>. Essa gaveta é só dela — o "apagar tudo" não mexe.</div>'+
+      '<div style="display:flex; gap:7px; flex-wrap:wrap;">'+
+        '<button class="acao sec" onclick="baixarAntesUp()">⤓ Baixar essa cópia</button>'+
+        '<button class="acao sec" onclick="voltarAntesUp()">↶ Voltar pra antes da atualização</button>'+
+      '</div></div>'; })()+
+
+    '<div class="card"><h3>Onde ficam seus dados</h3>'+
+      '<div class="mini">O arquivo <b>index.html</b> é só o programa. O que você digita não fica dentro dele — '+
+        'fica em dois lugares, e trocar o programa não encosta em nenhum dos dois:</div>'+
+      '<div class="rolar"><table class="tabPrinc">'+
+      '<tr><td>Neste aparelho (navegador)</td><td class="num"><b>'+kb.toLocaleString('pt-BR')+' KB</b></td></tr>'+
+      '<tr><td>No banco, que sincroniza os dois aparelhos</td><td class="num"><b>'+
+        (fbOnline? 'ligado':'fora do ar')+'</b></td></tr>'+
+      '<tr><td>Versão rodando aqui</td><td class="num"><b>v'+esc(VERSAO)+'</b></td></tr>'+
+      '</table></div>'+
+      '<div class="aviso" style="margin-top:10px;">Quando trocar o <b>index.html</b>, troque nos <b>dois</b> aparelhos. '+
+        'Um aparelho numa versão velha pode apagar o que o novo gravou — ele avisa em vermelho no topo quando isso acontece.</div>'+
     '</div>'+
 
     '<div class="card" style="border-color:#e7cdc8;"><h3 style="color:var(--vermelho)">Limpar tudo</h3>'+
