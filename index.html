@@ -633,6 +633,18 @@ ol.plano li.suas::before{content:'↓'; background:transparent; color:var(--sub)
 ul.faltLista{list-style:none; margin:0 0 10px; padding:0;}
 ul.faltLista li{position:relative; padding:3px 0 3px 18px; font-size:13.5px;}
 ul.faltLista li::before{content:'•'; position:absolute; left:4px; color:var(--ambar); font-weight:700;}
+/* Peça a peça: o que ele quer em cima, o que falta nela embaixo. Antes o
+   cartão só dizia "a cor de 3 peças" e ele tinha que abrir a OP pra lembrar
+   do que era a conversa. */
+ul.faltPecas{list-style:none; margin:0 0 10px; padding:0;}
+ul.faltPecas li{position:relative; padding:6px 0 6px 18px; font-size:13.5px;
+  border-top:1px solid var(--linha);}
+ul.faltPecas li:first-child{border-top:0;}
+ul.faltPecas li::before{content:'›'; position:absolute; left:5px; top:6px;
+  color:var(--dourado); font-weight:700;}
+ul.faltPecas li b{display:block; color:var(--ink); font-weight:600;}
+.faltOp{font-size:11px; color:var(--sub); opacity:.75; margin-right:7px;}
+.faltFalta{color:var(--ambar); font-size:12.5px;}
 .faltAcoes{display:flex; gap:7px; flex-wrap:wrap;}
 .faltAcoes .acao{min-height:40px; font-size:13.5px; padding:9px 14px;
   display:inline-flex; align-items:center;}
@@ -2124,7 +2136,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.17.0';
+const VERSAO='3.18.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -3547,6 +3559,50 @@ function vistoCurto(ts){
   if(d.toDateString()===hoje.toDateString()) return 'visto hoje '+hh;
   return 'visto '+dataCurta(ts)+' '+hh;
 }
+/* ---- terminei a rodada ----
+   21/10, 13h37, depois dele varrer as 154 OPs: "n tenho mais nenhuma
+   pendencia / E mandei mensagem para todas as pessoas das op's".
+   O sistema continuava dizendo 46 mensagens por mandar, 8 clientes esperando
+   resposta e 116 pendências — e boa parte dessas pendências era anotação
+   MINHA da varredura da noite ("anexar: o cliente mandou 3 imagens",
+   "op repetida", "correção 21/10"), não trabalho dele. Ele já tinha reclamado
+   disso de manhã: "N tem isso tudo de coisa pra eu fazer".
+   Em vez de eu mexer no banco dele por fora, o fecho da rodada virou um botão:
+   ele diz que terminou, o sistema se acerta, e dá pra desfazer. */
+var ultimaRodada=null;
+function terminarRodada(){
+  const P=S.pedidos;
+  const msgs=P.filter(p=>p.msg && String(p.msg.txt||'').trim() && !p.msg.enviadoEm);
+  const bola=P.filter(p=>p.situacao==='semresp');
+  const pend=P.filter(p=>grupoDe(p.etapa)!=='fim').reduce((s,p)=>s+abertasPend(p),0);
+  const vistos=P.filter(p=>p.visto).length;
+  if(!msgs.length && !bola.length && !pend && !vistos){ avisoRapido('Já estava tudo fechado.'); return; }
+  const linhas=[];
+  if(msgs.length) linhas.push('• '+msgs.length+' mensagem'+(msgs.length>1?'ns':'')+' pronta'+(msgs.length>1?'s':'')+' → dadas como enviadas');
+  if(bola.length) linhas.push('• '+bola.length+' OP'+(bola.length>1?'s':'')+' saem de "esperando você"');
+  if(pend)        linhas.push('• '+pend+' pendência'+(pend>1?'s':'')+' fechada'+(pend>1?'s':'')+' (as minhas anotações da varredura entram aqui)');
+  if(vistos)      linhas.push('• '+vistos+' carimbo'+(vistos>1?'s':'')+' de "já vi" limpo'+(vistos>1?'s':'')+', pra começar outra passagem');
+  if(!confirm('Terminei a rodada\n\nVou dar como feito:\n'+linhas.join('\n')+
+              '\n\nDá pra desfazer logo depois. OK?')) return;
+  ultimaRodada=JSON.parse(JSON.stringify(P));
+  const agora=Date.now();
+  P.forEach(p=>{
+    if(p.msg && String(p.msg.txt||'').trim() && !p.msg.enviadoEm) p.msg.enviadoEm=agora;
+    if(p.situacao==='semresp') p.situacao='';
+    /* fecha, não apaga: o texto continua lá e dá pra reabrir uma a uma */
+    (p.pend||[]).forEach(x=>{ if(!x.ok) x.ok=true; });
+    if(p.visto) delete p.visto;
+    p.ts=agora;
+  });
+  salvar(); render();
+  avisoRapido('Rodada fechada. '+linhas.length+' coisa'+(linhas.length>1?'s':'')+' acertada'+(linhas.length>1?'s':'')+'.', 'rodada');
+}
+function desfazerRodada(){
+  if(!ultimaRodada) return;
+  S.pedidos=ultimaRodada; ultimaRodada=null;
+  esconderAviso(); salvar(); render();
+  avisoRapido('Rodada desfeita — voltou tudo pro que era.');
+}
 function limparVistos(){
   let n=0;
   S.pedidos.forEach(p=>{ if(p.visto){ delete p.visto; n++; } });
@@ -3804,7 +3860,9 @@ function renderOPs(){
      depois da primeira — antes disso seria mais um número sem uso. */
   const vistos=S.pedidos.filter(p=>p.visto).length;
   const passagem = vistos? ' · <span class="passagem">já passei por <b>'+vistos+'</b> de '+
-      S.pedidos.length+'<button class="linkInline" onclick="limparVistos()">recomeçar</button></span>' : '';
+      S.pedidos.length+
+      '<button class="linkInline" onclick="terminarRodada()">terminei a rodada</button>'+
+      '<button class="linkInline" onclick="limparVistos()">só limpar as marcas</button></span>' : '';
   document.getElementById('resOPs').innerHTML= S.pedidos.length?
     '<b>'+abertasT.length+'</b> OP'+(abertasT.length!==1?'s':'')+' em aberto · <b>'+
     abertasT.reduce((s,p)=>s+pecasDaOP(p),0).toLocaleString('pt-BR')+'</b> peças'+
@@ -5820,7 +5878,9 @@ function desfazer(){
 function avisoRapido(texto, acao){
   let el=document.getElementById('toast');
   if(!el){ el=document.createElement('div'); el.id='toast'; document.body.appendChild(el); }
-  el.innerHTML='<span>'+esc(texto)+'</span>'+(acao? '<button onclick="desfazer()">Desfazer</button>':'');
+  /* acao=true desfaz a última exclusão; acao='rodada' desfaz o fecho da rodada */
+  const qual = acao==='rodada'? 'desfazerRodada()' : 'desfazer()';
+  el.innerHTML='<span>'+esc(texto)+'</span>'+(acao? '<button onclick="'+qual+'">Desfazer</button>':'');
   el.classList.add('on');
   clearTimeout(window.__toast);
   window.__toast=setTimeout(esconderAviso, acao? 25000 : 8000);
@@ -6515,13 +6575,22 @@ function imprimirTalhacao(){
    Por PESSOA, porque é pra ela que ele vai mandar mensagem. Cada uma com o
    que falta e o texto pronto — a ideia é ele abrir, copiar e mandar, sem
    reescrever a mesma pergunta trinta vezes. */
+/* Como a peça aparece no cartão da pilotagem: quantidade, modelagem, malha e
+   cor, na mesma ordem em que ela aparece na linha da OP — o que falta vem em
+   branco e por isso some sozinho da descrição. */
+function descPeca(i){
+  const q=Number(i.qtd)>0? Number(i.qtd).toLocaleString('pt-BR')+'× ' : '';
+  const d=[i.corte||'', i.malha||'', (i.cores||[]).map(tituloCaixa).join('/')]
+    .filter(Boolean).join(' · ');
+  return (q+d).trim() || 'peça ainda sem definição';
+}
 function faltantes(){
   const porCli={};
   S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim').forEach(p=>{
     const itens=itensDaOP(p);
     const c=clienteDe(p.clienteId)||{};
     const k=p.clienteId||p.id;
-    porCli[k]=porCli[k]||{cliente:c, clienteId:k, ops:[], pecas:0, valor:0,
+    porCli[k]=porCli[k]||{cliente:c, clienteId:k, ops:[], pecas:0, valor:0, linhasPeca:[],
       falta:{cor:new Set(), tam:new Set(), qtd:new Set(), malha:new Set(), corte:0, arte:0, vazio:0}};
     const F=porCli[k].falta;
     itens.forEach(i=>{
@@ -6531,8 +6600,24 @@ function faltantes(){
       if(!(i.tamanhos||[]).length) F.tam.add(nome);
       if(!(Number(i.qtd)>0))       F.qtd.add(nome);
       if(!i.corte)                 F.corte++;
+      /* ---- peça a peça, pra tela dele ----
+         Pedido de 21/10: "na parte da piloto preciso aprimorar / coloque
+         numero pessoa e qual peça ela quer / e o que falta". Nome e número já
+         estavam; QUAL PEÇA não — ele tinha que abrir a OP pra lembrar do que
+         era a conversa. A mensagem pro cliente segue agrupada (ninguém
+         responde treze perguntas); o cartão aqui é pra ELE, e aqui o detalhe
+         por peça é justamente o que serve. */
+      const fl=[];
+      if(!i.corte)                 fl.push('qual modelagem');
+      if(!i.malha)                 fl.push('a malha');
+      if(!(i.cores||[]).length)    fl.push('a cor');
+      if(!(i.tamanhos||[]).length) fl.push('a grade de tamanhos');
+      if(!(Number(i.qtd)>0))       fl.push('a quantidade');
+      if(fl.length) porCli[k].linhasPeca.push({op:p.codigo||'', desc:descPeca(i), falta:fl});
     });
-    if(!itens.length) F.vazio++;
+    if(!itens.length){ F.vazio++;
+      porCli[k].linhasPeca.push({op:p.codigo||'', desc:'(OP sem nenhum item)',
+        falta:['o que ele quer produzir']}); }
     if((p.artes||[]).some(a=>!a.tecnica) || ((p.extras||[]).length && !(p.artes||[]).length)) F.arte++;
     porCli[k].ops.push(p);
     porCli[k].pecas+=pecasDaOP(p);
@@ -6564,11 +6649,16 @@ function zap(tel){
   if(String(tel||'').trim().charAt(0)==='+' || d.length>11) return d;
   return '55'+d;
 }
+/* "a cor, a grade de tamanhos e a quantidade" — vírgula até o penúltimo, "e"
+   no último. Serve pro cartão e pra mensagem. */
+function juntarCom(arr){
+  const L=(arr||[]).filter(Boolean);
+  if(L.length<=1) return L[0]||'';
+  return L.slice(0,-1).join(', ')+' e '+L[L.length-1];
+}
 function mensagemFaltante(f){
   const nome=(f.cliente.nome||'').split(/[\s·]/)[0];
-  const itens=f.linhas.map(x=>x.txt);
-  const lista = itens.length===1? itens[0]
-    : itens.slice(0,-1).join(', ')+' e '+itens[itens.length-1];
+  const lista = juntarCom(f.linhas.map(x=>x.txt));
   return 'Oi'+(nome? ' '+nome : '')+', tudo bem? Aqui é da Borinelli Confecções.\n\n'+
     'Pra eu fechar seu pedido e mandar pra produção, falta só me confirmar '+lista+'.\n\n'+
     'Me manda que eu já sigo com o orçamento.';
@@ -6599,7 +6689,12 @@ function renderFaltantes(){
           '<span class="mini">'+f.ops.map(p=>esc(p.codigo||'')).join(', ')+'</span>'+
           '<span class="faltVal">'+(f.valor? reais(f.valor) : (f.pecas? f.pecas+' pç':'a orçar'))+'</span>'+
         '</div>'+
-        '<ul class="faltLista">'+f.linhas.map(x=>'<li>'+esc(x.txt)+'</li>').join('')+'</ul>'+
+        '<ul class="faltPecas">'+f.linhasPeca.map(x=>
+          '<li><b>'+esc(x.desc)+'</b>'+
+          (f.ops.length>1? '<span class="faltOp">'+esc(x.op)+'</span>':'')+
+          '<span class="faltFalta">falta '+esc(juntarCom(x.falta))+'</span></li>').join('')+
+        (f.falta.arte? '<li><b>a arte</b><span class="faltFalta">falta o arquivo e se é DTF, silk ou bordado</span></li>':'')+
+        '</ul>'+
         '<div class="faltAcoes">'+
           '<button class="acao mini" onclick="copiarFaltante('+ix+')">Copiar a mensagem</button>'+
           (tel? '<a class="acao mini wpp" target="_blank" href="https://wa.me/'+zap(tel)+
