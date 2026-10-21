@@ -2124,7 +2124,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.16.0';
+const VERSAO='3.17.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -3568,6 +3568,9 @@ function mudarEtapaNaLista(ev, id, v){
   const c=clienteDe(p.clienteId)||{};
   const de=p.etapa, y=window.scrollY;
   const antes=opsFiltradas().length;
+  /* decidir a etapa É passar pela OP, mesmo sem abrir: ele pediu que o
+     carimbo apareça quando ele age, não só quando ele entra. */
+  marcarVisto(id);
   mudarEtapaOP(id, v, grupoDe(de)==='fabrica' && grupoDe(v)!=='fabrica');
   if(p.etapa===de){                        /* ele cancelou o motivo da perda */
     render();                              /* redesenha pra etiqueta voltar ao que era */
@@ -3611,7 +3614,7 @@ function cabecaPainel(p, c){
     '<button class="painelVolta" onclick="fecharPainelOP()" title="fechar">←</button>'+
     '<div class="painelTit"><span class="opCod">'+esc(p.codigo||'—')+'</span>'+
       '<b>'+esc(c.nome)+'</b>'+
-      (c.telefone? '<span class="tel" onclick="copiarTel(event,\''+esc(c.telefone)+'\')" '+
+      (c.telefone? '<span class="tel" onclick="copiarTel(event,\''+esc(c.telefone)+'\',\''+p.id+'\')" '+
         'title="clique pra copiar">'+esc(c.telefone)+'</span>':'')+
     '</div>'+
     /* a etapa no cabeçalho não é só enfeite: é o próprio controle.
@@ -3926,7 +3929,7 @@ function aplicarLoteEtapa(){
   ids.forEach(id=>{ const p=S.pedidos.find(x=>x.id===id); if(!p) return;
     if(v==='futuro' && !p.voltarEm) p.voltarEm=daquiADias(30);
     if(v!=='futuro') p.voltarEm='';
-    registrarEtapa(p, v); p.etapa=v; p.ts=agora; });
+    registrarEtapa(p, v); p.etapa=v; p.ts=agora; p.visto=agora; });
   marcadas={}; salvar(); render();
   avisoRapido(ids.length+' OP(s) movidas para '+etapaDe(v).nome+'.');
 }
@@ -3963,8 +3966,8 @@ function linhaOP(p, semEtapa){
       '<div class="opNome"><b>'+esc(c.nome)+'</b>'+
         (p.refCliente? ' <span class="mini">· '+esc(p.refCliente)+'</span>':'')+
         /* o número na cara, sem precisar abrir nem clicar em nada */
-        (c.telefone? '<span class="tel" onclick="copiarTel(event,\''+esc(c.telefone)+'\')"'+
-          ' title="clique pra copiar">'+esc(c.telefone)+'</span>':
+        (c.telefone? '<span class="tel" onclick="copiarTel(event,\''+esc(c.telefone)+'\',\''+p.id+'\')"'+
+          ' title="clique pra copiar — também marca que você passou por esta OP">'+esc(c.telefone)+'</span>':
           '<span class="tel semTel">sem número</span>')+
         '<div class="opDados">'+
           '<span>'+(pecas? '<b>'+pecas.toLocaleString('pt-BR')+'</b> peças':'<i>sem quantidade</i>')+'</span>'+
@@ -4019,14 +4022,28 @@ function piorAlerta(p, at, fa, t){
   if(fa!==null)              return {nivel:'ok', txt:'entrega em '+fa+'d'};
   return null;
 }
-/* copiar o número sem abrir o WhatsApp nem sair da tela */
-function copiarTel(ev, tel){
+/* copiar o número sem abrir o WhatsApp nem sair da tela.
+   O 3º argumento é a OP de onde o número foi copiado. Ele pediu em 21/10:
+   "faça com que apareça clicado agora / quando eu pego numero tambem / nao so
+   quando entro no sitema da op" — e é verdade: o jeito dele de trabalhar a
+   lista é pegar o número e ir pro WhatsApp, sem nunca abrir a OP. Sem isso,
+   a OP que ele acabou de atender continuava marcada como "ainda não vi". */
+function copiarTel(ev, tel, idOP){
   if(ev && ev.stopPropagation) ev.stopPropagation();
   const so=soDigitos(tel);
+  String(idOP||'').split(',').filter(Boolean).forEach(marcarVisto);
   const põe=()=>avisoRapido('Número copiado: '+tel);
   if(navigator.clipboard) navigator.clipboard.writeText(tel).then(põe, ()=>põe());
   else põe();
+  if(idOP) renderMantendoLugar();
   return so;
+}
+/* redesenhar a lista joga a rolagem pro topo, e ele trabalha a lista rolando:
+   na linha 140 de 171, perder o lugar é perder a passagem. */
+function renderMantendoLugar(){
+  const y=window.scrollY;
+  render();
+  try{ window.scrollTo(0, y); }catch(e){}
 }
 function faltamDias(p){
   if(!p.entregaEm || grupoDe(p.etapa)==='fim') return null;
@@ -6577,7 +6594,7 @@ function renderFaltantes(){
       return '<div class="card falt">'+
         '<div class="faltTopo">'+
           '<b>'+esc(f.cliente.nome||'(sem nome)')+'</b>'+
-          (tel? '<span class="tel" onclick="copiarTel(event,\''+esc(tel)+'\')">'+esc(tel)+'</span>'
+          (tel? '<span class="tel" onclick="copiarTel(event,\''+esc(tel)+'\',\''+f.ops.map(p=>p.id).join(',')+'\')">'+esc(tel)+'</span>'
               : '<span class="tel semTel">sem número</span>')+
           '<span class="mini">'+f.ops.map(p=>esc(p.codigo||'')).join(', ')+'</span>'+
           '<span class="faltVal">'+(f.valor? reais(f.valor) : (f.pecas? f.pecas+' pç':'a orçar'))+'</span>'+
