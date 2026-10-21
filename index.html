@@ -240,6 +240,20 @@ a.acao.wpp:hover{background:#1a6641;}
 .opLead{color:var(--sub); font-size:12px;}
 .opLead.semLead{opacity:.6; font-style:italic;}
 
+/* "Cliente vai aguardar": no alto da OP, antes de tudo. Azul acinzentado
+   porque é pausa, não urgência — vira laranja só quando a data venceu. */
+.aguardaBox{border:1px solid #5a6b8f; border-left:4px solid #5a6b8f; border-radius:11px;
+  padding:11px 13px; margin-bottom:13px; background:rgba(90,107,143,.08);}
+.aguardaBox.venceu{border-color:var(--ambar); border-left-color:var(--ambar);
+  background:rgba(168,125,47,.11);}
+.aguardaTopo{display:flex; gap:4px 12px; flex-wrap:wrap; align-items:baseline;
+  font-size:13px; color:var(--sub); margin-bottom:9px;}
+.aguardaTopo b{color:var(--ink); font-size:13.5px;}
+.aguardaPe{display:flex; gap:7px; flex-wrap:wrap; align-items:center;}
+.aguardaPe label{display:flex; gap:6px; align-items:center; color:var(--sub);}
+.aguardaPe input[type=date]{min-height:36px; padding:5px 8px; font-size:13px;
+  border:1px solid var(--linha); border-radius:8px; background:var(--card); color:var(--ink);}
+
 /* Mensagem pronta: a caixa que ele usa de manhã. Verde na borda pra puxar o
    olho sem gritar, e o texto em fonte normal (não monospace) porque é o que
    vai ser lido pelo cliente, tem que parecer com o que ele vai mandar. */
@@ -502,10 +516,18 @@ table.tabPrinc tr.semTab td:first-child b{color:var(--vermelho);}
   display:inline-flex; align-items:center; justify-content:center; gap:6px; font-weight:600;}
 .opCorpo .cliAcoes > .acao:not(.sec):not(.alerta){box-shadow:0 2px 0 var(--verde-esc);}
 .opCorpo .cliAcoes .maisCaixa .acao{font-size:14px; padding:10px 13px; min-height:42px;}
+/* Excluir ficou visível (era atrás do "mais ⋯"), então vai pro canto oposto
+   das ações boas e em letra menor: alcançável num toque, longe do dedo que
+   está clicando em Editar e Orçamento. */
+.opCorpo .cliAcoes > .soltoDir{margin-left:auto; opacity:.82;}
+.opCorpo .cliAcoes > .soltoDir:hover{opacity:1;}
 @media(max-width:760px){
   .opCorpo .cliAcoes > .acao, .opCorpo .cliAcoes > a.acao, .opCorpo .maisOP summary{
     flex:1 1 calc(50% - 4px); padding:12px 10px;}
   .opCorpo .cliAcoes{gap:8px;}
+  /* no celular ele ocupa a linha inteira embaixo, sozinho: ninguém erra o dedo
+     num botão que não tem vizinho */
+  .opCorpo .cliAcoes > .soltoDir{flex:1 1 100%; margin-left:0;}
 }
 /* a etapa é um seletor com cara de etiqueta: lê igual, mas muda num clique */
 .etapaSel{width:auto; flex:0 0 auto; margin:0; border:0; color:#fff; font-weight:600;
@@ -1156,6 +1178,13 @@ const ETAPAS = [
      fria. Fica fora das listas de trabalho pra não poluir, mas continua
      achável pelo seletor de Etapa e pela busca. */
   {id:'antigo',     nome:'Lead antigo', cor:'#6b7280', grupo:'fim'},
+  /* Vai aguardar: o próprio cliente marcou a volta — "quando os documentos da
+     empresa ficarem prontos", "depois do verão", "vou esperar pra começar".
+     Não é perda e não é lead antigo (conversa que morreu sozinha): é um
+     compromisso COM DATA. Sai das listas de hoje e volta sozinho no dia, pelo
+     card "Hora de voltar". A data mora em p.voltarEm (YYYY-MM-DD, igual à da
+     entrega). Sem data isso seria só mais um lugar pra esquecer gente. */
+  {id:'futuro',     nome:'Vai aguardar', cor:'#5a6b8f', grupo:'fim'},
   {id:'perdido',    nome:'Perdido',     cor:'#a63d2f', grupo:'fim'}
 ];
 /* ---- O QUE SE ANOTA EM CADA ETAPA DA FÁBRICA ----
@@ -1285,7 +1314,7 @@ function acharNome(txt, autores){
   // 2) nome que a pessoa falou de si (conversa colada à mão, sem autores)
   //    Cuidado: "aqui é o Patrick, da Borinelli" e "falo com Patrick?" são o
   //    NOSSO lado, não o do cliente. Sem esse filtro o cliente virava "Patrick"
-  //    — aconteceu de verdade com o (11) 93920-5613, que só tinha escrito
+  //    — aconteceu de verdade com um lead de SP, que só tinha escrito
   //    "Patrick, gostaria de saber como funciona".
   const re=/(?:meu nome (?:e|é)|aqui (?:e|é) (?:o|a)?|falo com|sou (?:o|a))\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-zá-ÿ]{2,})/ig;
   let m;
@@ -2081,7 +2110,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.13.0';
+const VERSAO='3.14.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -2507,7 +2536,10 @@ function montarAbas(){
 function pintarAbas(){
   document.querySelectorAll('[data-a]').forEach(b=>b.classList.toggle('on', b.dataset.a===aba));
   const ab=S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim');
-  const pede=ab.filter(p=>p.situacao==='semresp'||(atencao(p)||{}).nivel==='alto').length;
+  /* o selo do painel soma quem venceu a data de voltar: é a única coisa que
+     mora fora das OPs abertas e ainda é trabalho de hoje */
+  const pede=ab.filter(p=>p.situacao==='semresp'||(atencao(p)||{}).nivel==='alto').length
+            + paraVoltar().length;
   const põe=(id,n,urg)=>{ const s=document.querySelector('[data-selo="'+id+'"]'); if(!s) return;
     s.style.display=n? '':'none'; s.textContent=n||''; s.classList.toggle('urg', !!urg); };
   põe('clientes', ab.length, false);
@@ -3345,6 +3377,37 @@ function atencao(p){
   if(g==='fabrica' && d>=10) return {nivel:'medio', txt:'sem movimento há '+d+'d'};
   return null;
 }
+
+/* ---- "o cliente vai aguardar" ----
+   Pedido dele em 21/10: "tem q colocar no sistema / Cliente vai aguardar / ou
+   cliente para futuro". Até aqui só havia dois jeitos de tirar um lead da
+   frente, e nenhum dos dois era verdade nesse caso: Perdido (não perdeu) e
+   Lead antigo (a conversa não morreu — o cliente marcou a volta). Nas conversas
+   que eu li isso aparece direto: "quando os documentos da minha empresa
+   ficarem prontos, até novembro", "vou esperar um pouco mais pra dar início",
+   "havendo necessidade eu entro em contato".
+   O que faz isso valer a pena é a data: sem ela, parquear é esquecer. */
+function emISO(ts){
+  const d=new Date(ts);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function daquiADias(n){ return emISO(Date.now()+n*DIA); }
+/* Contagem de DIA pra DIA, não de instante pra instante: se a volta é hoje,
+   isso tem que dar 0, e não 1 só porque ainda é de manhã. Meio-dia dos dois
+   lados pra não tropeçar em horário de verão. */
+function diasPraVoltar(p){
+  if(p.etapa!=='futuro' || !p.voltarEm) return null;
+  const d=new Date(p.voltarEm+'T12:00:00'); if(isNaN(d)) return null;
+  const hoje=new Date(); hoje.setHours(12,0,0,0);
+  return Math.round((d-hoje)/DIA);
+}
+function horaDeVoltar(p){ const d=diasPraVoltar(p); return d!==null && d<=0; }
+/* sem data marcada também é trabalho: ou marca o dia, ou decide o que é */
+function aguardandoSemData(p){ return p.etapa==='futuro' && !p.voltarEm; }
+function paraVoltar(){
+  return S.pedidos.filter(p=>horaDeVoltar(p)||aguardandoSemData(p))
+    .sort((a,b)=>(diasPraVoltar(a)===null?1:0)-(diasPraVoltar(b)===null?1:0) || valorDaOP(b)-valorDaOP(a));
+}
 /* linha do tempo: toda mudança de etapa fica registrada com data */
 function registrarEtapa(p, nova){
   if(!nova || nova===p.etapa) return;
@@ -3359,14 +3422,14 @@ function historicoOP(p){
     h.map(x=>'<li><b>'+esc(etapaDe(x.e).nome)+'</b> · '+fmtData(x.ts)+'</li>').join('')+'</ul></div>';
 }
 function proximaEtapa(p){
-  const seq=ETAPAS.filter(e=>e.id!=='perdido' && e.id!=='antigo');
+  const seq=ETAPAS.filter(e=>e.id!=='perdido' && e.id!=='antigo' && e.id!=='futuro');
   const j=seq.findIndex(e=>e.id===p.etapa);
   return (j>=0 && j<seq.length-1)? seq[j+1] : null;
 }
 /* Faltava o caminho de volta. Avançar era um clique e desandar era caçar um
    seletor no pé do painel — ele clicou em "→ Piloto" e ficou preso lá. */
 function etapaAnterior(p){
-  const seq=ETAPAS.filter(e=>e.id!=='perdido' && e.id!=='antigo');
+  const seq=ETAPAS.filter(e=>e.id!=='perdido' && e.id!=='antigo' && e.id!=='futuro');
   const j=seq.findIndex(e=>e.id===p.etapa);
   return j>0? seq[j-1] : null;
 }
@@ -3423,6 +3486,10 @@ function mudarEtapaOP(id, etapa, voltando){
     const n=Number(m);
     p.motivoPerda = (n>=1&&n<=MOTIVOS_PERDA.length)? MOTIVOS_PERDA[n-1] : String(m).trim();
   }
+  /* pelo seletor de Etapa também: "Vai aguardar" sem data é um buraco, então
+     já entra com 30 dias e a caixa da OP deixa ele corrigir o dia */
+  if(etapa==='futuro' && !p.voltarEm) p.voltarEm=daquiADias(30);
+  if(etapa!=='futuro' && p.voltarEm) p.voltarEm='';
   registrarEtapa(p, etapa);
   p.etapa=etapa; p.ts=Date.now(); salvar(); render();
 }
@@ -3516,6 +3583,10 @@ function pecasDaOP(p){ return itensDaOP(p).reduce((s,i)=>s+(Number(i.qtd)||0),0)
 const RAPIDOS=[
   {id:'',          nome:'Abertas',        f:p=>grupoDe(p.etapa)!=='fim'},
   {id:'esperando', nome:'Esperando você', f:p=>grupoDe(p.etapa)!=='fim' && p.situacao==='semresp'},
+  /* a contrapartida do "vai aguardar": a lista dos que já venceram a data.
+     A fila inteira dos parqueados não ganha atalho de propósito — ela não é
+     trabalho de hoje, e quem quiser ver acha no seletor de Etapa. */
+  {id:'voltar',    nome:'Hora de voltar', f:horaDeVoltar},
   {id:'atrasadas', nome:'Prazo apertado', f:p=>(atencao(p)||{}).nivel==='alto'},
   {id:'commsg',    nome:'Mensagem pronta', f:p=>!!(p.msg && String(p.msg.txt||'').trim() && !p.msg.enviadoEm)},
   {id:'pendencia', nome:'Com pendência',  f:p=>grupoDe(p.etapa)!=='fim' && abertasPend(p)>0},
@@ -3766,7 +3837,7 @@ function pintarBarraLote(){
     '</select>'+
     '<button class="acao mini sec" onclick="aplicarLoteEtapa()">Aplicar</button>'+
     '<button class="acao mini sec" onclick="imprimirLote()">🖨 Fichas internas</button>'+
-    '<button class="acao mini alerta" onclick="excluirLote()">Excluir</button>'+
+    '<button class="acao mini alerta" onclick="excluirLote()">🗑 Excluir as '+ids.length+'</button>'+
     '<button class="acao mini sec" onclick="limparMarcadas()">Desmarcar</button>';
 }
 function aplicarLoteEtapa(){
@@ -3775,17 +3846,20 @@ function aplicarLoteEtapa(){
   if(!confirm('Mudar '+ids.length+' OP(s) para "'+etapaDe(v).nome+'"?')) return;
   const agora=Date.now();
   ids.forEach(id=>{ const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+    if(v==='futuro' && !p.voltarEm) p.voltarEm=daquiADias(30);
+    if(v!=='futuro') p.voltarEm='';
     registrarEtapa(p, v); p.etapa=v; p.ts=agora; });
   marcadas={}; salvar(); render();
   avisoRapido(ids.length+' OP(s) movidas para '+etapaDe(v).nome+'.');
 }
 function excluirLote(){
-  const ids=Object.keys(marcadas);
-  if(!confirm('Excluir '+ids.length+' OP(s)?\n\nIsso não dá pra desfazer em lote — baixe um backup antes se tiver dúvida.')) return;
+  const ids=Object.keys(marcadas); if(!ids.length) return;
+  guardarPraDesfazer(S.pedidos.filter(p=>ids.indexOf(p.id)>=0));
   S.removidos=[...new Set([...(S.removidos||[]), ...ids])];
   S.pedidos=S.pedidos.filter(p=>ids.indexOf(p.id)<0);
+  ids.forEach(id=>{ delete abertos[id]; });
   marcadas={}; salvar(); render();
-  avisoRapido(ids.length+' OP(s) excluídas.');
+  avisoRapido('Excluí '+ids.length+' OP'+(ids.length>1?'s':'')+'.', true);
 }
 
 function linhaOP(p, semEtapa){
@@ -3900,8 +3974,69 @@ function linhaDatas(p){
   return '<div class="opDatas">'+bits.join('')+'</div>';
 }
 
+/* ---- a caixa de quem vai aguardar ----
+   Fica no alto da OP, antes de qualquer outra coisa: se essa OP está parada
+   por combinação, é isso que ele precisa ler primeiro. Três botões de adiar
+   porque na prática a volta é sempre "mais umas semanas", e aí digitar data
+   no celular é o que faz ele não marcar nada. */
+function caixaAguardar(p){
+  if(p.etapa!=='futuro') return '';
+  const d=diasPraVoltar(p);
+  const quando=p.voltarEm? dataCurta(new Date(p.voltarEm+'T12:00:00').getTime()) : '';
+  const txt = d===null? 'sem data marcada — marque o dia aqui, senão isso vira lead esquecido'
+    : d>0 ? 'volta a falar em '+quando+' · faltam '+d+' dia'+(d>1?'s':'')
+    : d===0? '<b>é hoje</b> — hora de voltar a falar'
+    :        '<b>passou da data</b> — era '+quando+', '+(-d)+' dia'+(-d>1?'s':'')+' atrás';
+  return '<div class="aguardaBox'+(d===null||d<=0? ' venceu':'')+'">'+
+    '<div class="aguardaTopo"><b>⏸ Cliente vai aguardar</b><span>'+txt+'</span></div>'+
+    '<div class="aguardaPe">'+
+      '<label class="mini">Voltar a falar em <input type="date" value="'+esc(p.voltarEm||'')+
+        '" onchange="marcarVolta(\''+p.id+'\',this.value)"></label>'+
+      '<button class="acao mini sec" onclick="adiarVolta(\''+p.id+'\',15)">+15d</button>'+
+      '<button class="acao mini sec" onclick="adiarVolta(\''+p.id+'\',30)">+30d</button>'+
+      '<button class="acao mini sec" onclick="adiarVolta(\''+p.id+'\',90)">+90d</button>'+
+      '<button class="acao mini" onclick="voltarPraFila(\''+p.id+'\')">Ele voltou — pra fila</button>'+
+    '</div></div>';
+}
+function marcarVolta(id, v){
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  p.voltarEm=v||''; p.ts=Date.now(); salvar(); render();
+  avisoRapido(v? 'Volta a falar em '+dataCurta(new Date(v+'T12:00:00').getTime())+'.'
+               : 'Data tirada — essa OP ficou sem dia marcado.');
+}
+function adiarVolta(id, n){
+  if(event&&event.stopPropagation) event.stopPropagation();
+  marcarVolta(id, daquiADias(n));
+}
+/* Pôr pra aguardar tem que ser desfazível num clique, senão ele não usa.
+   Volta pra última etapa real que a OP teve — não pra "Novo", que apagaria
+   o caminho já andado. */
+function etapaDeAntes(p){
+  const h=(p.hist||[]).slice().reverse().find(x=>grupoDe(x.e)!=='fim');
+  if(h) return h.e;
+  return valorDaOP(p)? 'orcado' : 'novo';
+}
+function voltarPraFila(id){
+  if(event&&event.stopPropagation) event.stopPropagation();
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  const volta=etapaDeAntes(p);
+  p.voltarEm=''; p.ultimoContato=Date.now();
+  mudarEtapaOP(id, volta);
+  avisoRapido('Voltou pra '+etapaDe(volta).nome+'.');
+}
+/* um clique, sem digitar nada: 30 dias é o padrão e ele ajusta na caixa */
+function aguardarOP(id){
+  if(event&&event.stopPropagation) event.stopPropagation();
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  if(!p.voltarEm) p.voltarEm=daquiADias(30);
+  mudarEtapaOP(id, 'futuro');
+  avisoRapido('Saiu das listas de hoje. Volta sozinha em '+
+    dataCurta(new Date(p.voltarEm+'T12:00:00').getTime())+' — a data dá pra mudar na OP.');
+}
+
 function corpoOP(p, c, itens){
   return '<div class="opCorpo">'+
+    caixaAguardar(p)+
     linhaDatas(p)+
     blocoMensagem(p, c)+
     caixaAnotar(p)+
@@ -4110,12 +4245,16 @@ function rodapeOP(p, c){
       (c.telefone? '<a class="acao mini wpp" target="_blank" href="https://wa.me/55'+soDigitos(c.telefone)+'">WhatsApp</a>':'')+
       '<button class="acao mini sec" onclick="editarPedido(\''+p.id+'\')">Editar</button>'+
       '<button class="acao mini" onclick="imprimir(\''+p.id+'\',\'cliente\')">🖨 Orçamento</button>'+
+      /* Saiu de dentro do "mais ⋯". Ele apaga OP toda hora enquanto limpa a
+         lista, e três toques pra cada uma é o que o fazia desistir. Fica por
+         último e separado, e agora tem Desfazer de 25s atrás. */
+      '<button class="acao mini alerta soltoDir" title="exclui a OP; dá pra desfazer" onclick="excluirPedido(\''+p.id+'\')">🗑 Excluir OP</button>'+
       '<details class="maisOP"><summary class="acao sec">mais ⋯</summary><div class="maisCaixa">'+
         '<button class="acao mini sec" onclick="fixarOP(\''+p.id+'\')">'+(p.fixa? '★ Tirar do topo':'☆ Fixar no topo')+'</button>'+
         '<button class="acao mini sec" onclick="imprimir(\''+p.id+'\',\'interna\')">🖨 Ficha interna</button>'+
         '<button class="acao mini sec" onclick="duplicarOP(\''+p.id+'\')">Duplicar</button>'+
+        (grupoDe(p.etapa)!=='fim'? '<button class="acao mini sec" title="o cliente disse que volta mais pra frente: sai das listas de hoje e volta sozinha na data" onclick="aguardarOP(\''+p.id+'\')">⏸ Cliente vai aguardar</button>':'')+
         (pedidosDe(p.clienteId).length>1? '<button class="acao mini sec" onclick="juntarPedidosDoCliente(\''+p.clienteId+'\')">⇅ Juntar as '+pedidosDe(p.clienteId).length+' OPs deste cliente</button>':'')+
-        '<button class="acao mini alerta" onclick="excluirPedido(\''+p.id+'\')">Excluir OP</button>'+
       '</div></details>'+
     '</div>'+
     '<div class="opEstado">'+
@@ -4161,13 +4300,15 @@ function verConversa(id){
 }
 function fecharModal(){ document.getElementById('modal').classList.remove('on'); }
 function excluirPedido(id){
+  if(event&&event.stopPropagation) event.stopPropagation();
   const p=S.pedidos.find(x=>x.id===id); if(!p) return;
-  if(!confirm('Excluir a OP '+(p.codigo||'')+'?\n\nO cliente continua cadastrado.')) return;
-  ultimoApagado={p:JSON.parse(JSON.stringify(p)), c:null};
+  const c=clienteDe(p.clienteId)||{};
+  guardarPraDesfazer([p]);
   S.removidos=[...new Set([...(S.removidos||[]), id])];
   S.pedidos=S.pedidos.filter(x=>x.id!==id);
+  delete abertos[id]; delete marcadas[id];
   salvar(); render();
-  avisoRapido('OP '+(p.codigo||'')+' excluída.', true);
+  avisoRapido('Excluí a OP '+(p.codigo||'')+(c.nome? ' — '+c.nome:'')+'.', true);
 }
 
 function editarPedido(id){
@@ -5334,6 +5475,29 @@ function blocoSemCusto(){
 
 /* O plano por CLIENTE, no Painel: é com a pessoa que ele fala, e uma pessoa
    pode ter três OPs. Vem na ordem de quem está travado e vale mais. */
+/* ---- hora de voltar ----
+   O único lugar em que uma OP de grupo 'fim' reaparece sozinha. É o que
+   sustenta o "vai aguardar": ele parqueia sem medo porque sabe que o dia
+   chega até ele, não ele até o dia. Só aparece quando tem alguém pra chamar. */
+function blocoVoltar(){
+  const L=paraVoltar();
+  if(!L.length) return '';
+  return '<div class="card urgente"><h3>Hora de voltar — '+L.length+'</h3>'+
+    '<div class="mini" style="margin-bottom:10px;">Eles mesmos pediram pra você voltar nessa data. '+
+      'Abra, veja o que ficou combinado e mande.</div>'+
+    L.map(p=>{
+      const c=clienteDe(p.clienteId)||{}, d=diasPraVoltar(p);
+      const quando = d===null? 'sem data marcada'
+        : d===0? 'é hoje'
+        : 'passou há '+(-d)+' dia'+(-d>1?'s':'');
+      return '<div class="urgLinha" onclick="abrirDaLista(\''+p.id+'\')">'+
+        '<span class="opCod">'+esc(p.codigo||'')+'</span>'+
+        '<b>'+esc(c.nome||'(sem nome)')+'</b>'+
+        '<span class="mini at">'+quando+'</span>'+
+        '<span class="urgVal">'+(valorDaOP(p)? reais(valorDaOP(p)):'—')+'</span></div>';
+    }).join('')+'</div>';
+}
+
 function blocoPlanoDoDia(){
   const ids=[...new Set(S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim').map(p=>p.clienteId))];
   /* Ordem do dia: primeiro o que se resolve copiando e colando (mensagem
@@ -5395,6 +5559,7 @@ function renderPainel(){
           '<span class="urgVal">'+(valorDaOP(p)? reais(valorDaOP(p)):'—')+'</span></div>';
       }).join('')+'</div>':'')+
 
+    blocoVoltar()+
     blocoPlanoDoDia()+
     blocoSemCusto()+
 
@@ -5521,23 +5686,37 @@ function exportarCSV(soFiltrado){
   avisoRapido((linhas.length-1)+' linhas exportadas.');
 }
 
-/* ================= LIXEIRA ================= */
+/* ================= LIXEIRA =================
+   Pedido dele em 21/10: "excluir OP tem ter botao melhorado tambem / mais
+   facil". Estava difícil por três motivos somados: o botão morava atrás do
+   "mais ⋯", vinha um confirm() em cima, e o desfazer guardava UMA OP só —
+   então excluir em lote avisava "isso não dá pra desfazer" e ele não usava.
+   Agora o desfazer guarda a lista inteira, e por isso o confirm() pôde sair:
+   quem erra, desfaz. É mais rápido E mais seguro que perguntar. */
 var ultimoApagado=null;
+function guardarPraDesfazer(ps, c){
+  ultimoApagado={ps:ps.map(p=>JSON.parse(JSON.stringify(p))), c:c||null};
+}
 function desfazer(){
   if(!ultimoApagado) return;
-  S.pedidos.push(ultimoApagado.p);
+  const ps=ultimoApagado.ps||[];
+  ps.forEach(p=>{ if(!S.pedidos.some(x=>x.id===p.id)) S.pedidos.push(p); });
   if(ultimoApagado.c && !clienteDe(ultimoApagado.c.id)) S.clientes.push(ultimoApagado.c);
-  S.removidos=(S.removidos||[]).filter(id=>id!==ultimoApagado.p.id);
+  const ids=ps.map(p=>p.id);
+  S.removidos=(S.removidos||[]).filter(id=>ids.indexOf(id)<0);
   ultimoApagado=null;
   esconderAviso(); salvar(); render();
+  avisoRapido(ps.length>1? ps.length+' OPs de volta.' : 'OP de volta.');
 }
+/* O aviso com Desfazer fica 25s no ar, não 8. Oito segundos é o tempo de ele
+   perceber que apagou errado — e aí o botão já sumiu. */
 function avisoRapido(texto, acao){
   let el=document.getElementById('toast');
   if(!el){ el=document.createElement('div'); el.id='toast'; document.body.appendChild(el); }
   el.innerHTML='<span>'+esc(texto)+'</span>'+(acao? '<button onclick="desfazer()">Desfazer</button>':'');
   el.classList.add('on');
   clearTimeout(window.__toast);
-  window.__toast=setTimeout(esconderAviso, 8000);
+  window.__toast=setTimeout(esconderAviso, acao? 25000 : 8000);
 }
 function esconderAviso(){ const el=document.getElementById('toast'); if(el) el.classList.remove('on'); }
 
