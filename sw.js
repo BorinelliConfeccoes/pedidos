@@ -1,4 +1,4 @@
-const CACHE='borinelli-pedidos-v3110';
+const CACHE='borinelli-pedidos-v3111';
 const ARQS=['./','./index.html','./manifest.json','./icone.png','./favicon.png'];
 self.addEventListener('install', e=>{ self.skipWaiting();
   e.waitUntil(caches.open(CACHE).then(c=>c.addAll(ARQS).catch(()=>{}))); });

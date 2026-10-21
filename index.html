@@ -89,7 +89,11 @@ a{color:var(--verde);}
   background:#fff; border-bottom:1px solid var(--linha); display:flex;
   overflow-x:auto; scrollbar-width:none;}
 #faixa::-webkit-scrollbar{display:none;}
-.fx{flex:1 1 0; min-width:132px; padding:9px 14px; border-right:1px solid var(--linha);
+/* flex:1 0 auto, e não 1 1 0: o botão cresce pra preencher a tela larga, mas
+   NUNCA encolhe abaixo do próprio conteúdo. Com 1 1 0 + min-width fixo, um
+   valor grande como R$ 105.253,90 estourava a caixa e vazava por cima do
+   botão seguinte — no celular o "45" das OPs aparecia dentro do dinheiro. */
+.fx{flex:1 0 auto; min-width:132px; padding:9px 14px; border-right:1px solid var(--linha);
   cursor:pointer; background:transparent; border-top:0; border-bottom:0; border-left:0;
   font-family:inherit; text-align:left; display:block;}
 .fx:last-child{border-right:0;}
@@ -518,6 +522,10 @@ table.tabPrinc tr.semTab td:first-child b{color:var(--vermelho);}
   color:var(--sub); display:flex; align-items:baseline; gap:9px;}
 .secao h4 .secN{margin-left:auto; text-transform:none; letter-spacing:0; font-size:13px; color:var(--ink); font-weight:600;}
 /* o mesmo rótulo, usado também no cabeçalho dos grupos da pilotagem */
+/* Todo h3 de card é flex: vários deles põem um <span class="secN"> do lado
+   com margin-left:auto, e sem flex esse auto não faz nada — o texto grudava
+   no título ("Plano de hoje44 clientes com algo pendente"). */
+.card h3{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap;}
 #talhaOut .card h3, #faltaOut .card h3{display:flex; align-items:baseline; gap:9px; flex-wrap:wrap;}
 #talhaOut .card h3 .secN, #faltaOut .card h3 .secN{font-size:13px; color:var(--ink); font-weight:600;}
 #talhaOut table.tabPrinc, #faltaOut table.tabPrinc{font-size:13px; width:100%;}
@@ -692,6 +700,15 @@ details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bott
   background:var(--creme); padding:12px; border-radius:9px; max-height:60vh; overflow:auto;}
 
 /* ---------- celular ---------- */
+@media(max-width:760px){
+  /* a faixa grudada no topo já mostra Em jogo, OPs abertas e Peças. Repetir
+     os três em corpo 40 logo abaixo gastava meia tela do telefone. */
+  .card.repeteFaixa{display:none;}
+  /* título de card e o contador do lado não cabem na mesma linha: deixa
+     quebrar e tira o empurrão pra direita, que no estreito só desalinha. */
+  .card h3{gap:4px 9px;}
+  .card h3 .secN{margin-left:0 !important; flex-basis:100%;}
+}
 /* a linha da OP não cabe numa tira só: nome em cima, etiquetas embaixo */
 @media(max-width:760px){
   /* no celular a linha tinha cinco andares e ia a 172 px — três pedidos por
@@ -2042,7 +2059,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.11.0';
+const VERSAO='3.11.1';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -5271,7 +5288,10 @@ function renderPainel(){
   const esperando=abertas.filter(p=>p.situacao==='semresp');
   const vencendo=abertas.filter(p=>{const a=atencao(p); return a&&a.nivel==='alto';});
 
-  return '<div class="card"><div class="numerao">'+reais(tot)+'</div>'+
+  /* No celular esse card repete, em letra enorme, os três números que a faixa
+     grudada no topo já mostra. Some no telefone e fica no desktop, onde sobra
+     espaço e ele dá o peso de abertura do painel. */
+  return '<div class="card repeteFaixa"><div class="numerao">'+reais(tot)+'</div>'+
     '<div class="mini">em jogo nas '+abertas.length+' OPs abertas · '+
       abertas.reduce((s,p)=>s+pecasDaOP(p),0).toLocaleString('pt-BR')+' peças</div></div>'+
 
