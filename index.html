@@ -240,6 +240,15 @@ a.acao.wpp:hover{background:#1a6641;}
 .opLead{color:var(--sub); font-size:12px;}
 .opLead.semLead{opacity:.6; font-style:italic;}
 
+/* A passagem pela lista: o que ele já abriu desbota, o que falta fica como
+   estava. É tinta A MENOS, não a mais — ele disse que já tem dado demais. */
+.card.op.jaVi{opacity:.5;}
+.card.op.jaVi:hover, .card.op.jaVi.aberta{opacity:1;}
+.opVisto{color:var(--sub); font-size:11.5px; font-style:italic; opacity:.85;}
+.passagem{color:var(--sub);}
+.linkInline{background:none; border:0; padding:0 0 0 7px; margin:0; font:inherit;
+  color:var(--verde); text-decoration:underline; cursor:pointer;}
+
 /* "Cliente vai aguardar": no alto da OP, antes de tudo. Azul acinzentado
    porque é pausa, não urgência — vira laranja só quando a data venceu. */
 .aguardaBox{border:1px solid #5a6b8f; border-left:4px solid #5a6b8f; border-radius:11px;
@@ -2110,7 +2119,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.14.0';
+const VERSAO='3.15.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -3509,9 +3518,39 @@ var marcadas={};
    as outras 129 OPs pra fora da tela e faz comparar virar rolagem.
    Então o corpo saiu da lista e foi pro painel: no computador ele fica do
    lado, no celular ele cobre a tela com um "voltar". A lista continua lista. */
+/* ---- "acessado agora" ----
+   Pedido dele em 21/10, no meio da passagem pela lista: "colocar algo como
+   acessado agora / To indo do final pro começo / e to me confundido com
+   tantos dados". Ele vai do lead mais velho pro mais novo, 171 linhas, e sem
+   marca nenhuma não dá pra saber onde parou — a lista é igual antes e depois
+   de ele abrir a OP. Então abrir uma OP carimba a hora, a linha vista fica
+   apagada (menos tinta, não mais) e o atalho "Ainda não vi" mostra só o que
+   falta. Quando a passagem acaba, "Recomeçar" limpa tudo e começa outra. */
+function marcarVisto(id){
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  p.visto=Date.now(); salvar();
+}
+function vistoCurto(ts){
+  if(!ts) return '';
+  const min=Math.floor((Date.now()-ts)/60000);
+  if(min<2)  return 'visto agora';
+  if(min<60) return 'visto há '+min+' min';
+  const h=Math.floor(min/60);
+  if(h<12)   return 'visto há '+h+'h';
+  const d=new Date(ts), hoje=new Date();
+  const hh=String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0');
+  if(d.toDateString()===hoje.toDateString()) return 'visto hoje '+hh;
+  return 'visto '+dataCurta(ts)+' '+hh;
+}
+function limparVistos(){
+  let n=0;
+  S.pedidos.forEach(p=>{ if(p.visto){ delete p.visto; n++; } });
+  salvar(); render();
+  avisoRapido(n? 'Comecei uma passagem nova — tirei a marca de '+n+' OPs.' : 'Nenhuma estava marcada.');
+}
 function abrirOP(id){
   if(abertos[id]){ abertos={}; }
-  else { abertos={}; abertos[id]=true; }
+  else { abertos={}; abertos[id]=true; marcarVisto(id); }
   guardarAbertos(); render();
   if(abertos[id]) setTimeout(()=>{
     const el=document.getElementById('painelOP');
@@ -3587,6 +3626,8 @@ const RAPIDOS=[
      A fila inteira dos parqueados não ganha atalho de propósito — ela não é
      trabalho de hoje, e quem quiser ver acha no seletor de Etapa. */
   {id:'voltar',    nome:'Hora de voltar', f:horaDeVoltar},
+  /* onde ele parou na passagem de hoje: só o que ainda não foi aberto */
+  {id:'naovi',     nome:'Ainda não vi',  f:p=>!p.visto},
   {id:'atrasadas', nome:'Prazo apertado', f:p=>(atencao(p)||{}).nivel==='alto'},
   {id:'commsg',    nome:'Mensagem pronta', f:p=>!!(p.msg && String(p.msg.txt||'').trim() && !p.msg.enviadoEm)},
   {id:'pendencia', nome:'Com pendência',  f:p=>grupoDe(p.etapa)!=='fim' && abertasPend(p)>0},
@@ -3724,10 +3765,15 @@ function renderOPs(){
 
   const box=document.getElementById('listaCli');
   const abertasT=S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim');
+  /* a linha da passagem: quantas ele já abriu e quanto falta. Só aparece
+     depois da primeira — antes disso seria mais um número sem uso. */
+  const vistos=S.pedidos.filter(p=>p.visto).length;
+  const passagem = vistos? ' · <span class="passagem">já passei por <b>'+vistos+'</b> de '+
+      S.pedidos.length+'<button class="linkInline" onclick="limparVistos()">recomeçar</button></span>' : '';
   document.getElementById('resOPs').innerHTML= S.pedidos.length?
     '<b>'+abertasT.length+'</b> OP'+(abertasT.length!==1?'s':'')+' em aberto · <b>'+
     abertasT.reduce((s,p)=>s+pecasDaOP(p),0).toLocaleString('pt-BR')+'</b> peças'+
-    (L.length!==S.pedidos.length? ' · mostrando '+L.length : '') : '';
+    (L.length!==S.pedidos.length? ' · mostrando '+L.length : '')+passagem : '';
 
   if(!L.length){
     box.innerHTML='<div class="card vazio">'+(S.pedidos.length? 'Nenhuma OP nesse filtro.'
@@ -3876,7 +3922,7 @@ function linhaOP(p, semEtapa){
      UM alerta só: o pior deles. O resto está a um clique. */
   const alerta=piorAlerta(p, at, fa, t);
   return '<div class="card op'+(at? ' at-'+at.nivel : '')+(p.fixa?' fixa':'')+
-      (marcadas[p.id]?' marcada':'')+(ab?' aberta':'')+'" data-id="'+p.id+'">'+
+      (marcadas[p.id]?' marcada':'')+(ab?' aberta':'')+(p.visto?' jaVi':'')+'" data-id="'+p.id+'">'+
     '<div class="opTopo" onclick="abrirOP(\''+p.id+'\')">'+
       '<input type="checkbox" class="opMarca"'+(marcadas[p.id]?' checked':'')+
         ' title="marcar" onclick="marcarOP(\''+p.id+'\')">'+
@@ -3899,6 +3945,8 @@ function linhaOP(p, semEtapa){
           (p.leadEm? '<span class="opLead" title="quando esse lead chegou">lead '+dataCurta(p.leadEm)+'</span>'
            : (p.criado? '<span class="opLead semLead" title="não sei de quando é o lead; esta é a data em que a OP foi aberta">aberta '+dataCurta(p.criado)+'</span>':''))+
           (alerta? '<span class="opAlerta '+alerta.nivel+'">'+esc(alerta.txt)+'</span>':'')+
+          /* o carimbo da passagem: é por aqui que ele acha onde parou */
+          (p.visto? '<span class="opVisto" title="você abriu esta OP">'+vistoCurto(p.visto)+'</span>':'')+
         '</div>'+
         ((!ab && resumoLigado())? resumoOP(p, itens) : '')+
       '</div>'+
@@ -5627,7 +5675,7 @@ function abrirDaLista(id){
   /* Pesquisar outra pessoa fecha o que ficou aberto da pesquisa anterior.
      Senão a tela desce até a PRIMEIRA aberta, que é a de antes, e parece que
      a busca não funcionou. Uma pesquisa, uma OP aberta. */
-  abertos={}; abertos[id]=true; guardarAbertos();
+  abertos={}; abertos[id]=true; guardarAbertos(); marcarVisto(id);
   rapidoOP='tudo';
   if(b) b.value='';
   if(e) e.value='';
