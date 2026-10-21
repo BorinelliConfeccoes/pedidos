@@ -2070,7 +2070,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.11.3';
+const VERSAO='3.12.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -3631,7 +3631,7 @@ function dataDoLead(p){ return p.leadEm || p.criado || 8e15; }
 function renderOPs(){
   const L=opsFiltradas();
   const btA=document.getElementById('btAgrupar');
-  if(btA) btA.textContent='Agrupar por etapa: '+(agruparLigado()? 'sim':'não');
+  if(btA) btA.textContent={'':'Agrupar: não','etapa':'Agrupar: por etapa','data':'Agrupar: por data'}[modoAgrupar()];
   const rap=document.getElementById('rapidosOPs');
   if(rap) rap.innerHTML=RAPIDOS.map(x=>{
     const n=S.pedidos.filter(x.f).length;
@@ -3654,7 +3654,10 @@ function renderOPs(){
   /* Agrupar por etapa tira a etiqueta de etapa de 130 linhas e põe uma só
      por grupo — e de quebra dá a contagem por etapa de graça.
      Quando ele ordena por outra coisa, o agrupamento sai da frente. */
-  box.innerHTML = agruparLigado()? porEtapaHTML(L) : L.map(p=>linhaOP(p)).join('');
+  const modo=modoAgrupar();
+  box.innerHTML = modo==='etapa'? porEtapaHTML(L)
+                : modo==='data' ? porDataHTML(L)
+                : L.map(p=>linhaOP(p)).join('');
   pintarBarraLote();
   pintarPainel();
 }
@@ -3663,15 +3666,63 @@ function ordemAtual(){ return (document.getElementById('fOrdemCli')||{}).value||
    o topo da tela é a primeira etapa, não o caso mais urgente. A tela de OPs é
    onde ele faz triagem, então urgência manda e o agrupamento fica como escolha
    dele — ligada, a etiqueta de etapa sai das linhas e vira cabeçalho de grupo. */
+/* O agrupamento tem três estados, no mesmo botão: nenhum, por etapa, por data.
+   Por data é como ele varre a carteira — do lead mais velho pro mais novo —
+   e ver os blocos ("este mês: 23") diz mais que uma data solta em cada linha.
+   O '1' antigo do localStorage continua valendo como 'etapa'. */
+function modoAgrupar(){
+  try{
+    const v=localStorage.getItem('borinelli-agrupar');
+    if(v==='1') return 'etapa';
+    return (v==='etapa'||v==='data')? v : '';
+  }catch(e){ return ''; }
+}
 function agruparLigado(){
-  try{ return localStorage.getItem('borinelli-agrupar')==='1'; }catch(e){ return false; }
+  return modoAgrupar()!=='';
 }
 function alternarAgrupar(){
   const a=ancoraOPs();
-  try{ localStorage.setItem('borinelli-agrupar', agruparLigado()? '0':'1'); }catch(e){}
+  const prox={'':'etapa','etapa':'data','data':''}[modoAgrupar()];
+  try{ localStorage.setItem('borinelli-agrupar', prox||'0'); }catch(e){}
   renderOPs(); voltarAncora(a);
-  if(agruparLigado() && ordemAtual()==='atencao')
+  if(prox==='etapa' && ordemAtual()==='atencao')
     avisoRapido('Agrupado por etapa. O mais urgente agora vem no topo de cada etapa, não no topo da tela.');
+  if(prox==='data') avisoRapido('Agrupado por data de chegada do lead, do mais novo pro mais velho.');
+}
+
+/* ---- blocos por data ----
+   Períodos, não datas soltas: o que ele quer saber é "quanto tem de mês
+   passado parado aí", e isso uma linha com 14/09 não responde. */
+const FAIXAS_DATA=[
+  {id:'hoje',    nome:'Hoje',             ate:1},
+  {id:'ontem',   nome:'Ontem',            ate:2},
+  {id:'semana',  nome:'Esta semana',      ate:8},
+  {id:'passada', nome:'Semana passada',   ate:15},
+  {id:'mes',     nome:'Este mês',         ate:31},
+  {id:'velho',   nome:'Mais de um mês',   ate:1e9}
+];
+function faixaDaData(p){
+  const d=p.leadEm||p.criado;
+  if(!d) return {id:'sem', nome:'Sem data'};
+  const dias=Math.floor((Date.now()-d)/DIA);
+  return FAIXAS_DATA.find(f=>dias<f.ate) || FAIXAS_DATA[FAIXAS_DATA.length-1];
+}
+function porDataHTML(L){
+  const grupos=new Map();
+  L.forEach(p=>{ const f=faixaDaData(p); if(!grupos.has(f.id)) grupos.set(f.id,{f, lista:[]}); grupos.get(f.id).lista.push(p); });
+  const ordem=FAIXAS_DATA.map(f=>f.id).concat(['sem']).filter(id=>grupos.has(id));
+  return ordem.map(id=>{
+    const {f, lista}=grupos.get(id);
+    const pc=lista.reduce((s,p)=>s+pecasDaOP(p),0);
+    const vl=lista.reduce((s,p)=>s+valorDaOP(p),0);
+    return '<div class="grupoEtapa">'+
+      '<div class="grupoCab" style="border-left-color:var(--dourado)">'+
+        '<b>'+esc(f.nome)+'</b><span class="grupoN">'+lista.length+'</span>'+
+        '<span class="mini">'+pc.toLocaleString('pt-BR')+' peças'+(vl? ' · '+reais(vl):'')+'</span>'+
+      '</div>'+
+      lista.map(p=>linhaOP(p)).join('')+
+    '</div>';
+  }).join('');
 }
 function porEtapaHTML(L){
   const grupos=new Map();
