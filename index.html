@@ -227,6 +227,7 @@ a.acao.wpp:hover{background:#1a6641;}
 .opDatas b{color:var(--ink); font-weight:600;}
 .opDatas .sub{opacity:.62;}
 .opLead{color:var(--sub); font-size:12px;}
+.opLead.semLead{opacity:.6; font-style:italic;}
 
 /* Mensagem pronta: a caixa que ele usa de manhã. Verde na borda pra puxar o
    olho sem gritar, e o texto em fonte normal (não monospace) porque é o que
@@ -894,6 +895,7 @@ details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bott
               <option value="pecas">mais peças</option>
               <option value="entrega">entrega mais perto</option>
               <option value="parado">parado há mais tempo</option>
+              <option value="antigo">lead mais antigo primeiro</option>
               <option value="codigo">código da OP</option>
             </select></div>
         </div>
@@ -2059,7 +2061,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.11.1';
+const VERSAO='3.11.2';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -3603,12 +3605,19 @@ function ordenarOPs(L){
     pecas:  (a,b)=> pecasDaOP(b)-pecasDaOP(a),
     entrega:(a,b)=> prazo(a)-prazo(b),
     parado: (a,b)=> diasParado(b)-diasParado(a),
+    /* do mais velho pro mais novo: é assim que ele varre a carteira, pra não
+       deixar lead antigo apodrecendo no fim da lista. Quem não tem data cai
+       pro fim, senão sobe tudo que eu não sei datar. */
+    antigo: (a,b)=> dataDoLead(a)-dataDoLead(b),
     codigo: (a,b)=> String(b.codigo||'').localeCompare(String(a.codigo||''),'pt-BR')
   }[modo]||cmp_atencao_fallback;
   /* fixadas sempre no topo, seja qual for a ordem */
   return L.slice().sort((a,b)=> (b.fixa?1:0)-(a.fixa?1:0) || cmp(a,b));
 }
 function cmp_atencao_fallback(a,b){ return diasParado(b)-diasParado(a); }
+/* a data que vale pra ordenar: quando o lead chegou. Sem ela, a abertura da
+   OP. Sem as duas, vai pro fim da fila (8e15 é bem depois de qualquer data). */
+function dataDoLead(p){ return p.leadEm || p.criado || 8e15; }
 
 function renderOPs(){
   const L=opsFiltradas();
@@ -3738,7 +3747,11 @@ function linhaOP(p, semEtapa){
           (t.fat? '<span><b>'+reais(t.fat)+'</b></span>':'')+
           /* de quando é esse lead: a OP foi criada essa semana, mas a conversa
              pode ser de julho. Sem isso, tudo parece novo. */
-          (p.leadEm? '<span class="opLead" title="quando esse lead chegou">lead '+dataCurta(p.leadEm)+'</span>':'')+
+          /* toda linha mostra uma data. Quando eu sei de quando o lead é, é
+             essa que vale. Quando não sei, mostro a de abertura da OP com
+             outro nome, pra não fingir que é a mesma coisa. */
+          (p.leadEm? '<span class="opLead" title="quando esse lead chegou">lead '+dataCurta(p.leadEm)+'</span>'
+           : (p.criado? '<span class="opLead semLead" title="não sei de quando é o lead; esta é a data em que a OP foi aberta">aberta '+dataCurta(p.criado)+'</span>':''))+
           (alerta? '<span class="opAlerta '+alerta.nivel+'">'+esc(alerta.txt)+'</span>':'')+
         '</div>'+
         ((!ab && resumoLigado())? resumoOP(p, itens) : '')+
