@@ -1272,8 +1272,17 @@ function acharNome(txt, autores){
   const outro=(autores||[]).find(a=>{ const an=normalizar(a); return !EU.some(e=>an===e)&&!an.includes('BORINELLI'); });
   if(outro && !/^\+?\d[\d\s()-]+$/.test(outro)) return outro.trim();
   // 2) nome que a pessoa falou de si (conversa colada à mão, sem autores)
-  const m=String(txt||'').match(/(?:meu nome (?:e|é)|aqui (?:e|é) (?:o|a)?|falo com|sou (?:o|a))\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-zá-ÿ]{2,})/i);
-  if(m) return m[1].charAt(0).toUpperCase()+m[1].slice(1);
+  //    Cuidado: "aqui é o Patrick, da Borinelli" e "falo com Patrick?" são o
+  //    NOSSO lado, não o do cliente. Sem esse filtro o cliente virava "Patrick"
+  //    — aconteceu de verdade com o (11) 93920-5613, que só tinha escrito
+  //    "Patrick, gostaria de saber como funciona".
+  const re=/(?:meu nome (?:e|é)|aqui (?:e|é) (?:o|a)?|falo com|sou (?:o|a))\s+([A-ZÁÉÍÓÚÂÊÔÃÕÇ][a-zá-ÿ]{2,})/ig;
+  let m;
+  while((m=re.exec(String(txt||'')))){
+    const nome=m[1];
+    if(EU.some(e=>normalizar(nome)===e)) continue;
+    return nome.charAt(0).toUpperCase()+nome.slice(1);
+  }
   return '';
 }
 
@@ -2061,7 +2070,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.11.2';
+const VERSAO='3.11.3';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
