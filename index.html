@@ -844,7 +844,7 @@ details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bott
           <div style="flex:2 1 220px;"><label>Buscar</label><input id="buscaCli" type="search" name="filtro-op" autocomplete="off"
             autocorrect="off" autocapitalize="off" spellcheck="false"
             data-lpignore="true" data-1p-ignore data-bwignore data-form-type="other"
-            placeholder="OP, cliente, ref, malha, peça, pendência…  (Esc limpa)" oninput="buscarOPs()"></div>
+            placeholder="OP, cliente, telefone… ou: vazia · sem cor · sem tamanho · sem malha · completa" oninput="buscarOPs()"></div>
           <div style="flex:1 1 150px;"><label>Etapa</label>
             <select id="fEtapaCli" onchange="renderOPs()"></select></div>
           <div style="flex:1 1 150px;"><label>Ordenar por</label>
@@ -1099,6 +1099,10 @@ const ETAPAS = [
   {id:'costura',    nome:'Costura',     cor:'#3d4d32', grupo:'fabrica'},
   {id:'acabamento', nome:'Acabamento',  cor:'#6b6a2e', grupo:'fabrica'},
   {id:'entregue',   nome:'Entregue',    cor:'#4a4a4a', grupo:'fim'},
+  /* Lead antigo: conversa parada, sem nada combinado. Não é perda — é fila
+     fria. Fica fora das listas de trabalho pra não poluir, mas continua
+     achável pelo seletor de Etapa e pela busca. */
+  {id:'antigo',     nome:'Lead antigo', cor:'#6b7280', grupo:'fim'},
   {id:'perdido',    nome:'Perdido',     cor:'#a63d2f', grupo:'fim'}
 ];
 /* ---- O QUE SE ANOTA EM CADA ETAPA DA FÁBRICA ----
@@ -2015,7 +2019,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.9.0';
+const VERSAO='3.9.1';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -2217,8 +2221,8 @@ const soDigitos=s=>String(s||'').replace(/\D/g,'');
 function etapaDe(id){ return ETAPAS.find(e=>e.id===id)||ETAPAS[0]; }
 
 /* ---- busca por telefone ----
-   O mesmo número aparece de mil jeitos: (18) 99674-6945, +55 18 99674-6945,
-   5518996746945, 18996746945. Comparar só os dígitos, pelos últimos 8,
+   O mesmo número aparece de mil jeitos: (00) 90000-0000, +55 00 90000-0000,
+   5500900000000, 00900000000. Comparar só os dígitos, pelos últimos 8,
    faz todos baterem — inclusive colando o número direto do WhatsApp. */
 function digitosDaBusca(q){
   const d=soDigitos(q);
@@ -3284,14 +3288,14 @@ function historicoOP(p){
     h.map(x=>'<li><b>'+esc(etapaDe(x.e).nome)+'</b> · '+fmtData(x.ts)+'</li>').join('')+'</ul></div>';
 }
 function proximaEtapa(p){
-  const seq=ETAPAS.filter(e=>e.id!=='perdido');
+  const seq=ETAPAS.filter(e=>e.id!=='perdido' && e.id!=='antigo');
   const j=seq.findIndex(e=>e.id===p.etapa);
   return (j>=0 && j<seq.length-1)? seq[j+1] : null;
 }
 /* Faltava o caminho de volta. Avançar era um clique e desandar era caçar um
    seletor no pé do painel — ele clicou em "→ Piloto" e ficou preso lá. */
 function etapaAnterior(p){
-  const seq=ETAPAS.filter(e=>e.id!=='perdido');
+  const seq=ETAPAS.filter(e=>e.id!=='perdido' && e.id!=='antigo');
   const j=seq.findIndex(e=>e.id===p.etapa);
   return j>0? seq[j-1] : null;
 }
@@ -3443,6 +3447,7 @@ const RAPIDOS=[
   {id:'esperando', nome:'Esperando você', f:p=>grupoDe(p.etapa)!=='fim' && p.situacao==='semresp'},
   {id:'atrasadas', nome:'Prazo apertado', f:p=>(atencao(p)||{}).nivel==='alto'},
   {id:'pendencia', nome:'Com pendência',  f:p=>grupoDe(p.etapa)!=='fim' && abertasPend(p)>0},
+  {id:'antigos',   nome:'Leads antigos',  f:p=>p.etapa==='antigo'},
   {id:'tudo',      nome:'Tudo',           f:()=>true}
 ];
 function porRapido(id){ rapidoOP=id; renderOPs(); }
@@ -3501,6 +3506,31 @@ function opsFiltradas(){
   if(fEtapa==='_abertas') L=L.filter(p=>grupoDe(p.etapa)!=='fim');
   else if(fEtapa.indexOf('sit:')===0) L=L.filter(p=>p.situacao===fEtapa.slice(4));
   else if(fEtapa) L=L.filter(p=>p.etapa===fEtapa);
+  /* ---- palavras que a busca entende como peneira ----
+     Sem botão novo: digitando "vazia" ele acha as OPs que não têm nada dentro
+     e marca todas pra apagar de uma vez; "sem cor", "sem tamanho" e "sem malha"
+     separam o que falta perguntar pro cliente. É o que faltava pra limpar a
+     casa sem apagar a casa inteira. */
+  const PENEIRAS={
+    'VAZIA':      p=>!itensDaOP(p).length,
+    'VAZIAS':     p=>!itensDaOP(p).length,
+    'SEM ITEM':   p=>!itensDaOP(p).length,
+    'SEM ITENS':  p=>!itensDaOP(p).length,
+    'SEM MALHA':  p=>itensDaOP(p).length && !itensDaOP(p).some(i=>i.malha),
+    'SEM COR':    p=>itensDaOP(p).length && !itensDaOP(p).some(i=>(i.cores||[]).length),
+    'SEM TAMANHO':p=>itensDaOP(p).length && !itensDaOP(p).some(i=>(i.tamanhos||[]).length),
+    'SEM TAM':    p=>itensDaOP(p).length && !itensDaOP(p).some(i=>(i.tamanhos||[]).length),
+    'SEM QTD':    p=>itensDaOP(p).length && !pecasDaOP(p),
+    'SEM QUANTIDADE':p=>itensDaOP(p).length && !pecasDaOP(p),
+    'SEM PRECO':  p=>!valorDaOP(p),
+    'SEM TELEFONE':p=>!(clienteDe(p.clienteId)||{}).telefone,
+    'COMPLETA':   p=>{ const I=itensDaOP(p); return I.length && pecasDaOP(p)>0 &&
+                        I.some(i=>i.malha) && I.some(i=>(i.cores||[]).length) &&
+                        I.some(i=>(i.tamanhos||[]).length); },
+    'COMPLETAS':  p=>PENEIRAS['COMPLETA'](p)
+  };
+  if(busca && PENEIRAS[busca]) return ordenarOPs(L.filter(PENEIRAS[busca]));
+
   const qDig=digitosDaBusca((document.getElementById('buscaCli')||{}).value||'');
   if(busca) L=L.filter(p=>{
     const c=clienteDe(p.clienteId)||{};
@@ -3510,6 +3540,10 @@ function opsFiltradas(){
       itensDaOP(p).map(i=>[i.ref,i.corte,i.malha,(i.cores||[]).join(' ')].join(' ')).join(' ')
     ].join(' ')).includes(busca);
   });
+  return ordenarOPs(L);
+}
+/* a ordenação saiu de dentro do filtro pra as peneiras poderem usar a mesma */
+function ordenarOPs(L){
   const modo=(document.getElementById('fOrdemCli')||{}).value||'atencao';
   const prazo=p=>p.entregaEm? new Date(p.entregaEm+'T12:00:00').getTime() : 8e15;
   const peso=p=>{ const a=atencao(p); const s=situacaoDe(p.situacao);
@@ -3523,8 +3557,7 @@ function opsFiltradas(){
     codigo: (a,b)=> String(b.codigo||'').localeCompare(String(a.codigo||''),'pt-BR')
   }[modo]||cmp_atencao_fallback;
   /* fixadas sempre no topo, seja qual for a ordem */
-  L.sort((a,b)=> (b.fixa?1:0)-(a.fixa?1:0) || cmp(a,b));
-  return L;
+  return L.slice().sort((a,b)=> (b.fixa?1:0)-(a.fixa?1:0) || cmp(a,b));
 }
 function cmp_atencao_fallback(a,b){ return diasParado(b)-diasParado(a); }
 
