@@ -447,8 +447,24 @@ table.impMini th, table.impMini td{padding:4px 7px; font-size:11.5px;}
 th.ord{cursor:pointer; user-select:none;}
 th.ord:hover{color:var(--verde);}
 th.ord.on{color:var(--verde);}
-#tabPedidos tr:not(:first-child):not(.somaLinha){cursor:pointer;}
 #tabPedidos tr:not(:first-child):not(.somaLinha):hover td{background:#fafcf6;}
+/* Quem leva pra OP é o código, não a linha inteira: ele CONFERE a tabela, e
+   um toque errado jogava ele pra aba das OPs no meio da conferência. */
+.linkOP{background:none; border:0; padding:0; margin:0; font:inherit; font-weight:700;
+  color:var(--verde); text-decoration:underline; cursor:pointer;}
+/* o que falta, na linha e no cabeçalho do cliente */
+#tabPedidos .falta{color:var(--ambar); font-size:12.5px;}
+#tabPedidos .okFalta{color:var(--sub); opacity:.55; font-size:12.5px;}
+/* bloco de cliente: uma pessoa, não uma peça */
+#tabPedidos tr.cliCab td{background:var(--creme); border-top:2px solid var(--dourado);
+  padding:9px 10px;}
+#tabPedidos tr.cliCab b{font-size:14.5px;}
+#tabPedidos tr.cliCab .tel{margin-left:9px; background:none; border:0; font:inherit;
+  color:var(--verde); text-decoration:underline; cursor:pointer;}
+#tabPedidos tr.cliCab .semTel{text-decoration:none; color:var(--sub); opacity:.6; cursor:default;}
+.cliCabN{margin-left:11px; color:var(--sub); font-size:12.5px;}
+#tabPedidos tr.cliCab .falta{margin-left:11px;}
+.cliCabVal{float:right; font-weight:600; color:var(--verde);}
 table{width:100%; border-collapse:collapse; font-size:13.5px;}
 th{text-align:left; font-size:11px; text-transform:uppercase; letter-spacing:.5px; color:var(--sub);
   border-bottom:1px solid var(--linha); padding:6px 7px; font-weight:600; white-space:nowrap;}
@@ -971,6 +987,7 @@ details.linhaCat[open] summary{border-bottom:1px solid var(--linha); margin-bott
     <section class="tela" id="tela-pedidos">
       <div class="cab"><h1>Tabela geral</h1>
         <div class="dir">
+          <button class="acao mini sec" id="btPorCliente" onclick="alternarPorCliente()">Agrupar por cliente</button>
           <button class="acao mini sec" onclick="copiarTabela()">Copiar tabela</button>
           <button class="acao mini sec" onclick="exportarCSV(true)">⤓ Exportar o filtrado</button>
         </div></div>
@@ -2136,7 +2153,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.18.0';
+const VERSAO='3.19.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -5511,6 +5528,16 @@ function imprimirLote(){
 
 /* ================= 3. PEDIDOS: tudo numa tabela só ================= */
 var ordem={campo:'op', cresc:false};
+/* o que falta numa peça, na ordem em que ele pergunta pro cliente */
+function faltaDoItem(i){
+  const f=[];
+  if(!i.corte)                 f.push('modelagem');
+  if(!i.malha)                 f.push('malha');
+  if(!(i.cores||[]).length)    f.push('cor');
+  if(!(i.tamanhos||[]).length) f.push('tamanhos');
+  if(!(Number(i.qtd)>0))       f.push('quantidade');
+  return f;
+}
 function linhasPedidos(){
   const out=[];
   S.pedidos.forEach(p=>{
@@ -5527,6 +5554,11 @@ function linhasPedidos(){
         cor:(i.cores||[]).map(tituloCaixa).join(', '),
         qtd:Number(i.qtd)||0, tam:(i.tamanhos||[]).join(' '),
         valor:Number(lin.c.fat)||0, kg:kgDoItem(i),
+        /* 21/10, ele olhando as pilotos na tabela: "nao tem algo que mostre
+           pilotos / os clientes / O que falta". A tabela mostrava "—" nas
+           colunas vazias, que diz que não tem — não diz que FALTA, nem o quê.
+           Agora cada linha carrega a lista do que está faltando NELA. */
+        falta:faltaDoItem(i), tel:c.telefone||'', clienteId:p.clienteId||'',
         chave:normalizar([p.codigo, c.nome, c.empresa, c.telefone, p.refCliente, i.ref, i.corte, i.malha,
           (i.cores||[]).join(' '), (i.tamanhos||[]).join(' ')].join(' '))
       });
@@ -5558,6 +5590,9 @@ function tabelaFiltrada(){
 }
 function renderPedidos(){
   const L=tabelaFiltrada();
+  const btc=document.getElementById('btPorCliente');
+  if(btc){ btc.textContent = porClienteTab()? 'Agrupado por cliente' : 'Agrupar por cliente';
+           btc.classList.toggle('on', porClienteTab()); }
   const tot=L.reduce((x,y)=>x+y.qtd,0), val=L.reduce((x,y)=>x+y.valor,0);
   const kg=L.reduce((x,y)=>x+y.kg,0);
   document.getElementById('resPedidos').innerHTML = L.length?
@@ -5566,11 +5601,14 @@ function renderPedidos(){
 
   const th=(campo,rot,cls)=>'<th class="'+(cls||'')+' ord'+(ordem.campo===campo?' on':'')+'" onclick="ordenar(\''+campo+'\')">'+
     rot+(ordem.campo===campo? (ordem.cresc?' ▲':' ▼'):'')+'</th>';
-  document.getElementById('tabPedidos').innerHTML = L.length?
-    '<tr>'+th('op','OP')+th('quando','Data')+th('cliente','Nome')+th('ref','Ref')+th('cor','Cor')+th('malha','Malha')+
-      th('qtd','Qtd','num')+th('valor','Valor','num')+th('peca','Peça')+th('etapa','Etapa')+'</tr>'+
-    L.map(x=>'<tr onclick="irAoCliente(\''+x.opId+'\')">'+
-      '<td class="mini"><b>'+esc(x.op)+'</b></td>'+
+  const COLS=11;
+  /* ---- a linha não navega mais ----
+     "e sempre ta voltando pra outra pagina": a linha inteira era um clique que
+     pulava pra aba das OPs. Ele está CONFERINDO uma lista; cada toque errado
+     jogava ele pra fora dela. Agora quem leva pra OP é só o código, que é o
+     lugar onde ele quer ir de propósito. */
+  const linhaTR=x=>'<tr>'+
+      '<td class="mini"><button class="linkOP" title="abrir a OP" onclick="irAoCliente(\''+x.opId+'\')">'+esc(x.op)+'</button></td>'+
       '<td class="mini'+(x.exata?'':' semLead')+'" title="'+(x.exata?'quando o lead chegou':'não sei de quando é o lead; data de abertura da OP')+'">'+
         (x.quando? dataCurta(x.quando):'—')+'</td>'+
       '<td><b>'+esc(x.cliente)+'</b></td>'+
@@ -5580,18 +5618,60 @@ function renderPedidos(){
       '<td class="num">'+(x.qtd? '<b>'+x.qtd.toLocaleString('pt-BR')+'</b>':'<span class="falta">a definir</span>')+'</td>'+
       '<td class="num">'+(x.valor? reais(x.valor):'—')+'</td>'+
       '<td>'+esc(x.peca||'—')+'</td>'+
-      '<td><span class="tag" style="background:'+etapaDe(x.etapa).cor+'">'+esc(etapaDe(x.etapa).nome)+'</span></td></tr>').join('')+
-    '<tr class="somaLinha"><td colspan="6">total</td><td class="num"><b>'+tot.toLocaleString('pt-BR')+
-      '</b></td><td class="num"><b>'+reais(val)+'</b></td><td colspan="2"></td></tr>'
-    : '<tr><td class="vazio">Nada nesse filtro.</td></tr>';
+      '<td>'+(x.falta.length? '<span class="falta">'+esc(x.falta.join(', '))+'</span>' : '<span class="okFalta">completo</span>')+'</td>'+
+      '<td><span class="tag" style="background:'+etapaDe(x.etapa).cor+'">'+esc(etapaDe(x.etapa).nome)+'</span></td></tr>';
+
+  const cabecalho='<tr>'+th('op','OP')+th('quando','Data')+th('cliente','Nome')+th('ref','Ref')+th('cor','Cor')+th('malha','Malha')+
+      th('qtd','Qtd','num')+th('valor','Valor','num')+th('peca','Peça')+'<th>Falta</th>'+th('etapa','Etapa')+'</tr>';
+  const somaTR='<tr class="somaLinha"><td colspan="6">total</td><td class="num"><b>'+tot.toLocaleString('pt-BR')+
+      '</b></td><td class="num"><b>'+reais(val)+'</b></td><td colspan="3"></td></tr>';
+
+  let corpo;
+  if(!L.length) corpo='<tr><td class="vazio" colspan="'+COLS+'">Nada nesse filtro.</td></tr>';
+  else if(!porClienteTab()) corpo=L.map(linhaTR).join('')+somaTR;
+  else {
+    /* ---- agrupado por cliente ----
+       "vendo as pilotos / E nao tem algo que mostre pilotos / os clientes":
+       a tabela é uma linha por PEÇA, então o Fábio aparecia 3 vezes e o Raul 4.
+       Agrupado, cada pessoa vira um bloco só, com o telefone do lado e a soma
+       do que falta em todas as peças dela. */
+    const g={};
+    L.forEach(x=>{ const k=x.clienteId||x.cliente; (g[k]=g[k]||{nome:x.cliente, tel:x.tel, linhas:[]}).linhas.push(x); });
+    corpo=Object.values(g)
+      .sort((a,b)=> b.linhas.reduce((s,x)=>s+x.valor,0)-a.linhas.reduce((s,x)=>s+x.valor,0))
+      .map(c=>{
+        const pc=c.linhas.reduce((s,x)=>s+x.qtd,0), vl=c.linhas.reduce((s,x)=>s+x.valor,0);
+        const ops=[...new Set(c.linhas.map(x=>x.op))];
+        const falta=[...new Set(c.linhas.reduce((a,x)=>a.concat(x.falta),[]))];
+        return '<tr class="cliCab"><td colspan="'+COLS+'">'+
+          '<b>'+esc(c.nome)+'</b>'+
+          (c.tel? '<button class="tel" title="copiar o número" onclick="copiarTel(event,\''+esc(c.tel)+'\',\''+
+            [...new Set(c.linhas.map(x=>x.opId))].join(',')+'\')">'+esc(c.tel)+'</button>' : '<span class="tel semTel">sem número</span>')+
+          '<span class="cliCabN">'+ops.length+' OP'+(ops.length>1?'s':'')+' · '+c.linhas.length+' peça'+(c.linhas.length>1?'s':'')+
+            (pc? ' · '+pc.toLocaleString('pt-BR')+' un':'')+'</span>'+
+          (falta.length? '<span class="falta">falta '+esc(juntarCom(falta))+'</span>'
+                       : '<span class="okFalta">nada faltando</span>')+
+          '<span class="cliCabVal">'+(vl? reais(vl):'a orçar')+'</span>'+
+        '</td></tr>'+c.linhas.map(linhaTR).join('');
+      }).join('')+somaTR;
+  }
+  document.getElementById('tabPedidos').innerHTML = cabecalho+corpo;
+}
+/* o agrupamento fica guardado: ele volta na aba e acha do jeito que deixou */
+function porClienteTab(){ try{ return localStorage.getItem('borinelli-tab-cli')==='1'; }catch(e){ return false; } }
+function alternarPorCliente(){
+  try{ localStorage.setItem('borinelli-tab-cli', porClienteTab()? '0':'1'); }catch(e){}
+  const b=document.getElementById('btPorCliente');
+  if(b) b.textContent= porClienteTab()? 'Agrupado por cliente' : 'Agrupar por cliente';
+  renderPedidos();
 }
 /* copia a tabela filtrada pronta pra colar no Excel ou mandar no WhatsApp */
 function copiarTabela(){
   const L=tabelaFiltrada();
   if(!L.length) return alert('Não tem nada nesse filtro pra copiar.');
-  const cab=['OP','Data','Cliente','Ref','Cor','Malha','Qtd','Valor','Peça','Etapa'];
-  const txt=[cab.join('\t')].concat(L.map(x=>[x.op, (x.quando? dataCurta(x.quando):''), x.cliente, x.ref, x.cor, x.malha, x.qtd,
-    (x.valor||0).toFixed(2).replace('.',','), x.peca, etapaDe(x.etapa).nome].join('\t'))).join('\n');
+  const cab=['OP','Data','Cliente','Telefone','Ref','Cor','Malha','Qtd','Valor','Peça','Falta','Etapa'];
+  const txt=[cab.join('\t')].concat(L.map(x=>[x.op, (x.quando? dataCurta(x.quando):''), x.cliente, x.tel||'', x.ref, x.cor, x.malha, x.qtd,
+    (x.valor||0).toFixed(2).replace('.',','), x.peca, x.falta.join(', '), etapaDe(x.etapa).nome].join('\t'))).join('\n');
   if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>avisoRapido(L.length+' linhas copiadas.'),()=>{});
   document.getElementById('modalCorpo').innerHTML='<h3>Tabela ('+L.length+' linhas)</h3><pre>'+esc(txt)+'</pre>';
   document.getElementById('modal').classList.add('on');
