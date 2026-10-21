@@ -545,6 +545,11 @@ table.tabPrinc tr.semTab td:first-child b{color:var(--vermelho);}
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%23fff'/%3E%3C/svg%3E");
   background-repeat:no-repeat; background-position:right 9px center;}
 .etapaSel:focus{outline:2px solid var(--dourado); outline-offset:1px;}
+/* Na linha fechada a etiqueta vira seletor, mas tem que continuar PARECENDO
+   etiqueta: mesma pílula, mesmo tamanho. O alvo do dedo é que cresce — 32px
+   de altura, senão no celular ele erra e abre a OP em vez de trocar a etapa. */
+.etapaSel.naLinha{min-height:32px; padding-top:6px; padding-bottom:6px;}
+.card.op.jaVi .etapaSel.naLinha{opacity:1;}
 /* ---- caixa de anotar: a entrada do sistema, sempre aberta e no alto ---- */
 .anotarBox{border:1px solid var(--dourado); border-radius:11px; padding:10px;
   background:#fffdf7; margin-bottom:12px;}
@@ -2119,7 +2124,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.15.0';
+const VERSAO='3.16.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -3548,6 +3553,33 @@ function limparVistos(){
   salvar(); render();
   avisoRapido(n? 'Comecei uma passagem nova — tirei a marca de '+n+' OPs.' : 'Nenhuma estava marcada.');
 }
+/* Mudar a etapa pela linha tem dois cuidados que o painel não tem:
+   1. a linha inteira é um botão que abre a OP — o clique no seletor não pode
+      subir, senão toda troca de etapa abria a OP junto;
+   2. render() redesenha a lista e a rolagem volta pro topo. Ele está na linha
+      140 de 171: perder o lugar aqui é perder a passagem inteira. Então a
+      altura é guardada antes e devolvida depois.
+   E como a OP pode sumir do filtro em que ele está (marcar "Perdido" dentro de
+   "Abertas", por exemplo), o aviso diz o que aconteceu — senão parece que a
+   linha evaporou. */
+function mudarEtapaNaLista(ev, id, v){
+  if(ev && ev.stopPropagation) ev.stopPropagation();
+  const p=S.pedidos.find(x=>x.id===id); if(!p) return;
+  const c=clienteDe(p.clienteId)||{};
+  const de=p.etapa, y=window.scrollY;
+  const antes=opsFiltradas().length;
+  mudarEtapaOP(id, v, grupoDe(de)==='fabrica' && grupoDe(v)!=='fabrica');
+  if(p.etapa===de){                        /* ele cancelou o motivo da perda */
+    render();                              /* redesenha pra etiqueta voltar ao que era */
+    try{ window.scrollTo(0, y); }catch(e){}
+    return;
+  }
+  try{ window.scrollTo(0, y); }catch(e){}
+  const sumiu = opsFiltradas().length < antes;
+  avisoRapido((c.nome? c.nome+': ' : (p.codigo||'')+': ')+etapaDe(de).nome+' → '+etapaDe(p.etapa).nome+
+    (sumiu? ' (saiu deste filtro)' : '')+
+    (p.etapa==='futuro'? ' · volta em '+dataCurta(new Date(p.voltarEm+'T12:00:00').getTime()) : ''));
+}
 function abrirOP(id){
   if(abertos[id]){ abertos={}; }
   else { abertos={}; abertos[id]=true; marcarVisto(id); }
@@ -3953,7 +3985,17 @@ function linhaOP(p, semEtapa){
       /* Etapa e situação são duas medidas de estado. Nenhum sistema sério põe
          as duas na mesma linha fechada — vira ruído. A situação já subiu pro
          alerta ("esperando você"); a etapa some quando o grupo já diz qual é. */
-      (semEtapa? '' : '<span class="tag" style="background:'+e.cor+'">'+esc(e.nome)+'</span>')+
+      /* ---- a etiqueta de etapa virou o controle dela ----
+         Pedido dele em 21/10, varrendo a lista: "e poder altera a etiqueta
+         nessa aba / N precisar entrar pra alterar sabe". Ele passa 171 linhas
+         decidindo "perdido / piloto / vai aguardar" e, pra cada uma, tinha
+         que abrir a OP, rolar até o pé e voltar. Agora muda aqui, na linha. */
+      (semEtapa? '' : '<select class="etapaSel naLinha" style="background-color:'+e.cor+'"'+
+        ' title="mudar a etapa sem abrir a OP"'+
+        ' onclick="event.stopPropagation()" onmousedown="event.stopPropagation()"'+
+        ' onchange="mudarEtapaNaLista(event,\''+p.id+'\',this.value)">'+
+        ETAPAS.map(x=>'<option value="'+x.id+'"'+(x.id===p.etapa?' selected':'')+'>'+esc(x.nome)+'</option>').join('')+
+      '</select>')+
       '<span class="seta">'+(ab?'▾':'▸')+'</span>'+
     '</div>'+
     /* o corpo NÃO vem aqui: ele mora no painel. Desenhar nos dois lugares
