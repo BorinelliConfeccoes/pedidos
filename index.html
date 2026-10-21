@@ -221,6 +221,17 @@ a.acao.wpp:hover{background:#1a6641;}
   border-radius:7px; padding:5px 11px; font-family:inherit; font-size:12.5px; cursor:pointer;}
 
 /* ---------- pendências ---------- */
+/* Faixa de versão nova: fica no pé, acima da barra de abas do celular, e não
+   some sozinha — o aviso anterior era um toast de 8 segundos mandando apertar
+   Ctrl+Shift+R, atalho que não existe no telefone dele. */
+#barraVer{position:fixed; left:12px; right:12px; bottom:calc(12px + env(safe-area-inset-bottom));
+  z-index:55; background:var(--verde-esc); color:#fff; border-radius:12px;
+  padding:11px 13px; display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+  box-shadow:0 8px 28px rgba(25,35,20,.35); font-size:13.5px;}
+#barraVer span{flex:1 1 auto; min-width:140px;}
+#barraVer .acao{min-height:38px; padding:8px 14px; font-size:13px;}
+@media(max-width:760px){ #barraVer{bottom:calc(68px + env(safe-area-inset-bottom));} }
+
 /* Datas do lead, no alto do pedido. Discreto: é contexto, não ação. */
 .opDatas{display:flex; gap:7px 16px; flex-wrap:wrap; font-size:12.5px; color:var(--sub);
   margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--linha);}
@@ -2070,7 +2081,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.12.0';
+const VERSAO='3.13.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -2155,7 +2166,8 @@ function conferirAparelhoAtrasado(verDoBanco){
     el.innerHTML='<b>Este aparelho está atrasado.</b> Ele está na v'+esc(VERSAO)+
       ' e o outro já está na v'+esc(verDoBanco)+'. Enquanto estiver assim, '+
       'o que você fizer aqui pode apagar coisas que o outro gravou. '+
-      'Atualize esta página com Ctrl+Shift+R (ou feche e abra o app) antes de mexer.';
+      'Toque em Atualizar agora antes de mexer.'+
+      '<button class="acao mini" style="margin-left:9px" onclick="atualizarAgora()">Atualizar agora</button>';
   }
   avisoRapido('Aparelho atrasado: v'+VERSAO+' contra v'+verDoBanco+'. Atualize antes de mexer.');
 }
@@ -5202,6 +5214,9 @@ function linhasPedidos(){
       const lin=o.linhas[ix]||{c:{}};
       out.push({
         op:p.codigo||'', opId:p.id, cliente:c.nome, etapa:p.etapa,
+        /* a data de chegada do lead, pra dar pra ordenar e varrer do velho
+           pro novo também aqui na tabela, não só na lista de OPs */
+        quando:p.leadEm||p.criado||0, exata:!!p.leadEm,
         ref:i.ref||'', peca:i.corte||'', malha:i.malha||'',
         cor:(i.cores||[]).map(tituloCaixa).join(', '),
         qtd:Number(i.qtd)||0, tam:(i.tamanhos||[]).join(' '),
@@ -5246,10 +5261,12 @@ function renderPedidos(){
   const th=(campo,rot,cls)=>'<th class="'+(cls||'')+' ord'+(ordem.campo===campo?' on':'')+'" onclick="ordenar(\''+campo+'\')">'+
     rot+(ordem.campo===campo? (ordem.cresc?' ▲':' ▼'):'')+'</th>';
   document.getElementById('tabPedidos').innerHTML = L.length?
-    '<tr>'+th('op','OP')+th('cliente','Nome')+th('ref','Ref')+th('cor','Cor')+th('malha','Malha')+
+    '<tr>'+th('op','OP')+th('quando','Data')+th('cliente','Nome')+th('ref','Ref')+th('cor','Cor')+th('malha','Malha')+
       th('qtd','Qtd','num')+th('valor','Valor','num')+th('peca','Peça')+th('etapa','Etapa')+'</tr>'+
     L.map(x=>'<tr onclick="irAoCliente(\''+x.opId+'\')">'+
       '<td class="mini"><b>'+esc(x.op)+'</b></td>'+
+      '<td class="mini'+(x.exata?'':' semLead')+'" title="'+(x.exata?'quando o lead chegou':'não sei de quando é o lead; data de abertura da OP')+'">'+
+        (x.quando? dataCurta(x.quando):'—')+'</td>'+
       '<td><b>'+esc(x.cliente)+'</b></td>'+
       '<td>'+esc(x.ref||'—')+'</td>'+
       '<td>'+esc(x.cor||'—')+'</td>'+
@@ -5258,7 +5275,7 @@ function renderPedidos(){
       '<td class="num">'+(x.valor? reais(x.valor):'—')+'</td>'+
       '<td>'+esc(x.peca||'—')+'</td>'+
       '<td><span class="tag" style="background:'+etapaDe(x.etapa).cor+'">'+esc(etapaDe(x.etapa).nome)+'</span></td></tr>').join('')+
-    '<tr class="somaLinha"><td colspan="5">total</td><td class="num"><b>'+tot.toLocaleString('pt-BR')+
+    '<tr class="somaLinha"><td colspan="6">total</td><td class="num"><b>'+tot.toLocaleString('pt-BR')+
       '</b></td><td class="num"><b>'+reais(val)+'</b></td><td colspan="2"></td></tr>'
     : '<tr><td class="vazio">Nada nesse filtro.</td></tr>';
 }
@@ -5266,8 +5283,8 @@ function renderPedidos(){
 function copiarTabela(){
   const L=tabelaFiltrada();
   if(!L.length) return alert('Não tem nada nesse filtro pra copiar.');
-  const cab=['OP','Cliente','Ref','Cor','Malha','Qtd','Valor','Peça','Etapa'];
-  const txt=[cab.join('\t')].concat(L.map(x=>[x.op, x.cliente, x.ref, x.cor, x.malha, x.qtd,
+  const cab=['OP','Data','Cliente','Ref','Cor','Malha','Qtd','Valor','Peça','Etapa'];
+  const txt=[cab.join('\t')].concat(L.map(x=>[x.op, (x.quando? dataCurta(x.quando):''), x.cliente, x.ref, x.cor, x.malha, x.qtd,
     (x.valor||0).toFixed(2).replace('.',','), x.peca, etapaDe(x.etapa).nome].join('\t'))).join('\n');
   if(navigator.clipboard) navigator.clipboard.writeText(txt).then(()=>avisoRapido(L.length+' linhas copiadas.'),()=>{});
   document.getElementById('modalCorpo').innerHTML='<h3>Tabela ('+L.length+' linhas)</h3><pre>'+esc(txt)+'</pre>';
@@ -5469,7 +5486,7 @@ function csv(v){ const s=String(v==null?'':v); return /[";\n]/.test(s)? '"'+s.re
 function exportarCSV(soFiltrado){
   const cab=['OP','Orçamento','Cliente','Empresa','Telefone','Ref do cliente','Etapa','Situação',
     'Ref','Peça','Malha','Cor','Tamanhos','Qtd','Kg malha','Preço un','Total','Custo un','Lucro','Margem %',
-    'Desconto OP','Frete OP','Total da OP','Sinal','Prazo','Entrega','Pendências abertas','Criada em'];
+    'Desconto OP','Frete OP','Total da OP','Sinal','Prazo','Entrega','Pendências abertas','Criada em','Lead de','Último contato dele'];
   const n=v=>(v===''||v==null)? '' : Number(v).toFixed(2).replace('.',',');
   const linhas=[cab.join(';')];
   /* "só o filtrado" usa exatamente o que está na tela da tabela geral */
@@ -5491,7 +5508,9 @@ function exportarCSV(soFiltrado){
         n(x.c.preco), n(x.c.fat), n(x.c.custo), n(x.c.lucro),
         x.c.margem? x.c.margem.toFixed(1).replace('.',','):'',
         n(a.desc), n(a.frete), n(a.total), n(a.sinal),
-        p.prazo||'', p.entregaEm||'', abertasPend(p), new Date(p.criado).toLocaleDateString('pt-BR')
+        p.prazo||'', p.entregaEm||'', abertasPend(p), new Date(p.criado).toLocaleDateString('pt-BR'),
+        p.leadEm? new Date(p.leadEm).toLocaleDateString('pt-BR'):'',
+        p.ultimoContato? new Date(p.ultimoContato).toLocaleDateString('pt-BR'):''
       ].map(csv).join(';'));
     });
   });
@@ -5870,7 +5889,8 @@ function renderDados(){
 
     '<div class="card"><h3>Sincronização</h3>'+
       '<div class="mini">Este aparelho: <b>'+esc(meuId)+'</b> · versão <b>v'+VERSAO+'</b>'+
-        (S.config&&S.config.verNova? ' · <b style="color:var(--ambar)">tem versão nova no servidor ('+esc(S.config.verNova)+') — atualize com Ctrl+Shift+R</b>':'')+'</div>'+
+        (S.config&&S.config.verNova? ' · <b style="color:var(--ambar)">tem a v'+esc(S.config.verNova)+' publicada</b>'+
+          '<button class="acao mini" style="margin-left:9px" onclick="atualizarAgora()">Atualizar agora</button>':'')+'</div>'+
       '<div class="aviso" style="margin-top:10px;">O banco na nuvem ainda está aberto: quem souber o endereço consegue ler. '+
         'Pra fechar de verdade é preciso criar um usuário no Firebase e travar a regra no seu código de usuário.</div>'+
     '</div>';
@@ -6576,6 +6596,37 @@ function render(){
 }
 
 /* avisa quando o servidor já tem versão mais nova que a que está aberta */
+/* ---- atualizar de verdade ----
+   O service worker guarda o index.html inteiro. Enquanto o antigo estiver
+   mandando, recarregar a página não adianta: ele serve o que tem em cache.
+   Então: tira todos os service workers do ar, apaga todos os caches, e só
+   então recarrega. É o que o Ctrl+Shift+R faz, só que num toque. */
+function atualizarAgora(){
+  const bt=document.getElementById('btAtualizar');
+  if(bt){ bt.disabled=true; bt.textContent='Atualizando…'; }
+  const tentar=Promise.all([
+    (navigator.serviceWorker? navigator.serviceWorker.getRegistrations() : Promise.resolve([]))
+      .then(rs=>Promise.all(rs.map(r=>r.unregister()))).catch(()=>{}),
+    (window.caches? caches.keys() : Promise.resolve([]))
+      .then(ks=>Promise.all(ks.map(k=>caches.delete(k)))).catch(()=>{})
+  ]);
+  /* se algo travar, recarrega mesmo assim depois de 4s */
+  let feito=false;
+  const vai=()=>{ if(feito) return; feito=true; location.replace(location.pathname+'?v='+Date.now()); };
+  tentar.then(vai).catch(vai);
+  setTimeout(vai, 4000);
+}
+
+function barraAtualizar(nova){
+  if(document.getElementById('barraVer')) return;
+  const d=document.createElement('div');
+  d.id='barraVer';
+  d.innerHTML='<span>Versão '+esc(nova)+' publicada.</span>'+
+    '<button class="acao mini" id="btAtualizar" onclick="atualizarAgora()">Atualizar agora</button>'+
+    '<button class="acao mini sec" onclick="this.parentNode.remove()">depois</button>';
+  document.body.appendChild(d);
+}
+
 function conferirVersao(){
   try{
     fetch('version.json?t='+Date.now(), {cache:'no-store'})
@@ -6583,9 +6634,12 @@ function conferirVersao(){
       .then(v=>{
         if(!v || !v.versao || v.versao===VERSAO) return;
         S.config=S.config||{}; S.config.verNova=v.versao;
-        avisoRapido('Tem a versão '+v.versao+' publicada. Atualize com Ctrl+Shift+R.');
+        /* "Atualize com Ctrl+Shift+R" não serve: ele usa isto no iPhone, onde
+           esse atalho não existe. Agora a faixa é um botão que faz a coisa. */
+        barraAtualizar(v.versao);
         const el=document.getElementById('ver');
-        if(el){ el.textContent='v'+VERSAO+' → v'+v.versao; el.style.opacity='1'; el.style.color='#f0d9a8'; }
+        if(el){ el.textContent='v'+VERSAO+' → v'+v.versao; el.style.opacity='1'; el.style.color='#f0d9a8';
+                el.style.cursor='pointer'; el.onclick=atualizarAgora; }
       }).catch(()=>{});
   }catch(e){}
 }
