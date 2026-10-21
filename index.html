@@ -2153,7 +2153,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.20.0';
+const VERSAO='3.21.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -2171,6 +2171,42 @@ var S={clientes:[], pedidos:[], removidos:[], meusNomes:[]};
 let fbDB=null, fbOnline=false, aplicandoRemoto=false, jaRecebeu=false;
 const meuId='p-'+Math.random().toString(36).slice(2,9);
 
+/* ---- lista que volta como objeto ----
+   Versão antiga gravava o estado como árvore no Firebase, e o Firebase não
+   guarda array vazio: ele devolve {} ou simplesmente não devolve. Quem leu
+   isso ficou com p.mudancas={} em vez de [], e o primeiro .forEach dali em
+   diante derrubava a função inteira.
+   Em 21/10 isso apareceu do pior jeito possível: 72 campos assim em 18 OPs
+   derrubaram renderDados, a tela de "Backup e limpeza" veio EM BRANCO e ele
+   ficou sem o botão de restaurar — com o backup na mão e sem onde colocar.
+   Uma tela em branco não diz o que aconteceu, então o conserto é na entrada:
+   toda lista conhecida é endireitada ao carregar e ao mesclar, venha de onde
+   vier (aparelho, banco ou arquivo restaurado). */
+const LISTAS_RAIZ=['clientes','pedidos','removidos','meusNomes'];
+const LISTAS_OP=['itens','pend','notas','hist','fotos','detalhes','extras','mudancas','artes','autores'];
+const LISTAS_ITEM=['cores','tamanhos'];
+function listar(v){
+  if(Array.isArray(v)) return v;
+  if(v===null || v===undefined || v==='') return [];
+  /* {} do Firebase, ou {"0":x,"1":y} de um array que virou mapa */
+  if(typeof v==='object') return Object.values(v).filter(x=>x!==null && x!==undefined);
+  return [];
+}
+function endireitar(o, campos){
+  if(!o || typeof o!=='object') return o;
+  campos.forEach(c=>{ if(c in o) o[c]=listar(o[c]); });
+  return o;
+}
+function endireitarTudo(e){
+  if(!e || typeof e!=='object') return e;
+  endireitar(e, LISTAS_RAIZ);
+  (e.pedidos||[]).forEach(p=>{
+    endireitar(p, LISTAS_OP);
+    (p.itens||[]).forEach(i=>endireitar(i, LISTAS_ITEM));
+  });
+  (e.clientes||[]).forEach(c=>endireitar(c, LISTAS_OP));
+  return e;
+}
 function salvar(){
   esqueceCombos();   /* mudou pedido ou preço: a varredura da tela de Custos refaz */
   try{ localStorage.setItem(CHAVE_LOCAL, JSON.stringify(S)); }
@@ -2187,6 +2223,7 @@ function salvar(){
 }
 function carregar(){
   try{ const v=localStorage.getItem(CHAVE_LOCAL); if(v) S=Object.assign(S, JSON.parse(v)); }catch(e){}
+  endireitarTudo(S);
   S.clientes=S.clientes||[]; S.pedidos=S.pedidos||[]; S.removidos=S.removidos||[]; S.meusNomes=S.meusNomes||[]; S.config=S.config||{};
   S.precos=S.precos||{};
   usarPrecosExtra(S.precos);
@@ -2272,6 +2309,7 @@ function baixarAntesUp(){
 function mesclar(remoto, forcar){
   /* forcar=true: o arquivo que está entrando manda, sem olhar carimbo de hora.
      É o que vale quando VOCÊ escolheu restaurar um backup pra corrigir algo. */
+  endireitarTudo(remoto); endireitarTudo(S);   /* lista que chegou como {} entra como [] */
   const por=(a,b)=>{ const m=new Map();
     (a||[]).forEach(x=>m.set(x.id,x));
     (b||[]).forEach(x=>{ const v=m.get(x.id);
