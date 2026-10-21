@@ -217,6 +217,22 @@ a.acao.wpp:hover{background:#1a6641;}
   border-radius:7px; padding:5px 11px; font-family:inherit; font-size:12.5px; cursor:pointer;}
 
 /* ---------- pendências ---------- */
+/* Mensagem pronta: a caixa que ele usa de manhã. Verde na borda pra puxar o
+   olho sem gritar, e o texto em fonte normal (não monospace) porque é o que
+   vai ser lido pelo cliente, tem que parecer com o que ele vai mandar. */
+.msgBox{border:1px solid var(--verde); border-left:4px solid var(--verde); border-radius:11px;
+  padding:12px 14px; margin-bottom:14px; background:#fff;}
+.msgBox h4{font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--verde);
+  margin-bottom:9px; display:flex; align-items:center; gap:7px; flex-wrap:wrap;}
+.msgPor{background:var(--verde); color:#fff; border-radius:20px; padding:2px 9px;
+  font-size:10px; letter-spacing:0; text-transform:none; font-weight:600;}
+.msgTxt{font:400 14.5px/1.55 inherit; white-space:pre-wrap; word-break:break-word;
+  background:var(--creme); border-radius:9px; padding:12px 13px; margin:0; color:var(--ink);}
+.msgNota{font-size:12.5px; line-height:1.45; color:var(--sub); margin-top:9px;
+  padding-left:10px; border-left:2px solid var(--linha);}
+.msgBox .cliAcoes{margin-top:11px;}
+.msgBox.feita{border-color:var(--linha); border-left-color:var(--linha); background:var(--creme);}
+.msgBox.feita h4{color:var(--sub);}
 .pendBox{border:1px solid var(--linha); border-radius:11px; padding:11px 13px; margin-bottom:12px; background:#fff;}
 .pendBox h4{font-size:10px; letter-spacing:1.4px; text-transform:uppercase; color:var(--sub); margin-bottom:8px;}
 .pendN{background:var(--vermelho); color:#fff; border-radius:20px; padding:1px 7px; font-size:10px; letter-spacing:0; margin-left:4px;}
@@ -2019,7 +2035,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.9.1';
+const VERSAO='3.10.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -3446,6 +3462,7 @@ const RAPIDOS=[
   {id:'',          nome:'Abertas',        f:p=>grupoDe(p.etapa)!=='fim'},
   {id:'esperando', nome:'Esperando você', f:p=>grupoDe(p.etapa)!=='fim' && p.situacao==='semresp'},
   {id:'atrasadas', nome:'Prazo apertado', f:p=>(atencao(p)||{}).nivel==='alto'},
+  {id:'commsg',    nome:'Mensagem pronta', f:p=>!!(p.msg && String(p.msg.txt||'').trim() && !p.msg.enviadoEm)},
   {id:'pendencia', nome:'Com pendência',  f:p=>grupoDe(p.etapa)!=='fim' && abertasPend(p)>0},
   {id:'antigos',   nome:'Leads antigos',  f:p=>p.etapa==='antigo'},
   {id:'tudo',      nome:'Tudo',           f:()=>true}
@@ -3743,6 +3760,7 @@ function faltamDias(p){
    fechado numa linha com título, visível, a um clique — não atrás de uma aba. */
 function corpoOP(p, c, itens){
   return '<div class="opCorpo">'+
+    blocoMensagem(p, c)+
     caixaAnotar(p)+
     blocoPedido(p, itens)+
     resumoDinheiro(p)+
@@ -4277,6 +4295,71 @@ function delPend(opId, ix){
   p.pend.splice(ix,1); p.ts=Date.now(); salvar(); render();
 }
 function abertasPend(p){ return pendencias(p).filter(x=>!x.ok).length; }
+
+/* ---- mensagem pronta ----
+   Quando alguém escreveu a mensagem desse cliente, ela fica no alto do
+   pedido, inteira, com o botão de copiar do lado. É o movimento da manhã:
+   abre a OP, lê, copia, manda. Não é mensagem automática montada de campo
+   faltando — é texto escrito olhando a conversa, por isso fica guardado.
+   "Já mandei" grava a data e encolhe a caixa: evita mandar duas vezes e
+   deixa o registro de quando foi. A mensagem nunca é apagada, só recolhida. */
+function blocoMensagem(p, c){
+  const m=p.msg;
+  if(!m || !String(m.txt||'').trim()) return '';
+  if(m.enviadoEm){
+    return '<div class="msgBox feita"><h4>Mensagem enviada</h4>'+
+      '<div class="mini">'+esc(quandoFoi(m.enviadoEm))+'</div>'+
+      '<button class="acao mini sec" onclick="voltarMsg(\''+p.id+'\')">ver de novo</button></div>';
+  }
+  const tel=(c&&c.telefone)||'';
+  return '<div class="msgBox"><h4>Mensagem pronta'+
+      (m.porque? '<span class="msgPor">'+esc(m.porque)+'</span>':'')+'</h4>'+
+    '<pre class="msgTxt">'+esc(m.txt)+'</pre>'+
+    (m.nota? '<div class="msgNota">'+esc(m.nota)+'</div>':'')+
+    '<div class="cliAcoes">'+
+      '<button class="acao mini" onclick="copiarMsg(\''+p.id+'\')">⧉ Copiar</button>'+
+      (tel? '<a class="acao mini wpp" target="_blank" href="https://wa.me/'+zap(tel)+'">Abrir conversa</a>':'')+
+      '<button class="acao mini sec" onclick="msgEnviada(\''+p.id+'\')">✓ Já mandei</button>'+
+      '<button class="acao mini sec" onclick="editarMsg(\''+p.id+'\')">Editar</button>'+
+    '</div></div>';
+}
+
+function quandoFoi(ts){
+  const d=new Date(ts), h=Math.floor((Date.now()-ts)/36e5);
+  const dm=String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+  if(h<1) return 'agora há pouco';
+  if(h<24) return 'hoje, '+String(d.getHours()).padStart(2,'0')+'h'+String(d.getMinutes()).padStart(2,'0');
+  return 'em '+dm;
+}
+
+function copiarMsg(opId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p||!p.msg) return;
+  const t=String(p.msg.txt||'');
+  const pos=()=>avisoRapido('Mensagem copiada.');
+  if(navigator.clipboard) navigator.clipboard.writeText(t).then(pos,pos); else pos();
+}
+
+function msgEnviada(opId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p||!p.msg) return;
+  p.msg.enviadoEm=Date.now();
+  p.situacao='semresp'===p.situacao? '' : p.situacao;
+  p.ts=Date.now(); salvar(); render();
+  avisoRapido('Marcada como enviada.');
+}
+
+function voltarMsg(opId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p||!p.msg) return;
+  delete p.msg.enviadoEm; p.ts=Date.now(); salvar(); render();
+}
+
+function editarMsg(opId){
+  const p=S.pedidos.find(x=>x.id===opId); if(!p) return;
+  const t=prompt('Mensagem pronta deste pedido:', (p.msg&&p.msg.txt)||'');
+  if(t===null) return;
+  if(!String(t).trim()){ delete p.msg; }
+  else { p.msg=Object.assign({}, p.msg||{}, {txt:String(t)}); delete p.msg.enviadoEm; }
+  p.ts=Date.now(); salvar(); render();
+}
 
 function blocoPendencias(p){
   const L=pendencias(p);
@@ -5667,6 +5750,10 @@ function planoDaOP(p){
   const g=grupoDe(p.etapa), d=diasParado(p), fa=faltamDias(p);
   const passos=[];
   const põe=(peso, txt, como)=>passos.push({peso, txt, como:como||''});
+
+  /* --- 0. tem mensagem escrita e não mandada: é o primeiro movimento --- */
+  if(p.msg && String(p.msg.txt||'').trim() && !p.msg.enviadoEm)
+    põe(1,'Mandar a mensagem que já está pronta','está no alto do pedido, só copiar e colar');
 
   /* --- 1. o que trava: sem isso não dá pra orçar nem cortar --- */
   if(!c.telefone) põe(1,'Pegar o telefone do cliente','sem número não dá pra cobrar resposta');
