@@ -2035,7 +2035,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.10.0';
+const VERSAO='3.10.1';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -5188,8 +5188,13 @@ function blocoSemCusto(){
    pode ter três OPs. Vem na ordem de quem está travado e vale mais. */
 function blocoPlanoDoDia(){
   const ids=[...new Set(S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim').map(p=>p.clienteId))];
+  /* Ordem do dia: primeiro o que se resolve copiando e colando (mensagem
+     pronta), depois quem está esperando resposta sua, depois o dinheiro,
+     e só então a contagem de coisa travada. Antes era trava primeiro, e aí
+     uma OP com cinco campos vazios passava na frente de uma venda fechada. */
   const planos=ids.map(planoDoCliente).filter(x=>x.passos)
-    .sort((a,b)=> (b.trava-a.trava) || (b.valor-a.valor));
+    .sort((a,b)=> (b.pronto-a.pronto) || (b.bola-a.bola)
+               || (b.valor-a.valor) || (b.trava-a.trava));
   if(!planos.length) return '';
   const MOSTRA=6;
   return '<div class="card"><h3>Plano de hoje<span class="secN" style="margin-left:auto">'+
@@ -5828,7 +5833,13 @@ function planoDoCliente(clienteId){
   return {cliente:c, ops, planos,
     trava:planos.reduce((s,x)=>s+x.trava,0),
     passos:planos.reduce((s,x)=>s+x.passos.length,0),
-    valor:ops.reduce((s,p)=>s+valorDaOP(p),0)};
+    valor:ops.reduce((s,p)=>s+valorDaOP(p),0),
+    /* pronto: tem mensagem escrita esperando ser mandada.
+       bola: ele respondeu e você ainda não. Os dois são movimento de um
+       minuto; cadastro incompleto é trabalho de meia hora. Por isso eles
+       mandam na ordem do plano, e não a contagem de campos vazios. */
+    pronto:ops.some(p=>p.msg && String(p.msg.txt||'').trim() && !p.msg.enviadoEm),
+    bola:ops.some(p=>p.situacao==='semresp')};
 }
 function blocoPlano(p){
   const pl=planoDaOP(p);
