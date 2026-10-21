@@ -2153,7 +2153,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.19.0';
+const VERSAO='3.20.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -6666,7 +6666,14 @@ function descPeca(i){
 }
 function faltantes(){
   const porCli={};
-  S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim').forEach(p=>{
+  /* Lead que acabou de chegar e ainda não disse o que quer não é "faltando
+     informação": é lead novo. Antes, toda OP vazia em "Novo" caía aqui e
+     inflava a lista de quem cobrar — foi disso que ele reclamou duas vezes
+     em 21/10 ("N tem isso tudo de coisa pra eu fazer"). Entra aqui quem já
+     pediu alguma coisa, ou quem já passou de "Novo". */
+  S.pedidos.filter(p=>grupoDe(p.etapa)!=='fim')
+    .filter(p=>p.etapa!=='novo' || itensDaOP(p).length)
+    .forEach(p=>{
     const itens=itensDaOP(p);
     const c=clienteDe(p.clienteId)||{};
     const k=p.clienteId||p.id;
