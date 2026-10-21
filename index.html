@@ -217,6 +217,13 @@ a.acao.wpp:hover{background:#1a6641;}
   border-radius:7px; padding:5px 11px; font-family:inherit; font-size:12.5px; cursor:pointer;}
 
 /* ---------- pendências ---------- */
+/* Datas do lead, no alto do pedido. Discreto: é contexto, não ação. */
+.opDatas{display:flex; gap:7px 16px; flex-wrap:wrap; font-size:12.5px; color:var(--sub);
+  margin-bottom:12px; padding-bottom:10px; border-bottom:1px solid var(--linha);}
+.opDatas b{color:var(--ink); font-weight:600;}
+.opDatas .sub{opacity:.62;}
+.opLead{color:var(--sub); font-size:12px;}
+
 /* Mensagem pronta: a caixa que ele usa de manhã. Verde na borda pra puxar o
    olho sem gritar, e o texto em fonte normal (não monospace) porque é o que
    vai ser lido pelo cliente, tem que parecer com o que ele vai mandar. */
@@ -2035,7 +2042,7 @@ function malhaIdDe(nome){ const m=MALHAS.find(x=>x.nome===nome); return m? m.id 
 const reais=v=>'R$ '+(Number(v)||0).toLocaleString('pt-BR',{minimumFractionDigits:2, maximumFractionDigits:2});
 
 /* ================= ESTADO E SINCRONIZAÇÃO ================= */
-const VERSAO='3.10.1';
+const VERSAO='3.11.0';
 const firebaseConfig = {
   apiKey: "AIzaSyAudnkPUtDS4r7INo6hZN6X4ectJJRWxjw",
   authDomain: "borinelli-producao.firebaseapp.com",
@@ -3268,7 +3275,15 @@ function migrarCodigos(){
   return true;
 }
 const DIA=86400000;
-function diasParado(p){ return Math.floor((Date.now()-(p.ts||p.criado||Date.now()))/DIA); }
+/* "Parado há X dias" só quer dizer alguma coisa se contar do último sinal do
+   CLIENTE. p.ts é a última vez que o registro foi mexido, e salvar uma
+   observação não significa que ele respondeu: bastava passar a tarde
+   organizando o sistema pra tudo parecer fresquinho no dia seguinte.
+   Quando a data do último contato dele está preenchida, é ela que manda. */
+function diasParado(p){
+  const base=p.ultimoContato || p.ts || p.criado || Date.now();
+  return Math.floor((Date.now()-base)/DIA);
+}
 function grupoDe(id){ return (ETAPAS.find(e=>e.id===id)||{}).grupo||'venda'; }
 function situacaoDe(id){ return SITUACOES.find(x=>x.id===id)||null; }
 function mudarSituacao(id, sit){
@@ -3704,6 +3719,9 @@ function linhaOP(p, semEtapa){
         '<div class="opDados">'+
           '<span>'+(pecas? '<b>'+pecas.toLocaleString('pt-BR')+'</b> peças':'<i>sem quantidade</i>')+'</span>'+
           (t.fat? '<span><b>'+reais(t.fat)+'</b></span>':'')+
+          /* de quando é esse lead: a OP foi criada essa semana, mas a conversa
+             pode ser de julho. Sem isso, tudo parece novo. */
+          (p.leadEm? '<span class="opLead" title="quando esse lead chegou">lead '+dataCurta(p.leadEm)+'</span>':'')+
           (alerta? '<span class="opAlerta '+alerta.nivel+'">'+esc(alerta.txt)+'</span>':'')+
         '</div>'+
         ((!ab && resumoLigado())? resumoOP(p, itens) : '')+
@@ -3758,8 +3776,31 @@ function faltamDias(p){
      4. o que falta          5. as artes
    O que ele olha de vez em quando (datas, a conta aberta, histórico) fica
    fechado numa linha com título, visível, a um clique — não atrás de uma aba. */
+/* ---- a linha das datas ----
+   Três datas que contam história diferente: quando o lead chegou, quando ele
+   falou pela última vez, e quando a OP foi criada aqui dentro. A terceira é
+   a menos importante e por isso fica por último, em cinza. */
+function dataCurta(ts){
+  if(!ts) return '';
+  const d=new Date(ts);
+  return String(d.getDate()).padStart(2,'0')+'/'+String(d.getMonth()+1).padStart(2,'0');
+}
+function linhaDatas(p){
+  const bits=[];
+  if(p.leadEm) bits.push('<span><b>Lead de '+dataCurta(p.leadEm)+'</b></span>');
+  if(p.ultimoContato){
+    const d=diasParado(p);
+    bits.push('<span>falou por último em '+dataCurta(p.ultimoContato)+
+      (d>0? ' · <b>'+d+' dia'+(d>1?'s':'')+' parado</b>' : ' · <b>hoje</b>')+'</span>');
+  }
+  if(p.criado) bits.push('<span class="sub">OP aberta em '+dataCurta(p.criado)+'</span>');
+  if(!bits.length) return '';
+  return '<div class="opDatas">'+bits.join('')+'</div>';
+}
+
 function corpoOP(p, c, itens){
   return '<div class="opCorpo">'+
+    linhaDatas(p)+
     blocoMensagem(p, c)+
     caixaAnotar(p)+
     blocoPedido(p, itens)+
