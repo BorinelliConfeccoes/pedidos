@@ -1,0 +1,263 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Marcellus&display=swap">
+<style>
+/* Arara Borinelli: secao para o bloco Codigo (HTML) do layout Ipanema */
+.bor-arara{--bor-bg:#F8F6F1;--bor-ink:#2b2f26;--bor-mute:#6d685d;--bor-green:#3d4d32;--bor-gold:#c7a581;--bor-gold-ink:#86663f;--bor-cream:#f6fdeb;--bor-kraft:#d4b68e;--bor-line:rgba(43,47,38,.28);--bor-pw:clamp(118px,12.5vw,196px);--bor-display:'Marcellus',Georgia,'Times New Roman',serif;--bor-body:'Lato',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;position:relative;background:var(--bor-bg);color:var(--bor-ink);font-family:var(--bor-body);font-size:16px;line-height:1.5;overflow:hidden;-webkit-font-smoothing:antialiased}
+.bor-arara *,.bor-arara *::before,.bor-arara *::after{box-sizing:border-box}
+.bor-arara [hidden]{display:none!important}
+.bor-arara button{font:inherit;color:inherit;background:none;border:0;padding:0;margin:0;cursor:pointer;-webkit-appearance:none;appearance:none;box-shadow:none;text-transform:none;letter-spacing:normal;min-width:0;min-height:0;width:auto;height:auto;line-height:inherit;border-radius:0}
+.bor-arara a{text-decoration:none}
+.bor-arara img{display:block;max-width:none;border:0;margin:0;-webkit-user-drag:none;user-select:none}
+.bor-arara a:focus-visible,.bor-arara button:focus-visible{outline:2px solid var(--bor-gold-ink);outline-offset:3px}
+.bor-arara .bor-in{max-width:1320px;margin:0 auto;padding-block:44px 32px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.bor-arara .bor-head{display:grid;gap:10px;justify-items:center;text-align:center;margin-bottom:26px}
+.bor-arara .bor-eyebrow{margin:0;font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--bor-gold-ink)}
+.bor-arara .bor-title{margin:0;font-family:var(--bor-display);font-weight:400;font-size:clamp(28px,4vw,46px);line-height:1.08;color:var(--bor-green);text-wrap:balance}
+.bor-arara .bor-railwrap{overflow-x:auto;overflow-y:hidden;padding-block:4px 40px;scrollbar-width:none;-webkit-overflow-scrolling:touch}
+.bor-arara .bor-railwrap::-webkit-scrollbar{display:none}
+.bor-arara .bor-pieces{position:relative;display:flex;align-items:flex-start;width:max-content;margin-inline:auto;padding-inline:calc(var(--bor-pw)*.3)}
+.bor-arara .bor-pieces::before{content:"";position:absolute;left:0;right:0;top:calc(var(--bor-pw)*.036);height:5px;border-radius:3px;background:linear-gradient(#f4f4f4,#9b9da0 55%,#c8c9cb);box-shadow:0 2px 3px rgba(0,0,0,.14)}
+.bor-arara .bor-piece{position:relative;z-index:1;display:block;width:var(--bor-pw);margin:0 calc(var(--bor-pw)*-.19);transform-origin:50% 1%;transition:transform .45s cubic-bezier(.2,.8,.2,1),opacity .3s,filter .3s}
+.bor-arara .bor-swing{display:block;transform-origin:50% 1%;animation:bor-swing 2.8s cubic-bezier(.3,.6,.3,1) both;animation-delay:calc(var(--i)*80ms)}
+.bor-arara.bor-loaded .bor-swing{animation:none}
+.bor-arara .bor-piece img{width:100%;height:auto;filter:drop-shadow(0 10px 12px rgba(60,48,30,.18))}
+@media (hover:hover){
+.bor-arara .bor-pieces:hover .bor-piece{opacity:.45;filter:saturate(.6) blur(1px)}
+.bor-arara .bor-pieces .bor-piece:hover{opacity:1;filter:none;transform:scale(1.12);z-index:5}
+.bor-arara.bor-loaded .bor-piece:hover .bor-swing{animation:bor-wiggle 1.3s ease-out}
+}
+.bor-arara .bor-piece:focus-visible{z-index:5}
+.bor-arara .bor-cap{margin:0;min-height:1.6em;text-align:center;font-size:13px;color:var(--bor-mute);letter-spacing:.02em}
+.bor-arara .bor-cap strong{color:var(--bor-ink);font-weight:700;font-size:12px;letter-spacing:.14em;text-transform:uppercase}
+.bor-arara .bor-row{padding-top:28px;border-top:1px solid rgba(43,47,38,.12)}
+.bor-arara .bor-row+.bor-row{margin-top:6px}
+.bor-arara .bor-label{display:flex;justify-content:center;align-items:baseline;flex-wrap:wrap;gap:6px 16px;margin-bottom:14px;text-align:center}
+.bor-arara .bor-label h3{margin:0;font-family:var(--bor-display);font-weight:400;font-size:28px;line-height:1.15;color:var(--bor-green)}
+.bor-arara .bor-label span{font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--bor-mute)}
+.bor-arara .bor-label a{font-size:13px;font-weight:700;color:var(--bor-green);border-bottom:1px solid currentColor;padding-bottom:1px}
+.bor-arara .bor-row .bor-pieces{margin-inline:auto}
+.bor-arara .bor-row .bor-cap{text-align:center;margin-top:-4px;margin-bottom:14px}
+@media (hover:hover){.bor-arara .bor-row .bor-pieces .bor-piece:hover{transform:scale(1.07)}}
+@media (max-width:640px){.bor-arara .bor-label{justify-content:space-between}.bor-arara .bor-label h3{font-size:24px}.bor-arara .bor-label span{display:none}}
+.bor-arara .bor-detail{display:grid;gap:22px;justify-items:center;animation:bor-in .5s cubic-bezier(.2,.8,.2,1) both}
+.bor-arara .bor-back{justify-self:start;padding:6px 0;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--bor-mute)}
+.bor-arara .bor-back:hover{color:var(--bor-green)}
+.bor-arara .bor-stagebox{position:relative;display:grid;grid-template-columns:1fr auto 1fr;align-items:start;width:100%;max-width:1060px}
+.bor-arara .bor-ghost{grid-row:1;width:min(220px,18vw);opacity:.32;filter:blur(5px);pointer-events:none}
+.bor-arara .bor-gl{grid-column:1;justify-self:end;margin-right:-28px}
+.bor-arara .bor-gr{grid-column:3;justify-self:start;margin-left:-28px}
+.bor-arara .bor-ghost img{width:100%;height:auto}
+.bor-arara .bor-bigwrap{grid-column:2;grid-row:1;position:relative;z-index:2}
+.bor-arara .bor-big{position:relative;width:min(400px,70vw);aspect-ratio:520/700}
+.bor-arara .bor-big.is-photo{width:min(480px,72vw);aspect-ratio:1/1}
+.bor-arara .bor-layer{position:absolute;inset:0}
+.bor-arara .bor-layer img{width:100%;height:100%;object-fit:contain;object-position:50% 0}
+.bor-arara .bor-big:not(.is-photo) .bor-layer img{filter:drop-shadow(0 18px 22px rgba(60,48,30,.2))}
+.bor-arara .bor-wipe{animation:bor-wipe .75s cubic-bezier(.65,0,.35,1) both}
+.bor-arara .bor-fade{animation:bor-fade .4s ease-out both}
+.bor-arara .bor-nav{position:absolute;top:38%;z-index:3;width:42px;height:42px;border-radius:50%;border:1px solid var(--bor-line);display:grid;place-items:center;font-size:22px;line-height:1;color:var(--bor-ink);background:rgba(248,246,241,.75);transition:background .2s,color .2s,border-color .2s}
+.bor-arara .bor-nav:hover{background:var(--bor-green);border-color:var(--bor-green);color:var(--bor-cream)}
+.bor-arara .bor-prev{left:0}
+.bor-arara .bor-next{right:0}
+.bor-arara .bor-kraft{position:absolute;left:94%;top:1%;display:flex;flex-direction:column;align-items:center;transform-origin:50% 0;animation:bor-sway 5s ease-in-out infinite alternate}
+.bor-arara .bor-kraft::before{content:"";width:1px;height:clamp(60px,9vw,110px);background:rgba(43,47,38,.45)}
+.bor-arara .bor-kraft b{position:relative;display:grid;place-items:center;width:30px;height:100px;padding-top:12px;white-space:nowrap;background:var(--bor-kraft);clip-path:polygon(25% 0,75% 0,100% 12%,100% 100%,0 100%,0 12%);writing-mode:vertical-rl;font-family:var(--bor-body);font-size:8.5px;font-weight:700;letter-spacing:.24em;color:var(--bor-green)}
+.bor-arara .bor-kraft b::before{content:"";position:absolute;top:5px;left:50%;width:5px;height:5px;margin-left:-2.5px;border-radius:50%;background:var(--bor-bg)}
+.bor-arara .bor-info{display:grid;gap:12px;justify-items:center;text-align:center;max-width:560px}
+.bor-arara .bor-name{margin:0;font-family:var(--bor-body);font-size:15px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--bor-ink);text-wrap:balance}
+.bor-arara .bor-spec,.bor-arara .bor-min{margin:0;font-size:13px;color:var(--bor-mute)}
+.bor-arara .bor-spec+.bor-min{margin-top:-8px}
+.bor-arara .bor-side{display:inline-flex;gap:2px;padding:3px;border:1px solid var(--bor-line);border-radius:999px}
+.bor-arara .bor-side button{padding:6px 16px;border-radius:999px;font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--bor-mute);transition:background .2s,color .2s}
+.bor-arara .bor-side button[aria-pressed="true"]{background:var(--bor-ink);color:var(--bor-bg)}
+.bor-arara .bor-tags{position:relative;display:flex;gap:7px;justify-content:center;margin-top:6px}
+.bor-arara .bor-tags::before{content:"";position:absolute;top:0;left:-12px;right:-12px;height:2px;border-radius:2px;background:linear-gradient(90deg,#c4c5c7,#8f9194,#c4c5c7)}
+.bor-arara .bor-tag{position:relative;display:flex;flex-direction:column;align-items:center;transform-origin:50% 0;filter:drop-shadow(0 1px 1.5px rgba(0,0,0,.25));transition:transform .25s}
+.bor-arara .bor-tag::before{content:"";width:1px;height:var(--len);background:rgba(43,47,38,.4);transition:height .25s}
+.bor-arara .bor-tag span{position:relative;display:block;width:clamp(20px,6vw,24px);height:40px;background:var(--c);clip-path:polygon(25% 0,75% 0,100% 16%,100% 100%,0 100%,0 16%)}
+.bor-arara .bor-tag span::after{content:"";position:absolute;top:5px;left:50%;width:4px;height:4px;margin-left:-2px;border-radius:50%;background:var(--bor-bg)}
+.bor-arara .bor-tag::after{content:"";width:12px;height:2px;margin-top:6px;border-radius:2px;background:transparent}
+.bor-arara .bor-tag:hover{transform:rotate(-5deg)}
+.bor-arara .bor-tag[aria-pressed="true"]::before{height:calc(var(--len) + 8px)}
+.bor-arara .bor-tag[aria-pressed="true"]::after{background:var(--bor-green)}
+.bor-arara .bor-cname{margin:-6px 0 0;font-size:12px;color:var(--bor-mute);letter-spacing:.04em}
+.bor-arara .bor-cname strong{color:var(--bor-ink)}
+.bor-arara .bor-ctas{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:4px}
+.bor-arara .bor-heroctas{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;margin-top:18px}
+.bor-arara .bor-wa,.bor-arara .bor-site{display:inline-flex;align-items:center;gap:6px;padding:12px 20px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.06em;transition:transform .2s,background .2s,color .2s}
+.bor-arara .bor-wa{background:var(--bor-green);color:var(--bor-cream)}
+.bor-arara .bor-wa:hover{background:#33422a;color:var(--bor-cream);transform:translateY(-1px)}
+.bor-arara .bor-site{border:1px solid var(--bor-green);color:var(--bor-green)}
+.bor-arara .bor-site:hover{background:var(--bor-green);color:var(--bor-cream)}
+.bor-arara .bor-marquee{background:var(--bor-green);color:var(--bor-cream);overflow:hidden;padding-block:11px;white-space:nowrap}
+.bor-arara .bor-track{display:flex;width:max-content;animation:bor-mq 42s linear infinite}
+.bor-arara .bor-run{display:flex;align-items:center}
+.bor-arara .bor-run span{padding-inline:18px;font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase}
+.bor-arara .bor-run i{font-style:normal;font-size:10px;color:var(--bor-gold)}
+@keyframes bor-swing{0%{transform:rotate(5deg)}22%{transform:rotate(-3.5deg)}44%{transform:rotate(2deg)}66%{transform:rotate(-1deg)}84%{transform:rotate(.4deg)}100%{transform:rotate(0)}}
+@keyframes bor-wiggle{0%{transform:rotate(0)}20%{transform:rotate(2.2deg)}45%{transform:rotate(-1.6deg)}70%{transform:rotate(.7deg)}100%{transform:rotate(0)}}
+@keyframes bor-sway{from{transform:rotate(-2.5deg)}to{transform:rotate(2.5deg)}}
+@keyframes bor-wipe{from{clip-path:inset(0 0 100% 0)}to{clip-path:inset(0 0 0 0)}}
+@keyframes bor-fade{from{opacity:0;transform:scale(.97)}to{opacity:1;transform:none}}
+@keyframes bor-in{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:none}}
+@keyframes bor-mq{to{transform:translateX(-50%)}}
+@media (max-width:640px){
+.bor-arara{--bor-pw:132px}
+.bor-arara .bor-in{padding-block:32px 24px}
+.bor-arara .bor-railwrap{-webkit-mask-image:linear-gradient(90deg,transparent,#000 5%,#000 88%,transparent);mask-image:linear-gradient(90deg,transparent,#000 5%,#000 88%,transparent)}
+.bor-arara .bor-ghost,.bor-arara .bor-kraft{display:none}
+.bor-arara .bor-big{width:min(300px,74vw)}
+.bor-arara .bor-big.is-photo{width:min(380px,86vw)}
+.bor-arara .bor-nav{top:34%;width:38px;height:38px}
+.bor-arara .bor-tags{gap:6px}
+.bor-arara .bor-tag span{height:36px}
+}
+@media (prefers-reduced-motion:reduce){.bor-arara *,.bor-arara *::before,.bor-arara *::after{animation:none!important;transition:none!important}}
+</style>
+<section class="bor-arara" id="bor-arara" aria-label="Arara de camisetas Borinelli">
+<div class="bor-in">
+<header class="bor-head">
+<p class="bor-eyebrow">Private label · Brusque/SC</p>
+<h2 class="bor-title">Escolha a peça. A marca é sua.</h2>
+<div class="bor-heroctas"><a class="bor-wa" href="https://wa.me/5547996225357?text=Ol%C3%A1!%20Estou%20querendo%20produzir%20camisetas%20com%20a%20minha%20marca." target="_blank" rel="noopener">Estou querendo produzir ↗</a><a class="bor-site" href="https://borinelli.com/produtos/">Ver produtos</a></div>
+</header>
+<div class="bor-rack" data-bor="rack"></div>
+<div class="bor-detail" data-bor="detail" hidden>
+<button class="bor-back" type="button" data-bor="back">← Voltar pra arara</button>
+<div class="bor-stagebox" data-bor="stage">
+<div class="bor-ghost bor-gl" data-bor="gl" aria-hidden="true"></div>
+<div class="bor-bigwrap"><div class="bor-big" data-bor="big"></div><span class="bor-kraft" aria-hidden="true"><b>SUA MARCA</b></span></div>
+<div class="bor-ghost bor-gr" data-bor="gr" aria-hidden="true"></div>
+<button class="bor-nav bor-prev" type="button" data-bor="prev" aria-label="Peça anterior">‹</button>
+<button class="bor-nav bor-next" type="button" data-bor="next" aria-label="Próxima peça">›</button>
+</div>
+<div class="bor-info">
+<h3 class="bor-name" data-bor="name"></h3>
+<p class="bor-spec" data-bor="spec"></p>
+<p class="bor-min">Sob encomenda · mínimo de 30 peças por tecido e cor</p>
+<div class="bor-side" role="group" aria-label="Lado da peça"><button type="button" data-side="front">Frente</button><button type="button" data-side="back">Costas</button></div>
+<div class="bor-tags" data-bor="tags" role="group" aria-label="Cores"></div>
+<p class="bor-cname" data-bor="cname"></p>
+<div class="bor-ctas"><a class="bor-wa" data-bor="wa" href="https://wa.me/5547996225357" target="_blank" rel="noopener">Pedir orçamento no WhatsApp ↗</a><a class="bor-site" data-bor="site" href="https://borinelli.com/">Ver o produto</a></div>
+</div>
+</div>
+</div>
+<div class="bor-marquee" aria-hidden="true"><div class="bor-track" data-bor="track"></div></div>
+</section>
+<script>
+(function(){
+var R=document.getElementById('bor-arara');
+if(!R||R.getAttribute('data-ready'))return;
+R.setAttribute('data-ready','1');
+function $(k){return R.querySelector('[data-bor="'+k+'"]')}
+var IMG='https://dcdn-us.mitiendanube.com/stores/007/753/571/media/';
+var WA='5547996225357';
+var ONSITE=!!(window.LS&&window.LS.store),BASE=ONSITE?'':'https://borinelli.com';
+var HEX={'Branco':'#f2f1ed','Preto':'#1f1f20','New Cinza Pedra':'#8a867e','Marinho':'#1f2a44','Off White':'#e9e0cc','Amarelo Bandeira':'#efc11c','Verde Cactus':'#566f4c','Vinho do Porto':'#5a1e2b','Royal':'#2445a6','Cacau':'#5b3d2f','Legend':'#645a4f','Verde Militar':'#45452b','Areia':'#cdb999','Cinza':'#9c9b98','Bordô':'#6a1f2d','Azul Piscina':'#3aa9c4'};
+function hex(n){return HEX[n]||'#c9c3b8'}
+/* slug = endereco do anuncio no borinelli.com (as fotos reais e as cores sao lidas do proprio anuncio) */
+var MODELS={
+trad:{n:'Camiseta Tradicional',s:'Do PP ao G6, com plus size',slug:'camiseta-gola-careca-penteada'},
+over:{n:'Camiseta Oversized',s:'Ombro caído e gola em ribana 2x1',slug:'camiseta-oversized-strong'},
+reg:{n:'Regata',s:'Do PP ao GG',slug:'regata-masculina-private-label'},
+ml:{n:'Camiseta Manga Longa',s:'',slug:'camiseta-manga-longa-penteada'},
+fem:{n:'Camiseta Feminina',s:'',slug:'camiseta-feminina-penteada'},
+crop:{n:'Cropped',s:'',slug:'cropped-penteada',g:'o'},
+inf:{n:'Camiseta Infantil',s:'',slug:'camiseta-infantil-penteada'},
+cv:{n:'Corta-Vento',s:'Capuz, zíper e punhos com elástico',slug:'corta-vento-aspen',g:'o'},
+short:{n:'Shorts',s:'',slug:'short-tactel',g:'o'},
+pima:{n:'Camiseta Pima',s:'Algodão pima, toque macio',slug:'camiseta-pima'},
+cotton:{n:'Camiseta Cotton Premium',s:'Algodão 200 g/m², gola no mesmo tecido',slug:'camiseta-cotton-premium'},
+ovfem:{n:'Camiseta Oversized Feminina',s:'Gola alta e ombro caído',slug:'camiseta-oversized-feminina-gola-alta'},
+plusfem:{n:'Camiseta Plus Size Feminina',s:'Do G1 ao G6',slug:'camiseta-plus-size-feminina-11adf'},
+regfem:{n:'Regata Feminina',s:'Do PP ao GG',slug:'regata-feminina'},
+ovinf:{n:'Camiseta Oversized Infantil',s:'Do 2 ao 16',slug:'camiseta-oversized-infantil'},
+reginf:{n:'Regata Infantil',s:'Do 2 ao 16',slug:'regata-infantil-unissex-private-label'},
+cvinf:{n:'Corta-Vento Infantil',s:'Do 2 ao 16',slug:'corta-vento-infantil',g:'o'}
+};
+/* araras por categoria: nome, link da categoria e pecas (modelo, cor, foto no cabide) */
+var CATS=[
+{n:'Masculino',u:'/camisetas/masculinas/',p:[['trad','Branco','ab8c9881-arara-01-tradicional-branco/source.webp'],['over','Preto','9d62b5fe-arara-02-oversized-preto/source.webp'],['pima','Areia','272a3eee-arara-12-pima-areia/source.webp'],['ml','Marinho','7eb94a76-arara-04-manga-longa-marinho/source.webp'],['cotton','Capuccino','91170220-arara-13-cotton-premium-capuccino/source.webp'],['reg','New Cinza Pedra','4afb1ec6-arara-03-regata-cinza-pedra/source.webp']]},
+{n:'Feminino',u:'/camisetas/femininas/',p:[['fem','Off White','65067d88-arara-05-feminina-off-white/source.webp'],['ovfem','Vinho do Porto','69dd73fd-arara-14-oversized-feminina-vinho/source.webp'],['crop','Amarelo Bandeira','da72e1c3-arara-06-cropped-amarelo/source.webp'],['plusfem','Verde Cactus','82457ee0-arara-15-plus-size-feminina-verde-cactus/source.webp'],['regfem','Cacau','452e5105-arara-16-regata-feminina-cacau/source.webp']]},
+{n:'Infantil',u:'/camisetas/infantis/',p:[['inf','Royal','96414fcf-arara-09-infantil-royal/source.webp'],['ovinf','Verde Militar','9922181c-arara-17-oversized-infantil-verde-militar/source.webp'],['reginf','Amarelo Bandeira','6939ba50-arara-18-regata-infantil-amarelo/source.webp']]},
+{n:'Corta-vento e shorts',u:'/corta-vento/',p:[['cv','Areia','0b433391-arara-10-corta-vento-areia/source.webp'],['cvinf','Marinho','0df3ee7c-arara-19-corta-vento-infantil-marinho/source.webp'],['short','Azul Piscina','48b0b0f7-arara-11-shorts-azul-piscina/source.webp']]}
+];
+var pieces=[];CATS.forEach(function(c,ci){c.idx=[];c.p.forEach(function(a){c.idx.push(pieces.length);pieces.push({m:a[0],c:a[1],c0:a[1],f:IMG+a[2],cat:ci})})});
+var cache={};
+function grab(h){var k=h.indexOf('LS.variants = '),s,d=0,inS=false,esc=false,i,c;if(k<0)return null;s=h.indexOf('[',k);
+for(i=s;i<h.length;i++){c=h.charAt(i);if(inS){if(esc)esc=false;else if(c==='\\')esc=true;else if(c==='"')inS=false;continue}
+if(c==='"')inS=true;else if(c==='['||c==='{')d++;else if(c===']'||c==='}'){d--;if(d===0){try{return JSON.parse(h.slice(s,i+1))}catch(e){return null}}}}return null}
+function strip(n){return n.replace(/(^|-)\d+-/,'$1')}
+function parse(h){var v=h&&grab(h);if(!v||!v.length)return null;
+var h2=h.replace(/\\\//g,'/'),gal={},re=/\/\/[a-z0-9.-]+\/stores\/[0-9\/]+\/products\/([a-z0-9_-]+?)-[0-9a-f]{32}-1024-1024\.webp/gi,mm,o=['option0','option1','option2'],ci='option0',k,colors=[],seen={};
+while((mm=re.exec(h2))){if(!gal[mm[1]])gal[mm[1]]='https:'+mm[0]}
+for(k=0;k<3;k++){if(v.some(function(x){return HEX[x[o[k]]]})){ci=o[k];break}}
+v.forEach(function(x){var n=x[ci],cand,p,f=null,b=null,nm,key,g;if(!n||seen[n])return;seen[n]=1;
+cand=v.filter(function(y){return y[ci]===n});
+p=cand.filter(function(y){return y.available!==false&&o.some(function(z){return y[z]==='M'})})[0]||cand.filter(function(y){return y.available!==false})[0]||cand[0];
+if(p.image_url){f='https:'+String(p.image_url).replace(/^https?:/,'');nm=f.split('/').pop().replace(/-[0-9a-f]{32}-.*$/,'');
+if(nm.indexOf('frente')>-1){key=strip(nm).replace('frente','costas');for(g in gal){if(strip(g)===key){b=gal[g];break}}}}
+colors.push({n:n,id:p.id,f:f,b:b})});
+return colors.length?{colors:colors}:null}
+function load(m){var M=MODELS[m];if(!ONSITE||!window.fetch||!window.Promise)return null;
+if(!cache[m]){cache[m]=fetch('/produtos/'+M.slug+'/',{credentials:'same-origin'}).then(function(r){return r.ok?r.text():''}).then(function(h){var d=parse(h);if(d)M.d=d;return d})['catch'](function(){return null})}
+return cache[m]}
+var N=pieces.length,st={i:0,s:'front'},tok=0;
+var canHover=!!(window.matchMedia&&window.matchMedia('(hover:hover)').matches);
+var reduce=!!(window.matchMedia&&window.matchMedia('(prefers-reduced-motion:reduce)').matches);
+var rack=$('rack'),det=$('detail'),big=$('big'),gl=$('gl'),gr=$('gr'),tagsEl=$('tags');
+var DEF=(canHover?'Clique':'Toque')+' numa peça pra ver as fotos e as cores';
+function renderRack(){var h='';CATS.forEach(function(c,ci){h+='<div class="bor-row" data-cat="'+ci+'"><div class="bor-label"><h3>'+c.n+'</h3><span>'+c.p.length+' peças</span><a href="'+BASE+c.u+'">Ver todas →</a></div><div><div class="bor-railwrap"><div class="bor-pieces">';
+c.idx.forEach(function(i,j){var p=pieces[i];h+='<button class="bor-piece" type="button" data-i="'+i+'" style="--i:'+j+'" aria-label="'+MODELS[p.m].n+', cor '+p.c0+'"><span class="bor-swing"><img src="'+p.f+'" alt="" loading="lazy" decoding="async" draggable="false"></span></button>'});
+h+='</div></div><p class="bor-cap" aria-live="polite">'+(ci?'':DEF)+'</p></div></div>'});rack.innerHTML=h}
+function sib(d){var L=CATS[pieces[st.i].cat].idx,j=L.indexOf(st.i);return L[(j+L.length+d)%L.length]}
+function setBig(html,anim){var l=document.createElement('div');l.className='bor-layer';l.innerHTML=html;
+if(!anim||reduce||!big.firstChild){big.innerHTML='';big.appendChild(l);return}
+l.className='bor-layer bor-'+anim;big.appendChild(l);
+var done=function(){while(big.firstChild&&big.firstChild!==l){big.removeChild(big.firstChild)}l.className='bor-layer'};
+l.addEventListener('animationend',done);setTimeout(done,950)}
+function cols(p){var d=MODELS[p.m].d;return d?d.colors.map(function(c){return c.n}):[p.c0]}
+function info(m,n){var d=MODELS[m].d,i;if(!d)return null;for(i=0;i<d.colors.length;i++){if(d.colors[i].n===n)return d.colors[i]}return null}
+function fix(q){var cs=cols(q);if(cs.indexOf(q.c)<0)q.c=cs.indexOf(q.c0)>-1?q.c0:cs[0]}
+function renderTags(p){var cs=cols(p),h='',k;for(k=0;k<cs.length;k++){h+='<button type="button" class="bor-tag" data-c="'+cs[k]+'" style="--c:'+hex(cs[k])+';--len:'+(10+(k*7)%11)+'px" aria-label="'+cs[k]+'" title="'+cs[k]+'" aria-pressed="'+(cs[k]===p.c?'true':'false')+'"><span></span></button>'}tagsEl.innerHTML=h}
+function hangerBig(p,M,anim){big.className='bor-big';setBig('<img src="'+p.f+'" alt="'+M.n+' '+p.c0+' no cabide">',anim)}
+function renderDetail(anim){var my=++tok,p=pieces[st.i],M=MODELS[p.m],ia=sib(-1),ib=sib(1),k,I,url,im;
+fix(p);I=info(p.m,p.c);
+if(I&&I.f&&!I.b&&st.s==='back')st.s='front';
+R.querySelector('.bor-side').hidden=!(I&&I.f&&I.b);
+url=I?(st.s==='back'?I.b:I.f):null;
+if(url){im=new Image();im.onload=function(){if(my!==tok)return;big.className='bor-big is-photo';setBig('<img src="'+url+'" alt="'+M.n+' '+p.c+(st.s==='back'?', costas':', frente')+'">',anim)};im.onerror=function(){if(my===tok)hangerBig(p,M,anim)};im.src=url}
+else hangerBig(p,M,anim);
+gl.innerHTML='<img src="'+pieces[ia].f+'" alt="">';gr.innerHTML='<img src="'+pieces[ib].f+'" alt="">';
+$('name').textContent=M.n;var sp=$('spec');sp.textContent=M.s;sp.hidden=!M.s;
+var sb=R.querySelectorAll('[data-side]');for(k=0;k<sb.length;k++){sb[k].setAttribute('aria-pressed',sb[k].getAttribute('data-side')===st.s?'true':'false')}
+renderTags(p);
+$('cname').innerHTML='Cor: <strong>'+p.c+'</strong>';
+$('wa').href='https://wa.me/'+WA+'?text='+encodeURIComponent('Olá! Vi no site '+(M.g||'a')+' '+M.n+' na cor '+p.c+' e quero um orçamento de private label.');
+$('site').href=BASE+'/produtos/'+M.slug+'/'+(I&&I.id?'?variant='+I.id:'');
+if(!M.d){var pr=load(p.m);if(pr)pr.then(function(d){if(d&&my===tok&&!det.hidden)renderDetail('fade')})}}
+function open(i,kb){st.i=i;st.s='front';rack.hidden=true;det.hidden=false;renderDetail('fade');
+if(R.getBoundingClientRect().top<0){R.scrollIntoView({behavior:reduce?'auto':'smooth',block:'start'})}
+if(kb){try{$('back').focus({preventScroll:true})}catch(e){}}}
+function close(){det.hidden=true;rack.hidden=false;var b=rack.querySelector('[data-i="'+st.i+'"]');if(b){var row=b.closest('.bor-row');if(row&&row.getBoundingClientRect().top<0)row.scrollIntoView({block:'start',behavior:reduce?'auto':'smooth'});try{b.focus({preventScroll:true})}catch(e){}}}
+function nav(dir){st.i=sib(dir);st.s='front';renderDetail('fade')}
+var k;
+rack.addEventListener('click',function(e){var b=e.target.closest('.bor-piece');if(b)open(+b.getAttribute('data-i'),e.detail===0)});
+function capFor(e){var b=e.target.closest&&e.target.closest('.bor-piece');if(!b)return;var p=pieces[+b.getAttribute('data-i')],c=b.closest('.bor-row').querySelector('.bor-cap');c.innerHTML='<strong>'+MODELS[p.m].n+'</strong> · '+p.c0;load(p.m)}
+rack.addEventListener('mouseover',capFor);rack.addEventListener('focusin',capFor);
+rack.addEventListener('mouseout',function(e){var row=e.target.closest&&e.target.closest('.bor-row');if(row&&!row.contains(e.relatedTarget))row.querySelector('.bor-cap').textContent=row.getAttribute('data-cat')==='0'?DEF:''});
+tagsEl.addEventListener('click',function(e){var b=e.target.closest('.bor-tag');if(!b)return;var c=b.getAttribute('data-c');if(c===pieces[st.i].c)return;pieces[st.i].c=c;renderDetail('wipe')});
+R.querySelector('.bor-side').addEventListener('click',function(e){var b=e.target.closest('[data-side]');if(!b)return;var s=b.getAttribute('data-side');if(s===st.s)return;st.s=s;renderDetail('fade')});
+$('back').addEventListener('click',close);
+$('prev').addEventListener('click',function(){nav(-1)});
+$('next').addEventListener('click',function(){nav(1)});
+R.addEventListener('keydown',function(e){if(det.hidden)return;if(e.key==='ArrowLeft')nav(-1);else if(e.key==='ArrowRight')nav(1);else if(e.key==='Escape')close()});
+var x0=null,stage=$('stage');
+stage.addEventListener('touchstart',function(e){x0=e.touches[0].clientX},{passive:true});
+stage.addEventListener('touchend',function(e){if(x0===null)return;var dx=e.changedTouches[0].clientX-x0;x0=null;if(Math.abs(dx)>45)nav(dx<0?1:-1)},{passive:true});
+var items=['Private label','Mínimo de 30 peças por tecido e cor','Etiqueta, tag e embalagem da sua marca','Certificação ABVTEX','Feito em Brusque/SC'],one='';
+for(k=0;k<items.length;k++){one+='<span>'+items[k]+'</span><i>✦</i>'}
+$('track').innerHTML='<div class="bor-run">'+one+one+'</div><div class="bor-run">'+one+one+'</div>';
+renderRack();
+setTimeout(function(){R.className+=' bor-loaded'},3600);
+})();
+</script>

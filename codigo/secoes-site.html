@@ -1,0 +1,175 @@
+<style>
+/* Home Borinelli: secoes abaixo da arara (bloco Codigo do Ipanema) */
+.bh{--bg:#F8F6F1;--bg2:#EFEBE2;--ink:#2b2f26;--mute:#6d685d;--green:#3d4d32;--green2:#2f3c27;--gold:#c7a581;--gold-ink:#86663f;--cream:#f6fdeb;--line:rgba(43,47,38,.14);--disp:'Marcellus',Georgia,'Times New Roman',serif;--body:'Lato',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.bh *,.bh *::before,.bh *::after{box-sizing:border-box}
+.bh img{display:block;max-width:100%;height:auto;border:0}
+.bh a{text-decoration:none;color:inherit}
+.bh h2,.bh h3,.bh p,.bh ol,.bh ul,.bh figure{margin:0;padding:0}
+.bh ol,.bh ul{list-style:none}
+.bh .bh-in{max-width:1120px;margin:0 auto;padding-block:96px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.bh .bh-eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-ink);margin-bottom:14px}
+.bh .bh-h2{font-family:var(--disp);font-weight:400;font-size:clamp(28px,3.4vw,42px);line-height:1.12;color:var(--green);text-wrap:balance;max-width:20ch}
+.bh .bh-lead{margin-top:16px;font-size:17px;color:var(--mute);max-width:52ch}
+.bh .bh-btn{display:inline-flex;align-items:center;gap:8px;padding:14px 24px;border-radius:999px;background:var(--green);color:var(--cream);font-size:14px;font-weight:700;letter-spacing:.04em;transition:background .2s,transform .2s}
+.bh .bh-btn:hover{background:var(--green2);transform:translateY(-1px)}
+.bh .bh-btn.gold{background:var(--gold);color:var(--green2)}
+.bh .bh-btn.gold:hover{background:#d4b591}
+.bh .bh-btn.ghost{background:transparent;border:1px solid rgba(246,253,235,.45);color:var(--cream)}
+.bh .bh-btn.ghost:hover{background:rgba(246,253,235,.08)}
+.bh .bh-link{font-size:14px;font-weight:700;color:var(--green);border-bottom:1px solid currentColor;padding-bottom:2px;white-space:nowrap}
+.bh a:focus-visible{outline:2px solid var(--gold-ink);outline-offset:3px}
+/* numeros */
+.bh-nums .bh-in{padding-block:56px}
+.bh-nums ul{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--line);border-bottom:1px solid var(--line)}
+.bh-nums li{padding:28px 24px;border-left:1px solid var(--line)}
+.bh-nums li:first-child{border-left:0;padding-left:0}
+.bh-nums b{display:block;font-family:var(--disp);font-weight:400;font-size:clamp(30px,3.2vw,44px);line-height:1;color:var(--green)}
+.bh-nums span{display:block;margin-top:10px;font-size:14px;color:var(--mute);max-width:22ch}
+/* private label + etapas */
+.bh-split{display:grid;grid-template-columns:1fr 1fr;gap:72px;align-items:center}
+.bh-photo{border-radius:4px;overflow:hidden;aspect-ratio:4/5;background:var(--bg2)}
+.bh-photo img{width:100%;height:100%;object-fit:cover;object-position:90% 50%}
+.bh-steps{margin-top:36px;border-top:1px solid var(--line)}
+.bh-steps li{display:grid;grid-template-columns:44px 1fr;gap:12px;padding:18px 0;border-bottom:1px solid var(--line)}
+.bh-steps li>span{font-family:var(--disp);font-size:20px;color:var(--gold-ink);line-height:1.2}
+.bh-steps b{display:block;font-size:16px;color:var(--ink)}
+.bh-steps p{font-size:14px;color:var(--mute);margin-top:2px}
+.bh-pl .bh-btn{margin-top:32px}
+.bh .bh-sac{display:inline-block;margin-top:24px}
+/* malhas */
+.bh-lines{background:var(--bg2)}
+.bh-headrow{display:flex;align-items:flex-end;justify-content:space-between;gap:24px;margin-bottom:40px}
+.bh-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:20px}
+.bh-card{display:flex;flex-direction:column;gap:6px}
+.bh-card .bh-img{aspect-ratio:4/5;border-radius:4px;overflow:hidden;background:#e4dfd4;margin-bottom:10px}
+.bh-card .bh-img img{width:100%;height:100%;object-fit:cover;transition:transform .5s cubic-bezier(.2,.8,.2,1)}
+.bh-card:hover .bh-img img{transform:scale(1.04)}
+.bh-card .bh-tag{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-ink)}
+.bh-card b{font-family:var(--disp);font-weight:400;font-size:22px;color:var(--green);line-height:1.2}
+.bh-card p{font-size:14px;color:var(--mute)}
+/* atacado */
+.bh-green{background:var(--green);color:var(--cream)}
+.bh-green .bh-eyebrow{color:var(--gold)}
+.bh-green .bh-h2{color:var(--cream)}
+.bh-green .bh-lead{color:rgba(246,253,235,.75)}
+.bh-ctas{display:flex;flex-wrap:wrap;gap:12px;margin-top:32px}
+.bh-tiers{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;align-items:end;height:260px}
+.bh-tiers li{display:flex;flex-direction:column;justify-content:flex-end;height:100%}
+.bh-tiers .bar{border-radius:4px 4px 0 0;background:linear-gradient(180deg,rgba(199,165,129,.95),rgba(199,165,129,.55));display:flex;align-items:flex-start;justify-content:center;padding-top:12px}
+.bh-tiers .bar b{font-family:var(--disp);font-weight:400;font-size:22px;color:var(--green2)}
+.bh-tiers small{display:block;margin-top:10px;font-size:12px;letter-spacing:.06em;color:rgba(246,253,235,.7);text-align:center}
+.bh-tiers-note{margin-top:18px;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold);text-align:center}
+/* perguntas */
+.bh-faq .bh-split{align-items:start;grid-template-columns:5fr 7fr}
+.bh-qs{border-top:1px solid var(--line)}
+.bh-qs details{border-bottom:1px solid var(--line)}
+.bh-qs summary{list-style:none;cursor:pointer;display:flex;justify-content:space-between;align-items:center;gap:16px;padding:22px 0;font-size:17px;font-weight:700;color:var(--ink)}
+.bh-qs summary::-webkit-details-marker{display:none}
+.bh-qs summary::after{content:"+";font-family:var(--disp);font-size:26px;font-weight:400;color:var(--gold-ink);transition:transform .25s}
+.bh-qs details[open] summary::after{transform:rotate(45deg)}
+.bh-qs details p{padding:0 0 22px;font-size:15px;color:var(--mute);max-width:60ch}
+/* chamada final */
+.bh-final{background:var(--green2);color:var(--cream);text-align:center}
+.bh-final .bh-in{padding-block:88px;display:grid;justify-items:center}
+.bh-final .bh-h2{color:var(--cream);max-width:none}
+.bh-final .bh-lead{color:rgba(246,253,235,.75);margin-inline:auto}
+.bh-final .bh-btn{margin-top:28px}
+.bh-center{text-align:center;display:grid;justify-items:center}
+.bh-center .bh-h2{max-width:none}
+.bh-center .bh-lead{margin-inline:auto}
+.bh-lines5{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;margin-top:44px}
+.bh-line{display:flex;flex-direction:column;background:#fffdf8;border:1px solid var(--line);border-radius:6px;overflow:hidden;transition:border-color .2s,transform .2s}
+.bh-line:hover{border-color:var(--gold);transform:translateY(-2px)}
+.bh-line-img{height:200px;overflow:hidden;padding:16px 12px 8px;background:var(--bg)}
+.bh-line-img img{display:block;width:100%;height:100%;object-fit:contain;object-position:50% 0;filter:drop-shadow(0 8px 10px rgba(60,48,30,.16))}
+.bh-line-body{display:flex;flex-direction:column;gap:8px;padding:18px 18px 20px;flex:1}
+.bh-line .bh-tag{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-ink)}
+.bh-line h3{font-family:var(--disp);font-weight:400;font-size:22px;line-height:1.15;color:var(--green)}
+.bh-line p{font-size:14px;color:var(--mute)}
+.bh-line-go{margin-top:auto;padding-top:6px;font-size:13px;font-weight:700;color:var(--green)}
+@media (max-width:1000px){.bh-lines5{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media (max-width:640px){.bh-lines5{grid-template-columns:1fr}.bh-line{flex-direction:row}.bh-line-img{width:120px;height:auto;min-height:170px;flex:none;padding:14px 8px}.bh-line-img img{height:150px}}
+@media (max-width:900px){
+.bh .bh-in{padding-block:64px}
+.bh-split,.bh-faq .bh-split{grid-template-columns:1fr;gap:36px}
+.bh-photo{aspect-ratio:4/3}
+.bh-cards{grid-template-columns:repeat(2,1fr);gap:16px}
+.bh-nums ul{grid-template-columns:repeat(2,1fr)}
+.bh-nums li{border-left:0;padding-left:0}
+.bh-nums li:nth-child(even){border-left:1px solid var(--line);padding-left:20px}
+.bh-nums li:nth-child(n+3){border-top:1px solid var(--line)}
+.bh-headrow{flex-direction:column;align-items:flex-start}
+.bh-tiers{height:200px}
+}
+@media (max-width:480px){.bh-tiers .bar b{font-size:17px}.bh-card b{font-size:19px}}
+</style>
+<div class="bh" id="bh-home">
+<section class="bh-nums" aria-label="Números da fábrica">
+<div class="bh-in"><ul>
+<li><b>30</b><span>peças de pedido mínimo por tecido e cor</span></li>
+<li><b>70 mil</b><span>camisetas por mês de capacidade</span></li>
+<li><b>+15</b><span>anos fazendo camiseta em Brusque/SC</span></li>
+<li><b>ABVTEX</b><span>fábrica certificada, corte e costura próprios</span></li>
+</ul></div>
+</section>
+<section class="bh-linhas" id="linhas">
+<div class="bh-in">
+<div class="bh-center"><p class="bh-eyebrow">Nossas linhas</p><h2 class="bh-h2">Uma linha pra cada tipo de marca</h2><p class="bh-lead">Escolha a linha pelo estilo da sua marca. Todas saem com a sua etiqueta, tag e embalagem.</p></div>
+<div class="bh-lines5"><article class="bh-line"><div class="bh-line-img"><img src="https://dcdn-us.mitiendanube.com/stores/007/753/571/media/ab8c9881-arara-01-tradicional-branco/source.webp" alt="Linha Giro Rápido" loading="lazy"></div><div class="bh-line-body"><span class="bh-tag">Básicos de alto giro</span><h3>Linha Giro Rápido</h3><p>Os básicos que mais vendem: tradicional, feminina, cropped, regata, manga longa, infantil e plus size. Em malha 30.1 penteada, 30.1 OE ou PV.</p><a class="bh-line-go" href="https://wa.me/5547996225357?text=Ol%C3%A1%21%20Tenho%20interesse%20na%20Linha%20Giro%20R%C3%A1pido." target="_blank" rel="noopener">Quero essa linha →</a></div></article><article class="bh-line"><div class="bh-line-img"><img src="https://dcdn-us.mitiendanube.com/stores/007/753/571/media/9d62b5fe-arara-02-oversized-preto/source.webp" alt="Linha Hype" loading="lazy"></div><div class="bh-line-body"><span class="bh-tag">Streetwear</span><h3>Linha Hype</h3><p>Oversized de ombro caído e oversized feminina de gola alta, em suedine encorpada pra marcas de streetwear.</p><a class="bh-line-go" href="https://wa.me/5547996225357?text=Ol%C3%A1%21%20Tenho%20interesse%20na%20Linha%20Hype." target="_blank" rel="noopener">Quero essa linha →</a></div></article><article class="bh-line"><div class="bh-line-img"><img src="https://dcdn-us.mitiendanube.com/stores/007/753/571/media/272a3eee-arara-12-pima-areia/source.webp" alt="Linha Black Label" loading="lazy"></div><div class="bh-line-body"><span class="bh-tag">Premium</span><h3>Linha Black Label</h3><p>A linha mais nobre: Pima, de algodão peruano de fibra extra-longa, e Cotton Premium, com elastano e caimento no corpo.</p><a class="bh-line-go" href="https://wa.me/5547996225357?text=Ol%C3%A1%21%20Tenho%20interesse%20na%20Linha%20Black%20Label." target="_blank" rel="noopener">Quero essa linha →</a></div></article><article class="bh-line"><div class="bh-line-img"><img src="https://dcdn-us.mitiendanube.com/stores/007/753/571/media/0b433391-arara-10-corta-vento-areia/source.webp" alt="Linha Outdoor" loading="lazy"></div><div class="bh-line-body"><span class="bh-tag">Inverno</span><h3>Linha Outdoor</h3><p>Corta-vento em tecido Aspen, que repele água e vento. Com capuz, zíper e elástico no punho e na barra, adulto e infantil.</p><a class="bh-line-go" href="https://wa.me/5547996225357?text=Ol%C3%A1%21%20Tenho%20interesse%20na%20Linha%20Outdoor." target="_blank" rel="noopener">Quero essa linha →</a></div></article><article class="bh-line"><div class="bh-line-img"><img src="https://dcdn-us.mitiendanube.com/stores/007/753/571/media/48b0b0f7-arara-11-shorts-azul-piscina/source.webp" alt="Linha Verão" loading="lazy"></div><div class="bh-line-body"><span class="bh-tag">Praia e esporte</span><h3>Linha Verão</h3><p>Short de tactel leve e de secagem rápida, com cós de elástico e cordão, pra praia e esporte.</p><a class="bh-line-go" href="https://wa.me/5547996225357?text=Ol%C3%A1%21%20Tenho%20interesse%20na%20Linha%20Ver%C3%A3o." target="_blank" rel="noopener">Quero essa linha →</a></div></article></div>
+</div>
+</section>
+<section class="bh-pl" id="private-label">
+<div class="bh-in bh-split">
+<figure class="bh-photo"><img src="https://dcdn-us.mitiendanube.com/stores/007/753/571/media/611dabe2-private_label/original/1290.jpg" alt="Camiseta com etiqueta e tag na mesa de corte da fábrica" loading="lazy"></figure>
+<div>
+<p class="bh-eyebrow">Private label</p>
+<h2 class="bh-h2">Você traz a marca. A gente entrega a camiseta pronta.</h2>
+<p class="bh-lead">Modelagem, malha, peça piloto, corte, costura, estampa, etiqueta e embalagem, tudo na nossa fábrica.</p>
+<ol class="bh-steps">
+<li><span>01</span><div><b>Briefing</b><p>Você manda a referência, a arte e a quantidade. A gente indica a malha e a modelagem.</p></div></li>
+<li><span>02</span><div><b>Peça piloto</b><p>Amostra pra aprovar caimento, cor e estampa antes de rodar o lote.</p></div></li>
+<li><span>03</span><div><b>Produção</b><p>Corte, costura, estampa, etiqueta, tag e embalagem na fábrica própria.</p></div></li>
+<li><span>04</span><div><b>Entrega</b><p>Lote embalado e enviado pra qualquer lugar do Brasil.</p></div></li>
+</ol>
+<a class="bh-btn" href="https://wa.me/5547996225357?text=Ol%C3%A1!%20Quero%20fabricar%20camisetas%20com%20a%20minha%20marca." target="_blank" rel="noopener">Falar sobre o meu projeto ↗</a>
+</div>
+</div>
+</section>
+<section class="bh-green" id="atacado">
+<div class="bh-in bh-split">
+<div>
+<p class="bh-eyebrow">Atacado</p>
+<h2 class="bh-h2">Quanto maior o lote, menor o preço por peça.</h2>
+<p class="bh-lead">São quatro faixas de preço por modelo. A tabela completa vai pelo WhatsApp.</p>
+<div class="bh-ctas"><a class="bh-btn gold" href="https://wa.me/5547996225357?text=Ol%C3%A1!%20Quero%20a%20tabela%20de%20atacado." target="_blank" rel="noopener">Pedir tabela de atacado ↗</a><a class="bh-btn ghost" href="/produtos/">Ver produtos</a></div>
+</div>
+<div>
+<ol class="bh-tiers" aria-label="Faixas de quantidade por modelo">
+<li><div class="bar" style="height:34%"><b>30–49</b></div><small>peças</small></li>
+<li><div class="bar" style="height:52%"><b>50–99</b></div><small>peças</small></li>
+<li><div class="bar" style="height:74%"><b>100–499</b></div><small>peças</small></li>
+<li><div class="bar" style="height:100%"><b>500+</b></div><small>peças</small></li>
+</ol>
+<p class="bh-tiers-note">Mais peças, menor preço por peça →</p>
+</div>
+</div>
+</section>
+<section class="bh-faq" id="perguntas">
+<div class="bh-in bh-split">
+<div><p class="bh-eyebrow">Dúvidas</p><h2 class="bh-h2">Perguntas frequentes</h2><p class="bh-lead">Não achou o que procurava? Chama no WhatsApp.</p><a class="bh-link bh-sac" href="/central-de-atendimento/">Trocas, devoluções e SAC →</a></div>
+<div class="bh-qs">
+<details open><summary>Qual é o pedido mínimo?</summary><p>30 peças por tecido e cor. Dá pra combinar modelagens e tamanhos dentro do lote.</p></details>
+<details><summary>Que personalização vocês fazem?</summary><p>Estampa DTF, bordado, etiqueta interna, tag externa e embalagem com a sua marca. A arte é sua, a aplicação é nossa.</p></details>
+<details><summary>Vocês fazem peça piloto?</summary><p>Sim. Você aprova caimento, cor e acabamento antes de rodar o lote. Valor e prazo da piloto vêm no orçamento.</p></details>
+<details><summary>Qual é o prazo de produção?</summary><p>Depende da quantidade, da malha e da personalização. O prazo vem confirmado no orçamento e você acompanha cada etapa pelo WhatsApp.</p></details>
+</div>
+</div>
+</section>
+<section class="bh-final">
+<div class="bh-in">
+<h2 class="bh-h2">Está querendo produzir?</h2>
+<p class="bh-lead">Nos chame e conte o que você precisa, que a gente te ajuda.</p>
+<a class="bh-btn gold" href="https://wa.me/5547996225357?text=Ol%C3%A1!%20Estou%20querendo%20produzir%20camisetas%20com%20a%20minha%20marca." target="_blank" rel="noopener">Chamar no WhatsApp ↗</a>
+</div>
+</section>
+</div>

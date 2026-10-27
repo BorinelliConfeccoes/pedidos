@@ -1,0 +1,127 @@
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Lato:wght@400;700&family=Marcellus&display=swap">
+<style>
+/* Central de atendimento Borinelli: trocas, devolucoes e SAC pelo WhatsApp, com base no CDC (bloco Codigo do Ipanema) */
+.bs{--bg:#F8F6F1;--bg2:#EFEBE2;--card:#fffdf8;--ink:#2b2f26;--mute:#6d685d;--green:#3d4d32;--green2:#2f3c27;--gold:#c7a581;--gold-ink:#86663f;--cream:#f6fdeb;--line:rgba(43,47,38,.14);--disp:'Marcellus',Georgia,'Times New Roman',serif;--body:'Lato',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;-webkit-font-smoothing:antialiased}
+.bs *,.bs *::before,.bs *::after{box-sizing:border-box}
+.bs a{text-decoration:none;color:inherit}
+.bs h1,.bs h2,.bs h3,.bs p,.bs ol,.bs ul,.bs dl,.bs dd{margin:0;padding:0}
+.bs ol,.bs ul{list-style:none}
+.bs a:focus-visible{outline:2px solid var(--gold-ink);outline-offset:3px}
+.bs .bs-in{max-width:1040px;margin:0 auto;padding-block:72px;padding-left:max(20px,env(safe-area-inset-left,0px));padding-right:max(20px,env(safe-area-inset-right,0px))}
+.bs .bs-eyebrow{font-size:11px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--gold-ink);margin-bottom:14px}
+.bs .bs-h1{font-family:var(--disp);font-weight:400;font-size:clamp(32px,4.4vw,52px);line-height:1.08;color:var(--green);text-wrap:balance}
+.bs .bs-h2{font-family:var(--disp);font-weight:400;font-size:clamp(26px,3vw,36px);line-height:1.15;color:var(--green);text-wrap:balance}
+.bs .bs-lead{margin-top:16px;font-size:17px;color:var(--mute);max-width:56ch}
+.bs .bs-btn{display:inline-flex;align-items:center;gap:8px;padding:15px 26px;border-radius:999px;background:var(--green);color:var(--cream);font-size:15px;font-weight:700;letter-spacing:.03em;transition:background .2s,transform .2s}
+.bs .bs-btn:hover{background:var(--green2);transform:translateY(-1px)}
+.bs .bs-btn.gold{background:var(--gold);color:var(--green2)}
+.bs .bs-btn.gold:hover{background:#d4b591}
+.bs .bs-law{display:inline-block;margin-top:2px;font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold-ink)}
+.bs-hero{text-align:center}
+.bs-hero .bs-in{padding-block:80px 48px;display:grid;justify-items:center}
+.bs-hero .bs-lead{margin-inline:auto}
+.bs-hero .bs-btn{margin-top:28px}
+.bs-hero small{margin-top:12px;font-size:13px;color:var(--mute)}
+/* casos */
+.bs-cases .bs-in{padding-top:0}
+.bs-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.bs-case{display:flex;flex-direction:column;gap:10px;padding:24px 22px;background:var(--card);border:1px solid var(--line);border-radius:6px;transition:border-color .2s,transform .2s}
+.bs-case:hover{border-color:var(--gold);transform:translateY(-2px)}
+.bs-case .ico{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--bg2);color:var(--green)}
+.bs-case .ico svg{width:18px;height:18px}
+.bs-case h3{font-family:var(--disp);font-weight:400;font-size:21px;line-height:1.2;color:var(--green)}
+.bs-case p{font-size:14px;color:var(--mute)}
+.bs-case .go{margin-top:auto;padding-top:6px;font-size:13px;font-weight:700;color:var(--green)}
+/* como funciona */
+.bs-steps-wrap{background:var(--bg2)}
+.bs-steps{display:grid;grid-template-columns:repeat(4,1fr);gap:28px;margin-top:36px;counter-reset:s}
+.bs-steps li{border-top:1px solid var(--line);padding-top:18px}
+.bs-steps li::before{counter-increment:s;content:"0" counter(s);display:block;font-family:var(--disp);font-size:22px;color:var(--gold-ink);margin-bottom:8px}
+.bs-steps b{display:block;font-size:16px}
+.bs-steps p{font-size:14px;color:var(--mute);margin-top:4px}
+/* prazos */
+.bs-split{display:grid;grid-template-columns:5fr 7fr;gap:64px;align-items:start}
+.bs-rules{border-top:1px solid var(--line)}
+.bs-rules div{display:grid;grid-template-columns:1fr auto;gap:4px 24px;padding:20px 0;border-bottom:1px solid var(--line)}
+.bs-rules dt{font-weight:700;font-size:16px}
+.bs-rules dd{font-family:var(--disp);font-size:20px;color:var(--green);text-align:right;white-space:nowrap}
+.bs-rules .det{grid-column:1/-1;font-size:14px;color:var(--mute)}
+.bs-notes{margin-top:28px;display:grid;gap:10px}
+.bs-notes li{position:relative;padding-left:20px;font-size:14px;color:var(--mute)}
+.bs-notes li::before{content:"";position:absolute;left:0;top:.6em;width:8px;height:2px;background:var(--gold-ink)}
+/* sac */
+.bs-contact{background:var(--green);color:var(--cream);text-align:center}
+.bs-contact .bs-in{display:grid;justify-items:center}
+.bs-contact .bs-eyebrow{color:var(--gold)}
+.bs-contact .bs-h2{color:var(--cream)}
+.bs-contact .bs-lead{color:rgba(246,253,235,.75);margin-inline:auto}
+.bs-contact .bs-btn{margin-top:28px}
+.bs-num{margin-top:14px;font-family:var(--disp);font-size:28px;color:var(--cream)}
+.bs-addr{margin-top:36px;padding-top:20px;border-top:1px solid rgba(246,253,235,.18);font-size:13px;color:rgba(246,253,235,.7);max-width:70ch}
+.bs-addr b{color:var(--cream)}
+@media (max-width:900px){
+.bs .bs-in{padding-block:56px}
+.bs-grid{grid-template-columns:repeat(2,1fr)}
+.bs-steps{grid-template-columns:repeat(2,1fr)}
+.bs-split{grid-template-columns:1fr;gap:28px}
+}
+@media (max-width:520px){.bs-grid{grid-template-columns:1fr}.bs-steps{grid-template-columns:1fr}}
+</style>
+<div class="bs" id="bs-sac">
+<section class="bs-hero">
+<div class="bs-in">
+<p class="bs-eyebrow">Central de atendimento</p>
+<h1 class="bs-h1">Trocas, devoluções e SAC</h1>
+<p class="bs-lead">Teve algum problema com o seu pedido? Escolha o que aconteceu e chame a gente no WhatsApp. Seguimos o Código de Defesa do Consumidor.</p>
+<a class="bs-btn" href="https://wa.me/5547996225357?text=Ol%C3%A1!%20Preciso%20de%20ajuda%20com%20o%20meu%20pedido.%20N%C3%BAmero%20do%20pedido%3A%20" target="_blank" rel="noopener">Abrir atendimento no WhatsApp ↗</a>
+<small>SAC Borinelli: (47) 99622-5357</small>
+</div>
+</section>
+<section class="bs-cases" aria-label="O que aconteceu">
+<div class="bs-in"><div class="bs-grid">
+<a class="bs-case" href="https://wa.me/5547996225357?text=Ol%C3%A1!%20Recebi%20meu%20pedido%20e%20uma%20pe%C3%A7a%20veio%20com%20defeito.%20N%C3%BAmero%20do%20pedido%3A%20" target="_blank" rel="noopener"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 8v5M12 16.5v.5"/><circle cx="12" cy="12" r="9"/></svg></span><h3>Peça com defeito</h3><p>Costura, mancha ou furo de fabricação. Mande fotos e a gente resolve.</p><span class="go">Chamar no WhatsApp →</span></a>
+<a class="bs-case" href="https://wa.me/5547996225357?text=Ol%C3%A1!%20Recebi%20meu%20pedido%20com%20pe%C3%A7a%20errada%20ou%20faltando.%20N%C3%BAmero%20do%20pedido%3A%20" target="_blank" rel="noopener"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M4 8h13l-3-3M20 16H7l3 3"/></svg></span><h3>Peça errada ou faltando</h3><p>Veio tamanho, cor ou quantidade diferente do pedido? A gente acerta sem custo pra você.</p><span class="go">Chamar no WhatsApp →</span></a>
+<a class="bs-case" href="https://wa.me/5547996225357?text=Ol%C3%A1!%20Meu%20pedido%20est%C3%A1%20atrasado.%20N%C3%BAmero%20do%20pedido%3A%20" target="_blank" rel="noopener"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M3 7h11v9H3zM14 10h4l3 3v3h-7"/><circle cx="7" cy="17.5" r="1.5"/><circle cx="17" cy="17.5" r="1.5"/></svg></span><h3>Pedido atrasado</h3><p>Passou do prazo combinado? A gente confere. Se não der pra cumprir, você pode cancelar e receber de volta.</p><span class="go">Chamar no WhatsApp →</span></a>
+<a class="bs-case" href="https://wa.me/5547996225357?text=Ol%C3%A1!%20Quero%20desistir%20da%20minha%20compra.%20N%C3%BAmero%20do%20pedido%3A%20" target="_blank" rel="noopener"><span class="ico" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M6 6l12 12M18 6L6 18"/></svg></span><h3>Quero desistir</h3><p>Comprou pelo site ou WhatsApp? Você pode desistir em até 7 dias depois de receber.</p><span class="go">Chamar no WhatsApp →</span></a>
+</div></div>
+</section>
+<section class="bs-steps-wrap">
+<div class="bs-in">
+<p class="bs-eyebrow">Como funciona</p>
+<h2 class="bs-h2">Troca ou devolução em 4 passos</h2>
+<ol class="bs-steps">
+<li><b>Chame no WhatsApp</b><p>Mande o número do pedido e fotos ou vídeo de como a peça chegou.</p></li>
+<li><b>Análise</b><p>A gente confere e confirma pelo próprio WhatsApp o que vai ser feito.</p></li>
+<li><b>Coleta</b><p>A gente agenda a coleta pela transportadora. O frete de volta é por nossa conta.</p></li>
+<li><b>Solução</b><p>Defeito resolvido em até 30 dias. Se não der, você escolhe: peça nova, dinheiro de volta ou desconto.</p></li>
+</ol>
+</div>
+</section>
+<section class="bs-terms">
+<div class="bs-in bs-split">
+<div><p class="bs-eyebrow">Prazos pelo CDC</p><h2 class="bs-h2">Até quando posso pedir?</h2><p class="bs-lead">Os prazos contam a partir do dia em que o pedido chega na sua mão.</p></div>
+<div>
+<dl class="bs-rules">
+<div><dt>Desistência da compra</dt><dd>7 dias</dd><p class="det">Compras feitas pelo site ou WhatsApp. O valor volta integral, com o frete, e corrigido. <span class="bs-law">CDC, art. 49</span></p></div>
+<div><dt>Defeito de fabricação</dt><dd>90 dias</dd><p class="det">Roupa é produto durável. Se o defeito só aparecer com o uso, os 90 dias contam a partir de quando ele aparecer. <span class="bs-law">CDC, art. 26</span></p></div>
+<div><dt>Peça errada ou faltando</dt><dd>90 dias</dd><p class="det">Tamanho, cor ou quantidade diferente do pedido: a gente completa ou troca. <span class="bs-law">CDC, art. 26</span></p></div>
+<div><dt>Prazo pra resolver</dt><dd>30 dias</dd><p class="det">Se o defeito não for resolvido em 30 dias, você escolhe entre peça nova, dinheiro de volta ou abatimento no preço. <span class="bs-law">CDC, art. 18</span></p></div>
+</dl>
+<ul class="bs-notes">
+<li>O reembolso volta pelo mesmo meio de pagamento: PIX na conta de origem ou estorno no cartão.</li>
+<li>Pedido atrasado: você pode exigir a entrega, aceitar outro produto equivalente ou cancelar com o dinheiro de volta. <span class="bs-law">CDC, art. 35</span></li>
+</ul>
+</div>
+</div>
+</section>
+<section class="bs-contact">
+<div class="bs-in">
+<p class="bs-eyebrow">SAC</p>
+<h2 class="bs-h2">Nosso SAC é o WhatsApp</h2>
+<p class="bs-lead">Todo atendimento, troca e devolução é feito por lá, direto com a fábrica.</p>
+<a class="bs-btn gold" href="https://wa.me/5547996225357" target="_blank" rel="noopener">Chamar no WhatsApp ↗</a>
+<p class="bs-num">(47) 99622-5357</p>
+<p class="bs-addr"><b>Borinelli Confecções</b> · CNPJ 26.983.663/0001-67 · Rua Santa Cruz, 293, Pavimento 2, Águas Claras, Brusque/SC, CEP 88353-600 · confeccoesborinelli@hotmail.com</p>
+</div>
+</section>
+</div>
